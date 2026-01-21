@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: spotch-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+    autoDeploy: false
