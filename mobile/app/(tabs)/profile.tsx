@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getCreatureAvatar } from '../../utils/avatar';
+import { Avatar } from '../../components/Avatar';
 import { trpc } from '../../utils/api';
 
 // ... (Mock Data stays the same for now)
@@ -20,12 +21,9 @@ export default function ProfileScreen() {
     const [period, setPeriod] = useState<'24h' | 'week' | 'month'>('week');
 
     // Fetch Real User Profile & Wallet
-    const { data: user, isLoading: isLoadingUser } = trpc.user.getProfile.useQuery();
+    const { data: user, isLoading: isLoadingUser } = trpc.user.getProfile.useQuery({});
     const { data: balance } = trpc.wallet.getBalance.useQuery();
-    const { data: transactions, isLoading: isLoadingTx, refetch: refetchTx } = trpc.wallet.getTransactions.useQuery(undefined, {
-        refetchOnMount: true,
-        refetchOnWindowFocus: true
-    });
+    const { data: transactions, isLoading: isLoadingTx, refetch: refetchTx } = trpc.wallet.getTransactions.useQuery();
 
     // Compute Graph Data (Daily Earnings for last 7 days)
     const chartData = (() => {
@@ -39,13 +37,9 @@ export default function ProfileScreen() {
         const dailyTotals = new Array(days).fill(0);
 
         transactions.forEach(tx => {
-            // Robust Date Parsing
-            let txDate: Date;
-            if (tx.createdAt instanceof Date) {
-                txDate = tx.createdAt;
-            } else {
-                txDate = new Date(tx.createdAt || Date.now());
-            }
+            // Handle both Date objects and string representations from tRPC
+            const txDate = tx.createdAt ? new Date(tx.createdAt) : new Date();
+            const amount = tx.amount || 0;
 
             const diffTime = Math.abs(now.getTime() - txDate.getTime());
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -97,9 +91,10 @@ export default function ProfileScreen() {
                         <View className="flex-row items-center gap-3">
                             <View className="relative">
                                 <View className="p-1 rounded-full border-2 border-black">
-                                    <Image
-                                        source={{ uri: getCreatureAvatar(user?.avatar || 'default_seed') }}
-                                        className="w-14 h-14 rounded-full bg-gray-100"
+                                    <Avatar
+                                        seed={user?.avatar || 'default_seed'}
+                                        size={56}
+                                        style={{ backgroundColor: '#f3f4f6' }}
                                     />
                                 </View>
                                 {/* Level Badge */}
@@ -128,12 +123,20 @@ export default function ProfileScreen() {
                         {/* Top Right Actions */}
                         <View className="flex-row items-center gap-4">
                             {/* Total Staked (Hidden on small screens if needed, otherwise simplified) */}
-                            <View className="items-end hidden sm:flex">
+                            <View className="items-end mr-2">
                                 <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-0.5">Total Staked</Text>
-                                <Text className="text-xl font-black text-black tracking-tighter">
-                                    {balance?.toLocaleString() || '0'}
-                                    <Text className="text-base text-[#FF4785]"> P</Text>
-                                </Text>
+                                <View className="flex-row items-center gap-2">
+                                    <Text className="text-xl font-black text-black tracking-tighter">
+                                        {balance?.toLocaleString() || '0'}
+                                        <Text className="text-base text-[#FF4785]"> P</Text>
+                                    </Text>
+                                    <TouchableOpacity
+                                        onPress={() => router.push('/purchase')}
+                                        className="bg-[#FF4785] px-2 py-0.5 rounded-full"
+                                    >
+                                        <Ionicons name="add" size={14} color="white" />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
 
                             {/* Settings Icon */}
@@ -181,13 +184,49 @@ export default function ProfileScreen() {
                         </View>
                         <View className="border-t-4 border-black pt-4 flex-row justify-between items-center">
                             <Text className="font-black text-gray-400 text-xs tracking-widest">ACTIVITY TREND</Text>
-                            <View className="flex-row items-center">
-                                <View className="w-2 h-2 rounded-full bg-[#FF4785] mr-2" />
-                                <Text className="font-bold text-xs text-gray-500">Live Data</Text>
+
+                            <View className="flex-row items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm">
+                                <Ionicons name="location" size={12} color="#00C2FF" />
+                                <Text className="text-slate-600 font-bold text-xs">Tokyo, JP</Text>
                             </View>
                         </View>
-                    </View>
 
+                        {/* Stats Row */}
+                        <View className="flex-row justify-center gap-8 mt-6">
+                            <View className="items-center">
+                                <Text className="text-xl font-black text-slate-800">{user?.level || 1}</Text>
+                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">Level</Text>
+                            </View>
+                            <View className="h-full w-[1px] bg-slate-200" />
+                            <View className="items-center">
+                                <Text className="text-xl font-black text-slate-800">{user?.followingCount || 0}</Text>
+                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">Following</Text>
+                            </View>
+                            <View className="h-full w-[1px] bg-slate-200" />
+                            <View className="items-center">
+                                <Text className="text-xl font-black text-slate-800">{user?.followerCount || 0}</Text>
+                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">Followers</Text>
+                            </View>
+                        </View>
+
+                        {/* Social & Quest Actions */}
+                        <View className="flex-row gap-3 mt-6">
+                            <TouchableOpacity
+                                onPress={() => router.push('/search-users')}
+                                className="flex-1 flex-row items-center justify-center gap-2 bg-slate-100 py-3 rounded-xl active:bg-slate-200"
+                            >
+                                <Ionicons name="person-add" size={16} color="#475569" />
+                                <Text className="font-bold text-slate-600">Find Friends</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => router.push('/quests')}
+                                className="flex-1 flex-row items-center justify-center gap-2 bg-pink-50 py-3 rounded-xl border border-pink-100 active:bg-pink-100"
+                            >
+                                <Ionicons name="gift" size={16} color="#db2777" />
+                                <Text className="font-bold text-pink-600">Quests</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                     {/* History List */}
                     <View className="mb-10">
                         <Text className="text-2xl font-black italic tracking-tighter mb-4">RECENT HISTORY 📜</Text>
@@ -195,16 +234,16 @@ export default function ProfileScreen() {
                             {transactions?.slice(0, 5).map((tx) => (
                                 <View key={tx.id} className="flex-row justify-between items-center p-4 border-b border-gray-100 last:border-0">
                                     <View className="flex-row items-center">
-                                        <View className={`p-2 rounded-full mr-3 ${tx.amount > 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                                            <Ionicons name={tx.amount > 0 ? "add" : "remove"} size={16} color={tx.amount > 0 ? "green" : "red"} />
+                                        <View className={`p-2 rounded-full mr-3 ${(tx.amount || 0) > 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+                                            <Ionicons name={(tx.amount || 0) > 0 ? "add" : "remove"} size={16} color={(tx.amount || 0) > 0 ? "green" : "red"} />
                                         </View>
                                         <View>
                                             <Text className="font-bold text-black">{tx.description || 'Unknown Transaction'}</Text>
                                             <Text className="text-gray-400 text-xs font-bold">{new Date(tx.createdAt || Date.now()).toLocaleDateString()}</Text>
                                         </View>
                                     </View>
-                                    <Text className={`font-black text-lg ${tx.amount > 0 ? 'text-green-500' : 'text-black'}`}>
-                                        {tx.amount > 0 ? '+' : ''}{tx.amount} P
+                                    <Text className={`font-black text-lg ${(tx.amount || 0) > 0 ? 'text-green-500' : 'text-black'}`}>
+                                        {(tx.amount || 0) > 0 ? '+' : ''}{tx.amount || 0} P
                                     </Text>
                                 </View>
                             ))}

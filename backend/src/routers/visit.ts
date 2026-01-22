@@ -71,14 +71,27 @@ export const visitRouter = router({
                 throw new Error('Invalid visit session');
             }
 
-            // Calculate Points & XP
-            const earnedAmount = 1;
-            const earnedXp = 5;
+            // Calculate Points & XP (Scale based on spot's rate)
+            // If rate is 100 P/min, a 5s heartbeat should give ~8 points (100 / 12).
+            const ratePerMin = (visit.spot as any).ratePerMinute || 10;
+            const earnedAmount = Math.max(1, Math.floor(ratePerMin / 12));
+            const earnedXp = Math.max(1, Math.floor(earnedAmount / 2));
 
-            // 1. Deduct from Spot
+            // 1. Update Spot Activity & Level Up
+            const currentSpot = await db.query.spots.findFirst({ where: eq(spots.id, visit.spot.id) });
+            let newSpotLevel = currentSpot?.spotLevel || 1;
+            let currentSpotActivity = (currentSpot?.totalActivity || 0) + 1;
+
+            // Spot levels up every 500 activity units
+            if (currentSpotActivity >= newSpotLevel * 500) {
+                newSpotLevel += 1;
+            }
+
             await db.update(spots)
                 .set({
-                    remainingPoints: sql`${spots.remainingPoints} - ${earnedAmount}`
+                    remainingPoints: sql`${spots.remainingPoints} - ${earnedAmount}`,
+                    totalActivity: currentSpotActivity,
+                    spotLevel: newSpotLevel
                 })
                 .where(eq(spots.id, visit.spot.id));
 

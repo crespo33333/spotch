@@ -9,6 +9,14 @@ import { QueryClientProvider } from '@tanstack/react-query';
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+import { usePushNotifications } from '../hooks/usePushNotifications';
+import { StripeProvider } from '@stripe/stripe-react-native';
+
+function PushController() {
+    usePushNotifications();
+    return null;
+}
+
 export default function Layout() {
     useEffect(() => {
         // Hide sidebar after 2 seconds
@@ -22,14 +30,21 @@ export default function Layout() {
     return (
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
             <QueryClientProvider client={queryClient}>
-                <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="onboarding" />
-                    <Stack.Screen name="welcome" />
-                    <Stack.Screen name="setup-profile" />
-                </Stack>
-                <StatusBar style="auto" />
+                <StripeProvider
+                    publishableKey="pk_test_placeholder"
+                    merchantIdentifier="merchant.com.spotch" // required for Apple Pay
+                >
+                    <PushController />
+                    <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="(tabs)" />
+                        <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+                        <Stack.Screen name="onboarding" />
+                        <Stack.Screen name="welcome" />
+                        <Stack.Screen name="setup-profile" />
+                        <Stack.Screen name="purchase" options={{ presentation: 'modal' }} />
+                    </Stack>
+                    <StatusBar style="auto" />
+                </StripeProvider>
             </QueryClientProvider>
         </trpc.Provider>
     );

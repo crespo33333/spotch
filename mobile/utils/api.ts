@@ -16,10 +16,12 @@ export const trpc = createTRPCReact<AppRouter>();
 import Constants from 'expo-constants';
 
 const getBaseUrl = () => {
-    // Hardcoded for physical device testing on current network
-    return 'http://192.168.151.10:4000';
+    // Production / Cloud URL
+    if (process.env.EXPO_PUBLIC_API_URL) {
+        return process.env.EXPO_PUBLIC_API_URL;
+    }
 
-    /* Dynamic detection (saving for later)
+    // For Simulator/Local development
     const debuggerHost = Constants.expoConfig?.hostUri;
     const localhost = debuggerHost?.split(':')[0];
 
@@ -27,11 +29,26 @@ const getBaseUrl = () => {
         return 'http://localhost:4000';
     }
     return `http://${localhost}:4000`;
-    */
 };
 
 
-export const queryClient = new QueryClient();
+// Session persistence (JS Only, does not require native rebuild)
+let sessionUserId: string | null = null;
+
+export const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 1000 * 30, // 30 seconds
+            refetchOnWindowFocus: false, // Prevents aggressive refetching when switching apps
+        },
+    },
+});
+
+export const setStoredUserId = async (id: string) => {
+    sessionUserId = id;
+};
+
+export const getStoredUserId = () => sessionUserId;
 
 export const trpcClient = trpc.createClient({
     links: [
@@ -39,7 +56,7 @@ export const trpcClient = trpc.createClient({
             url: `${getBaseUrl()}/trpc`,
             async headers() {
                 return {
-                    'x-user-id': '2', // Hardcoded System Admin ID for testing
+                    'x-user-id': sessionUserId || '2', // Defaults to '2' if not registered in this session
                 };
             },
         }),

@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+}
+
+@layer theme {
+  :root {
+    --color-primary: #00C2FF;
+    --color-secondary: #FF4785;
+  }
+}

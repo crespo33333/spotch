@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
-import { trpc } from '../utils/api';
+import { trpc } from '../../utils/api';
 
 export default function CreateSpot() {
     const router = useRouter();
@@ -82,8 +82,8 @@ export default function CreateSpot() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white p-4">
-            <Text className="text-2xl font-bold text-primary mb-6">Create New Spot</Text>
+        <SafeAreaView className="flex-1 bg-white p-4 pt-0">
+            {/* Header is handled by Tab Layout now */}
 
             <View className="mb-4">
                 <Text className="text-gray-600 mb-2">Spot Name</Text>

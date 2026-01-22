@@ -2,7 +2,7 @@ import { router, protectedProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '../db';
 import { spots, wallets, transactions, users } from '../db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 export const spotRouter = router({
@@ -85,12 +85,38 @@ export const spotRouter = router({
                 })
                 .map(({ spot, user }) => ({
                     ...spot,
+                    pointsPerMinute: spot.ratePerMinute, // Map for frontend convenience
                     spotter: user ? {
                         id: user.id,
                         name: user.name,
                         avatar: user.avatar,
                     } : null
                 }));
+        }),
+
+    getById: publicProcedure
+        .input(z.object({ id: z.number() }))
+        .query(async ({ input }) => {
+            const spotData = await db.query.spots.findFirst({
+                where: eq(spots.id, input.id),
+                with: {
+                    spotter: true,
+                }
+            });
+
+            if (!spotData) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: 'Spot not found' });
+            }
+
+            return {
+                ...spotData,
+                pointsPerMinute: spotData.ratePerMinute,
+                spotter: spotData.spotter ? {
+                    id: spotData.spotter.id,
+                    name: spotData.spotter.name,
+                    avatar: spotData.spotter.avatar,
+                } : null
+            };
         }),
 
     getRankings: publicProcedure
@@ -112,6 +138,84 @@ export const spotRouter = router({
             })).sort((a, b) => b.points - a.points).slice(0, 10);
 
             return ranked;
+        }),
+
+    getMessages: publicProcedure
+        .input(z.object({ spotId: z.number() }))
+        .query(async ({ input }) => {
+            const { spotMessages } = require('../db/schema');
+            return await db.query.spotMessages.findMany({
+                where: eq(spotMessages.spotId, input.spotId),
+                with: {
+                    user: {
+                        columns: {
+                            id: true,
+                            name: true,
+                            avatar: true,
+                        }
+                    }
+                },
+                orderBy: (messages, { desc }) => [desc(messages.createdAt)],
+                limit: 50,
+            });
+        }),
+
+    postMessage: protectedProcedure
+        .input(z.object({
+            spotId: z.number(),
+            content: z.string().min(1).max(280),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const { spotMessages } = require('../db/schema');
+            const [message] = (await db.insert(spotMessages).values({
+                spotId: input.spotId,
+                userId: ctx.user!.id,
+                content: input.content,
+            }).returning()) as any[];
+
+            return message;
+        }),
+
+    toggleLike: protectedProcedure
+        .input(z.object({ spotId: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+            const { spotLikes } = require('../db/schema');
+            const existing = await db.query.spotLikes.findFirst({
+                where: and(eq(spotLikes.spotId, input.spotId), eq(spotLikes.userId, ctx.user!.id)),
+            });
+
+            if (existing) {
+                await db.delete(spotLikes).where(eq(spotLikes.id, existing.id));
+                return { liked: false };
+            } else {
+                await db.insert(spotLikes).values({
+                    spotId: input.spotId,
+                    userId: ctx.user!.id,
+                });
+                return { liked: true };
+            }
+        }),
+
+    getStats: publicProcedure
+        .input(z.object({ spotId: z.number() }))
+        .query(async ({ ctx, input }) => {
+            const { spotLikes, spotMessages } = require('../db/schema');
+            const likeCount = await db.select({ count: sql`count(*)` }).from(spotLikes).where(eq(spotLikes.spotId, input.spotId));
+            const msgCount = await db.select({ count: sql`count(*)` }).from(spotMessages).where(eq(spotMessages.spotId, input.spotId));
+
+            let isLiked = false;
+            if (ctx.user) {
+                const existing = await db.query.spotLikes.findFirst({
+                    where: and(eq(spotLikes.spotId, input.spotId), eq(spotLikes.userId, ctx.user.id)),
+                });
+                isLiked = !!existing;
+            }
+
+            return {
+                likes: Number(likeCount[0]?.count || 0),
+                messages: Number(msgCount[0]?.count || 0),
+                isLiked,
+            };
         }),
 });
 

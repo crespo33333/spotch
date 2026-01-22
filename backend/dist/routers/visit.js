@@ -59,9 +59,11 @@ exports.visitRouter = (0, trpc_1.router)({
         if (!visit || !visit.spot || !visit.spot.active) {
             throw new Error('Invalid visit session');
         }
-        // Calculate Points & XP
-        const earnedAmount = 1;
-        const earnedXp = 5;
+        // Calculate Points & XP (Scale based on spot's rate)
+        // If rate is 100 P/min, a 5s heartbeat should give ~8 points (100 / 12).
+        const ratePerMin = visit.spot.ratePerMinute || 10;
+        const earnedAmount = Math.max(1, Math.floor(ratePerMin / 12));
+        const earnedXp = Math.max(1, Math.floor(earnedAmount / 2));
         // 1. Deduct from Spot
         await db_1.db.update(schema_1.spots)
             .set({

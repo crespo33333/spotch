@@ -2,6 +2,9 @@ import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { trpc } from '../../utils/api';
+import { Avatar } from '../../components/Avatar';
 
 // Mock Data
 const NEWS_ITEMS = [
@@ -16,7 +19,18 @@ const FOOTPRINT_ITEMS = [
 ];
 
 export default function ActivityScreen() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<'news' | 'footprints'>('news');
+
+    // Fetch real activity feed
+    const { data: feed, isLoading: isFeedLoading } = trpc.activity.getFeed.useQuery(undefined, {
+        enabled: activeTab === 'footprints',
+    });
+
+    // Fetch personal notifications
+    const { data: notifications, isLoading: isNotifLoading } = trpc.activity.getNotifications.useQuery(undefined, {
+        enabled: activeTab === 'news',
+    });
 
     return (
         <SafeAreaView className="flex-1 bg-white" edges={['top']}>
@@ -40,33 +54,99 @@ export default function ActivityScreen() {
                 </TouchableOpacity>
             </View>
 
+            {/* Find Friends CTA */}
+            <TouchableOpacity
+                onPress={() => router.push('/search-users')}
+                className="mx-4 mt-4 bg-slate-50 p-4 rounded-xl flex-row items-center gap-3 border border-slate-100 active:bg-slate-100"
+            >
+                <View className="bg-white p-2 rounded-full shadow-sm">
+                    <Ionicons name="search" size={20} color="#00C2FF" />
+                </View>
+                <View className="flex-1">
+                    <Text className="font-bold text-slate-700">友達を探す</Text>
+                    <Text className="text-xs text-slate-400">IDや名前（"jun"など）で検索しよう</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+            </TouchableOpacity>
+
             <ScrollView className="flex-1 bg-white">
                 {activeTab === 'news' ? (
                     <View>
+                        {/* System News (Hardcoded for now) */}
                         {NEWS_ITEMS.map((item) => (
-                            <View key={item.id} className="p-4 border-b border-gray-100 flex-row gap-3">
+                            <View key={item.id} className="p-4 border-b border-gray-100 flex-row gap-3 bg-slate-50">
                                 <View className="w-10 h-10 rounded-full bg-[#E0F7FF] items-center justify-center">
                                     <Ionicons name="megaphone" size={20} color="#00C2FF" />
                                 </View>
                                 <View className="flex-1">
-                                    <Text className="text-gray-800 leading-5 mb-1">{item.text}</Text>
-                                    <Text className="text-gray-400 text-xs">{item.date}</Text>
+                                    <View className="flex-row justify-between">
+                                        <Text className="text-gray-800 leading-5 mb-1 font-bold">運営チーム</Text>
+                                        <Text className="text-gray-400 text-xs">{item.date}</Text>
+                                    </View>
+                                    <Text className="text-gray-600 text-sm">{item.text}</Text>
+                                </View>
+                            </View>
+                        ))}
+
+                        {/* Real Notifications */}
+                        {notifications?.map((item) => (
+                            <View key={item.id} className="p-4 border-b border-gray-100 flex-row gap-3">
+                                <View className={`w-10 h-10 rounded-full items-center justify-center ${item.type === 'like' ? 'bg-pink-100' : 'bg-green-100'}`}>
+                                    <Ionicons
+                                        name={item.type === 'like' ? "heart" : "person-add"}
+                                        size={20}
+                                        color={item.type === 'like' ? "#FF4785" : "#10B981"}
+                                    />
+                                </View>
+                                <View className="flex-1">
+                                    <View className="flex-row justify-between mb-1">
+                                        <Text className="text-gray-800 text-sm">
+                                            <Text className="font-bold">{item.user.name}</Text> {item.message}
+                                        </Text>
+                                    </View>
+                                    <Text className="text-gray-400 text-xs">
+                                        {new Date(item.createdAt || '').toLocaleDateString()} {new Date(item.createdAt || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </Text>
                                 </View>
                             </View>
                         ))}
                     </View>
                 ) : (
                     <View>
-                        {FOOTPRINT_ITEMS.map((item) => (
+                        {feed?.map((item) => (
                             <View key={item.id} className="p-4 border-b border-gray-50 flex-row items-center gap-3">
-                                <Image source={{ uri: item.avatar }} className="w-12 h-12 rounded-full bg-gray-100" />
+                                <TouchableOpacity onPress={() => router.push(`/user/${item.userId}`)}>
+                                    <Avatar
+                                        seed={item.avatar || 'default_seed'}
+                                        size={48}
+                                        style={{ backgroundColor: '#f1f5f9' }}
+                                    />
+                                </TouchableOpacity>
                                 <View className="flex-1">
-                                    <Text className="text-gray-800">
-                                        <Text className="font-bold">{item.user}</Text> {item.action}
+                                    <View className="flex-row justify-between mb-1">
+                                        <Text className="text-gray-800">
+                                            <Text className="font-bold text-slate-900">{item.user}</Text>
+                                            <Text className="text-slate-600"> {item.action}</Text>
+                                        </Text>
+                                    </View>
+                                    <Text className="text-[10px] text-slate-400 font-medium">
+                                        {new Date(item.createdAt || '').toLocaleDateString()} {new Date(item.createdAt || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </Text>
                                 </View>
                             </View>
                         ))}
+                        {(!feed || feed.length === 0) && !isFeedLoading && (
+                            <View className="items-center py-20">
+                                <Ionicons name="people-outline" size={48} color="#cbd5e1" />
+                                <Text className="mt-4 text-slate-400 font-bold">まだアクティビティはありません</Text>
+                                <Text className="text-slate-300 text-xs">友達をフォローして動きをチェックしよう！</Text>
+                            </View>
+                        )}
+                        {isFeedLoading && (
+                            <View className="items-center py-20">
+                                <Text className="text-slate-400 font-bold">読み込み中...</Text>
+                            </View>
+                        )}
                     </View>
                 )}
             </ScrollView>

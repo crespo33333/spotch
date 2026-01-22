@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
 import { Spot } from '../components/MapView';
 
 export interface GeofencingResult {
     nearestSpot: Spot | null;
     distanceToNearest: number; // in km
     isInside: boolean;
+    ignoreSpot?: (id: string) => void;
 }
 
 export function useGeofencing(
@@ -17,6 +19,7 @@ export function useGeofencing(
         distanceToNearest: Infinity,
         isInside: false,
     });
+    const [ignoredSpotIds, setIgnoredSpotIds] = useState<string[]>([]);
 
     useEffect(() => {
         if (!userLocation || !spots || spots.length === 0) {
@@ -42,24 +45,46 @@ export function useGeofencing(
         });
 
         if (closest) {
-            // Check if inside radius (radius is usually in meters in the object, handle conversion)
-            // Assuming spot.radius is in meters (defaulting to 100m if undefined, from visualization)
-            // But wait, in seed.ts or spot router, did we define radius?
-            // Spot interface has radius: number.
-            // Let's assume input radius is in METERS.
-            // minDist is in KM.
             const radiusInKm = (closest as Spot).radius / 1000;
             const isInside = minDist <= radiusInKm;
+
+            // Trigger Notification if newly entered AND not ignored
+            // Also if previously ignored but now OUTSIDE, remove from ignore list (re-entry allowed)
+            const isIgnored = ignoredSpotIds.includes((closest as Spot).id);
+
+            if (!isInside && isIgnored) {
+                // Left the spot, so remove from ignore list to allow re-entry notification
+                setIgnoredSpotIds(prev => prev.filter(id => id !== (closest as Spot).id));
+            }
+
+            if (isInside && !result.isInside && closest && !isIgnored) {
+                Notifications.scheduleNotificationAsync({
+                    content: {
+                        title: "📍 You found a Spot!",
+                        body: `Check in at ${(closest as Spot).name} to earn points!`,
+                        sound: true,
+                    },
+                    trigger: null, // Send immediately
+                });
+            }
 
             setResult({
                 nearestSpot: closest,
                 distanceToNearest: minDist,
-                isInside
+                isInside: isInside && !isIgnored // If ignored, we treat as "not inside" for overlay purposes? Or just prevent notification? User wants to "Leave".
             });
         }
-    }, [userLocation, spots]);
+    }, [userLocation, spots, ignoredSpotIds]);
 
-    return result;
+    const ignoreSpot = (spotId: string) => {
+        setIgnoredSpotIds(prev => [...prev, spotId]);
+        // Also force isInside to false immediately in result if it matches
+        if (result.nearestSpot?.id === spotId) {
+            setResult(prev => ({ ...prev, isInside: false }));
+        }
+    };
+
+    return { ...result, ignoreSpot };
 }
 
 // Haversine Formula

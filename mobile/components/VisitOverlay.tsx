@@ -1,11 +1,12 @@
 
-import { View, Text, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Image, StyleSheet } from 'react-native';
 import { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spot } from './MapView';
 import { trpc } from '../utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import { getCreatureAvatar } from '../utils/avatar';
+import { Avatar } from './Avatar';
 
 interface VisitOverlayProps {
     spot: Spot;
@@ -32,13 +33,12 @@ export default function VisitOverlay({ spot, userLocation, onClose }: VisitOverl
     });
 
     const heartbeatMutation = trpc.visit.heartbeat.useMutation({
-        onSuccess: (data) => {
-            if (data?.earned) {
-                setEarned(prev => prev + data.earned);
+        onSuccess: (data: any) => {
+            if (data?.earnedPoints) {
+                setEarned(prev => prev + data.earnedPoints);
                 // Refresh wallet balance and history in background
                 utils.wallet.getBalance.invalidate();
                 utils.wallet.getTransactions.invalidate();
-                utils.spot.getNearby.invalidate();
             }
         }
     });
@@ -73,13 +73,13 @@ export default function VisitOverlay({ spot, userLocation, onClose }: VisitOverl
         }
     }, [userLocation]); // Re-run when location changes
 
-    // Effect: Heartbeat every 10s (Demo)
+    // Effect: Heartbeat every 5s (Demo)
     useEffect(() => {
         if (status !== 'active' || !visitId) return;
 
         const interval = setInterval(() => {
             heartbeatMutation.mutate({ visitId });
-        }, 10000); // For DEMO: 10 seconds instead of 60s
+        }, 5000); // 5 seconds for faster feedback
 
         return () => clearInterval(interval);
     }, [status, visitId]);
@@ -97,8 +97,8 @@ export default function VisitOverlay({ spot, userLocation, onClose }: VisitOverl
     };
 
     return (
-        <View className="absolute inset-0 bg-black/90 z-50 justify-center items-center p-6">
-            <SafeAreaView className="w-full h-full items-center justify-center">
+        <View style={StyleSheet.absoluteFill} className="bg-black/90 justify-center items-center">
+            <SafeAreaView className="flex-1 w-full items-center justify-center p-6">
 
                 {/* Close Button */}
                 <TouchableOpacity onPress={handleLeave} className="absolute top-12 right-4 z-10 bg-white/20 p-2 rounded-full">
@@ -108,9 +108,11 @@ export default function VisitOverlay({ spot, userLocation, onClose }: VisitOverl
                 {/* Spot Info */}
                 <View className="items-center mb-10">
                     <View className="mb-6 shadow-2xl shadow-primary">
-                        <Image
-                            source={{ uri: spot.spotter?.avatarUrl ? getCreatureAvatar(spot.spotter.avatarUrl) : getCreatureAvatar(`spot_${spot.id}`) }}
-                            className="w-32 h-32 rounded-full border-4 border-white bg-gray-200"
+                        <Avatar
+                            seed={spot.spotter?.avatarUrl || `spot_${spot.id}`}
+                            size={128}
+                            style={{ backgroundColor: '#e5e7eb' }}
+                            showBorder
                         />
                         <View className="absolute -bottom-2 -right-2 bg-primary px-3 py-1 rounded-full border-2 border-white">
                             <Text className="text-white font-bold">{spot.pointsPerMinute} P/min</Text>

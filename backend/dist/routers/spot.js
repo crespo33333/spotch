@@ -78,12 +78,35 @@ exports.spotRouter = (0, trpc_1.router)({
         })
             .map(({ spot, user }) => ({
             ...spot,
+            pointsPerMinute: spot.ratePerMinute, // Map for frontend convenience
             spotter: user ? {
                 id: user.id,
                 name: user.name,
                 avatar: user.avatar,
             } : null
         }));
+    }),
+    getById: trpc_1.publicProcedure
+        .input(zod_1.z.object({ id: zod_1.z.number() }))
+        .query(async ({ input }) => {
+        const spotData = await db_1.db.query.spots.findFirst({
+            where: (0, drizzle_orm_1.eq)(schema_1.spots.id, input.id),
+            with: {
+                spotter: true,
+            }
+        });
+        if (!spotData) {
+            throw new server_1.TRPCError({ code: 'NOT_FOUND', message: 'Spot not found' });
+        }
+        return {
+            ...spotData,
+            pointsPerMinute: spotData.ratePerMinute,
+            spotter: spotData.spotter ? {
+                id: spotData.spotter.id,
+                name: spotData.spotter.name,
+                avatar: spotData.spotter.avatar,
+            } : null
+        };
     }),
     getRankings: trpc_1.publicProcedure
         .query(async () => {
@@ -102,6 +125,69 @@ exports.spotRouter = (0, trpc_1.router)({
             activeUsers: Math.floor(Math.random() * 50) // Mock active users
         })).sort((a, b) => b.points - a.points).slice(0, 10);
         return ranked;
+    }),
+    getMessages: trpc_1.publicProcedure
+        .input(zod_1.z.object({ spotId: zod_1.z.number() }))
+        .query(async ({ input }) => {
+        const { spotMessages } = require('../db/schema');
+        return await db_1.db.query.spotMessages.findMany({
+            where: (0, drizzle_orm_1.eq)(spotMessages.spotId, input.spotId),
+            with: {
+                user: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    }
+                }
+            },
+            orderBy: (messages, { desc }) => [desc(messages.createdAt)],
+            limit: 50,
+        });
+    }),
+    postMessage: trpc_1.protectedProcedure
+        .input(zod_1.z.object({
+        spotId: zod_1.z.number(),
+        content: zod_1.z.string().min(1).max(280),
+    }))
+        .mutation(async ({ ctx, input }) => {
+        const { spotMessages } = require('../db/schema');
+        const [message] = (await db_1.db.insert(spotMessages).values({
+            spotId: input.spotId,
+            userId: ctx.user.id,
+            content: input.content,
+        }).returning());
+        return message;
+    }),
+    toggleLike: trpc_1.protectedProcedure
+        .input(zod_1.z.object({ spotId: zod_1.z.number() }))
+        .mutation(async ({ ctx, input }) => {
+        const { spotLikes } = require('../db/schema');
+        const existing = await db_1.db.query.spotLikes.findFirst({
+            where: (0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(spotLikes.spotId, input.spotId), (0, drizzle_orm_1.eq)(spotLikes.userId, ctx.user.id)),
+        });
+        if (existing) {
+            await db_1.db.delete(spotLikes).where((0, drizzle_orm_1.eq)(spotLikes.id, existing.id));
+            return { liked: false };
+        }
+        else {
+            await db_1.db.insert(spotLikes).values({
+                spotId: input.spotId,
+                userId: ctx.user.id,
+            });
+            return { liked: true };
+        }
+    }),
+    getStats: trpc_1.publicProcedure
+        .input(zod_1.z.object({ spotId: zod_1.z.number() }))
+        .query(async ({ input }) => {
+        const { spotLikes, spotMessages } = require('../db/schema');
+        const likeCount = await db_1.db.select({ count: (0, drizzle_orm_1.sql) `count(*)` }).from(spotLikes).where((0, drizzle_orm_1.eq)(spotLikes.spotId, input.spotId));
+        const msgCount = await db_1.db.select({ count: (0, drizzle_orm_1.sql) `count(*)` }).from(spotMessages).where((0, drizzle_orm_1.eq)(spotMessages.spotId, input.spotId));
+        return {
+            likes: Number(likeCount[0]?.count || 0),
+            messages: Number(msgCount[0]?.count || 0),
+        };
     }),
 });
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {

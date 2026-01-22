@@ -91,6 +91,8 @@ export default function SettingsScreen() {
                         hasArrow={!isVerified}
                     />
                     <Item label="Spotch Premium" value="未登録" onPress={() => router.push('/premium')} />
+                    <Item label="ポイント購入" onPress={() => router.push('/purchase')} />
+                    <Item label="ポイント交換" onPress={() => router.push('/exchange')} />
                     <Item label="友達にシェア" isLast onPress={handleShare} />
                 </Section>
 

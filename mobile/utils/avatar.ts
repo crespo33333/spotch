@@ -1,34 +1,57 @@
-/**
- * Generates a random "creature" avatar URL based on a seed string.
- * Uses RoboHash to provide Cats (set4), Monsters (set2), and Robots (set1).
- */
-export const getCreatureAvatar = (seed: string) => {
-    // Deterministically decide which set to use based on the seed
-    // We want a good mix of Cats, Monsters, and Robots
+// Avatar Categories using RoboHash (Cats) and Placehold.co (Emoji Text)
+export type AvatarCategory = 'cats' | 'dogs' | 'critters' | 'birds' | 'fish' | 'flowers';
 
-    // Simple hash of the string to get a number
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) {
-        hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    const setIndex = Math.abs(hash) % 3;
-    let set = 'set1'; // Default Robots
-
-    if (setIndex === 1) set = 'set2'; // Monsters
-    if (setIndex === 2) set = 'set4'; // Cats
-
-    // Robohash URL
-    return `https://robohash.org/${seed}.png?set=${set}&bgset=bg1&size=200x200`;
+const EMOJI_SETS: Record<string, string[]> = {
+    dogs: ['🐶', '🐕', '🦮', '🐩', '🐕‍🦺', '🐺', '🦊', '🐾', '🌭', '🦴'],
+    critters: ['🦔', '🐿️', '🐁', '🐹', '🐇', '🦦', '🦡', '🦇', '🐌', '🐢'],
+    birds: ['🐦', '🕊️', '🦅', '🦆', '🦉', '🦜', '🦩', '🐣', '🐔', '🐧'],
+    fish: ['🐟', '🐠', '🐡', '🦈', '🐳', '🐬', '🐙', '🦀', '🦞', '🦐'],
+    flowers: ['🌸', '🌹', '🌻', '🌺', '🌷', '🪷', '💐', '🍀', '🌿', '🌵'],
 };
 
+const BACKGROUND_COLORS = ['FF9900', 'FF4785', '00C2FF', '4CAF50', '9C27B0', 'FFEB3B'];
+
 /**
- * Returns a list of ~50 dummy avatars for pre-loading or selection
+ * Generates an avatar URL based on seed/category.
+ * If seed starts with 'http', return it as is.
+ * Otherwise, handle RoboHash (kitten) vs Emoji (placehold.co).
  */
-export const getDummyAvatarSeeds = () => {
-    const seeds = [];
-    for (let i = 0; i < 50; i++) {
-        seeds.push(`creature_${i}`);
+export const getCreatureAvatar = (seed: string) => {
+    if (seed.startsWith('http')) return seed;
+
+    // Legacy or Kitten
+    if (seed.startsWith('kitten_')) {
+        return `https://robohash.org/${seed}.png?set=set4&size=200x200`;
     }
-    return seeds;
+
+    // Attempt to parse 'emoji:🐶:COLOR' -> URL
+    if (seed.startsWith('emoji:')) {
+        // Return the seed directly to be handled by the UI components
+        // This allows we to render native high-res emojis instead of blurry placeholders
+        return seed;
+    }
+
+    // Fallback
+    return `https://robohash.org/${seed}.png?set=set4&size=200x200`;
+};
+
+
+/**
+ * Returns avatar options for a specific category
+ */
+export const getAvatarOptions = (category: AvatarCategory) => {
+    if (category === 'cats') {
+        const seeds = [];
+        for (let i = 1; i <= 16; i++) {
+            seeds.push(`kitten_${i}`);
+        }
+        return seeds;
+    }
+
+    // For Emoji Categories
+    const emojis = EMOJI_SETS[category] || [];
+    return emojis.map((emoji, index) => {
+        const color = BACKGROUND_COLORS[index % BACKGROUND_COLORS.length];
+        return `emoji:${emoji}:${color}`;
+    });
 };

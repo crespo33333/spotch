@@ -7,20 +7,6 @@ const db_1 = require("../db");
 const schema_1 = require("../db/schema");
 const drizzle_orm_1 = require("drizzle-orm");
 exports.userRouter = (0, trpc_1.router)({
-    getProfile: trpc_1.protectedProcedure.query(async ({ ctx }) => {
-        // In a real app, ctx.user would be populated. 
-        // For now, we simulate finding a user by a simulated ID or just return first user
-        // Since we lack real auth middleware yet, let's assume we pass userId in input for testing
-        // BUT spec says getProfile. 
-        // We will assume middleware sets ctx.user.id
-        // Fallback for dev without full Auth
-        if (!ctx.user)
-            return null;
-        const user = await db_1.db.query.users.findFirst({
-            where: (0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id),
-        });
-        return user;
-    }),
     // Create or Update user from OAuth
     loginOrRegister: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -60,5 +46,76 @@ exports.userRouter = (0, trpc_1.router)({
             description: 'Welcome bonus',
         });
         return newUser;
+    }),
+    updatePushToken: trpc_1.protectedProcedure
+        .input(zod_1.z.object({
+        token: zod_1.z.string(),
+    }))
+        .mutation(async ({ ctx, input }) => {
+        await db_1.db.update(schema_1.users)
+            .set({ pushToken: input.token })
+            .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
+        return { success: true };
+    }),
+    follow: trpc_1.protectedProcedure
+        .input(zod_1.z.object({
+        targetUserId: zod_1.z.number(),
+    }))
+        .mutation(async ({ ctx, input }) => {
+        if (ctx.user.id === input.targetUserId) {
+            throw new Error("Cannot follow yourself");
+        }
+        // Check if already follows
+        const existing = await db_1.db.query.follows.findFirst({
+            where: (follows, { and, eq }) => and(eq(follows.followerId, ctx.user.id), eq(follows.followingId, input.targetUserId)),
+        });
+        if (existing)
+            return { success: true }; // Already following
+        await db_1.db.insert(schema_1.follows).values({
+            followerId: ctx.user.id,
+            followingId: input.targetUserId,
+        });
+        // TODO: Notify target user?
+        return { success: true };
+    }),
+    unfollow: trpc_1.protectedProcedure
+        .input(zod_1.z.object({
+        targetUserId: zod_1.z.number(),
+    }))
+        .mutation(async ({ ctx, input }) => {
+        const { and, eq } = require('drizzle-orm'); // Import locally or top level if possible, avoiding conflict
+        await db_1.db.delete(schema_1.follows)
+            .where(and(eq(schema_1.follows.followerId, ctx.user.id), eq(schema_1.follows.followingId, input.targetUserId)));
+        return { success: true };
+    }),
+    getProfile: trpc_1.protectedProcedure
+        .input(zod_1.z.object({ userId: zod_1.z.number().optional() })) // Allow fetching other profiles
+        .query(async ({ ctx, input }) => {
+        const targetId = input.userId || ctx.user.id;
+        const user = await db_1.db.query.users.findFirst({
+            where: (0, drizzle_orm_1.eq)(schema_1.users.id, targetId),
+            with: {
+                followers: true,
+                following: true,
+            }
+        });
+        if (!user)
+            return null;
+        // Calculate counts
+        return {
+            ...user,
+            followerCount: user.followers.length,
+            followingCount: user.following.length,
+            isFollowing: input.userId ? user.followers.some(f => f.followerId === ctx.user.id) : false,
+        };
+    }),
+    searchUsers: trpc_1.protectedProcedure
+        .input(zod_1.z.object({ query: zod_1.z.string() }))
+        .query(async ({ input }) => {
+        const { ilike } = require('drizzle-orm');
+        return await db_1.db.query.users.findMany({
+            where: ilike(schema_1.users.name, `%${input.query}%`),
+            limit: 10,
+        });
     }),
 });
