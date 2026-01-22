@@ -64,10 +64,19 @@ exports.visitRouter = (0, trpc_1.router)({
         const ratePerMin = visit.spot.ratePerMinute || 10;
         const earnedAmount = Math.max(1, Math.floor(ratePerMin / 12));
         const earnedXp = Math.max(1, Math.floor(earnedAmount / 2));
-        // 1. Deduct from Spot
+        // 1. Update Spot Activity & Level Up
+        const currentSpot = await db_1.db.query.spots.findFirst({ where: (0, drizzle_orm_1.eq)(schema_1.spots.id, visit.spot.id) });
+        let newSpotLevel = currentSpot?.spotLevel || 1;
+        let currentSpotActivity = (currentSpot?.totalActivity || 0) + 1;
+        // Spot levels up every 500 activity units
+        if (currentSpotActivity >= newSpotLevel * 500) {
+            newSpotLevel += 1;
+        }
         await db_1.db.update(schema_1.spots)
             .set({
-            remainingPoints: (0, drizzle_orm_1.sql) `${schema_1.spots.remainingPoints} - ${earnedAmount}`
+            remainingPoints: (0, drizzle_orm_1.sql) `${schema_1.spots.remainingPoints} - ${earnedAmount}`,
+            totalActivity: currentSpotActivity,
+            spotLevel: newSpotLevel
         })
             .where((0, drizzle_orm_1.eq)(schema_1.spots.id, visit.spot.id));
         // 2. Add to User Wallet

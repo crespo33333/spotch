@@ -87,7 +87,22 @@ export const userRouter = router({
                 followingId: input.targetUserId,
             });
 
-            // TODO: Notify target user?
+            // Notify User
+            const targetUser = await db.query.users.findFirst({
+                where: eq(users.id, input.targetUserId),
+                columns: { pushToken: true }
+            });
+
+            if (targetUser?.pushToken) {
+                const { sendPushNotification } = require('../utils/push');
+                await sendPushNotification(
+                    targetUser.pushToken,
+                    "New Follower!",
+                    `${ctx.user.name} started following you.`,
+                    { type: 'follow', userId: ctx.user.id }
+                );
+            }
+
             return { success: true };
         }),
 

@@ -35,6 +35,8 @@ exports.spots = (0, pg_core_1.pgTable)('spots', {
     color: (0, pg_core_1.varchar)('color', { length: 50 }).default('#00C2FF'),
     radius: (0, pg_core_1.integer)('radius').default(100),
     description: (0, pg_core_1.text)('description'),
+    spotLevel: (0, pg_core_1.integer)('spot_level').default(1),
+    totalActivity: (0, pg_core_1.integer)('total_activity').default(0),
     createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
 });
 exports.visits = (0, pg_core_1.pgTable)('visits', {

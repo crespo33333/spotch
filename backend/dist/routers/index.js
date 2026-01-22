@@ -9,6 +9,8 @@ const visit_1 = require("./visit");
 const admin_1 = require("./admin");
 const quest_1 = require("./quest");
 const payment_1 = require("./payment");
+const activity_1 = require("./activity");
+const ranking_1 = require("./ranking");
 exports.appRouter = (0, trpc_1.router)({
     health: trpc_1.publicProcedure.query(() => {
         return 'ok';
@@ -20,4 +22,6 @@ exports.appRouter = (0, trpc_1.router)({
     admin: admin_1.adminRouter,
     quest: quest_1.questRouter,
     payment: payment_1.paymentRouter,
+    activity: activity_1.activityRouter,
+    ranking: ranking_1.rankingRouter,
 });

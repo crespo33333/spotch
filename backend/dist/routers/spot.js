@@ -180,13 +180,21 @@ exports.spotRouter = (0, trpc_1.router)({
     }),
     getStats: trpc_1.publicProcedure
         .input(zod_1.z.object({ spotId: zod_1.z.number() }))
-        .query(async ({ input }) => {
+        .query(async ({ ctx, input }) => {
         const { spotLikes, spotMessages } = require('../db/schema');
         const likeCount = await db_1.db.select({ count: (0, drizzle_orm_1.sql) `count(*)` }).from(spotLikes).where((0, drizzle_orm_1.eq)(spotLikes.spotId, input.spotId));
         const msgCount = await db_1.db.select({ count: (0, drizzle_orm_1.sql) `count(*)` }).from(spotMessages).where((0, drizzle_orm_1.eq)(spotMessages.spotId, input.spotId));
+        let isLiked = false;
+        if (ctx.user) {
+            const existing = await db_1.db.query.spotLikes.findFirst({
+                where: (0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(spotLikes.spotId, input.spotId), (0, drizzle_orm_1.eq)(spotLikes.userId, ctx.user.id)),
+            });
+            isLiked = !!existing;
+        }
         return {
             likes: Number(likeCount[0]?.count || 0),
             messages: Number(msgCount[0]?.count || 0),
+            isLiked,
         };
     }),
 });

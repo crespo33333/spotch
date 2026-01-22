@@ -192,6 +192,27 @@ export const spotRouter = router({
                     spotId: input.spotId,
                     userId: ctx.user!.id,
                 });
+
+                // Notify Spot Owner
+                const spot = await db.query.spots.findFirst({
+                    where: eq(spots.id, input.spotId),
+                    with: {
+                        spotter: {
+                            columns: { pushToken: true }
+                        }
+                    }
+                });
+
+                if (spot?.spotter?.pushToken && spot.spotterId !== ctx.user.id) {
+                    const { sendPushNotification } = require('../utils/push');
+                    await sendPushNotification(
+                        spot.spotter.pushToken,
+                        "Spot Liked!",
+                        `${ctx.user.name} liked your spot "${spot.name}".`,
+                        { type: 'like', spotId: input.spotId }
+                    );
+                }
+
                 return { liked: true };
             }
         }),

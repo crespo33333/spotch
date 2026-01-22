@@ -97,16 +97,31 @@ exports.userRouter = (0, trpc_1.router)({
             with: {
                 followers: true,
                 following: true,
+                wallet: true,
+                visits: true,
+                messages: true,
             }
         });
         if (!user)
             return null;
-        // Calculate counts
+        // Badge Logic
+        const badges = [];
+        if (user.id <= 10)
+            badges.push({ id: 'pioneer', name: 'Pioneer', icon: '🥇', color: '#FEF9C3' });
+        if ((user.wallet?.currentBalance || 0) >= 5000)
+            badges.push({ id: 'wealthy', name: 'High Roller', icon: '💎', color: '#FCE7F3' });
+        if (user.followers.length >= 5)
+            badges.push({ id: 'socialite', name: 'Socialite', icon: '🔥', color: '#FFEDD5' });
+        if (user.visits.length >= 10)
+            badges.push({ id: 'explorer', name: 'Explorer', icon: '🌍', color: '#DBEAFE' });
+        if (user.messages.length >= 10)
+            badges.push({ id: 'chatterbox', name: 'Chatterbox', icon: '💬', color: '#F1F5F9' });
         return {
             ...user,
             followerCount: user.followers.length,
             followingCount: user.following.length,
             isFollowing: input.userId ? user.followers.some(f => f.followerId === ctx.user.id) : false,
+            badges,
         };
     }),
     searchUsers: trpc_1.protectedProcedure

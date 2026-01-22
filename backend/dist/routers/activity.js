@@ -41,6 +41,7 @@ exports.activityRouter = (0, trpc_1.router)({
             ...recentLikes.map(l => ({
                 id: `like-${l.id}`,
                 type: 'like',
+                userId: l.user.id,
                 user: l.user.name,
                 action: `がスポット「${l.spot.name}」をいいねしました`,
                 avatar: l.user.avatar,
@@ -49,6 +50,7 @@ exports.activityRouter = (0, trpc_1.router)({
             ...recentSpots.map(s => ({
                 id: `spot-${s.id}`,
                 type: 'visit', // Reusing icon for now
+                userId: s.spotter?.id,
                 user: s.spotter?.name || '不明',
                 action: `が新しいスポット「${s.name}」を作成しました`,
                 avatar: s.spotter?.avatar,
@@ -56,5 +58,52 @@ exports.activityRouter = (0, trpc_1.router)({
             })),
         ];
         return activities.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+    }),
+    getNotifications: trpc_1.protectedProcedure
+        .query(async ({ ctx }) => {
+        const userId = ctx.user.id;
+        // 1. Likes on my spots
+        const mySpots = await db_1.db.query.spots.findMany({
+            where: (0, drizzle_orm_1.eq)(schema_1.spots.spotterId, userId),
+        });
+        const mySpotIds = mySpots.map(s => s.id);
+        let likes = [];
+        if (mySpotIds.length > 0) {
+            likes = await db_1.db.query.spotLikes.findMany({
+                where: (0, drizzle_orm_1.inArray)(schema_1.spotLikes.spotId, mySpotIds),
+                with: {
+                    user: true,
+                    spot: true,
+                },
+                orderBy: [(0, drizzle_orm_1.desc)(schema_1.spotLikes.createdAt)],
+                limit: 20
+            });
+        }
+        // 2. New Followers
+        const myFollowers = await db_1.db.query.follows.findMany({
+            where: (0, drizzle_orm_1.eq)(schema_1.follows.followingId, userId),
+            with: {
+                follower: true
+            },
+            orderBy: [(0, drizzle_orm_1.desc)(schema_1.follows.createdAt)],
+            limit: 20
+        });
+        const notifications = [
+            ...likes.map(l => ({
+                id: `like-${l.id}`,
+                type: 'like',
+                user: l.user,
+                message: `liked your spot "${l.spot.name}"`,
+                createdAt: l.createdAt
+            })),
+            ...myFollowers.map(f => ({
+                id: `follow-${f.id}`,
+                type: 'follow',
+                user: f.follower,
+                message: `started following you`,
+                createdAt: f.createdAt
+            }))
+        ];
+        return notifications.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
     }),
 });
