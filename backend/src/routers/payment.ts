@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../trpc";
 import { db } from "../db";
-import { wallets, transactions } from "../db/schema";
+import { wallets, transactions, users } from "../db/schema";
 import { TRPCError } from "@trpc/server";
 import Stripe from "stripe";
 import { eq, sql } from "drizzle-orm";
@@ -82,5 +82,31 @@ export const paymentRouter = router({
 
                 return { success: true };
             });
+        }),
+
+    createSubscription: protectedProcedure
+        .input(z.object({ priceId: z.string() }))
+        .mutation(async ({ input, ctx }) => {
+            const user = await db.query.users.findFirst({
+                where: eq(users.id, ctx.user.id),
+            });
+
+            if (!user) throw new TRPCError({ code: "NOT_FOUND" });
+
+            // In real production, we'd use Stripe to create a subscription
+            await db.update(users)
+                .set({ isPremium: true })
+                .where(eq(users.id, ctx.user.id));
+
+            return { success: true, message: "Subscription active (Mock Mode)" };
+        }),
+
+    cancelSubscription: protectedProcedure
+        .mutation(async ({ ctx }) => {
+            await db.update(users)
+                .set({ isPremium: false })
+                .where(eq(users.id, ctx.user.id));
+
+            return { success: true };
         }),
 });

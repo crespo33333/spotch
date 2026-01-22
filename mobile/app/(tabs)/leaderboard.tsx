@@ -10,7 +10,7 @@ export default function LeaderboardScreen() {
     const router = useRouter();
     const [filter, setFilter] = useState<'all' | 'weekly'>('all');
 
-    const { data: rankings, isLoading, refetch, isRefetching } = trpc.ranking.getGlobalLeaderboard.useQuery();
+    const { data: rankings, isLoading, refetch, isRefetching } = trpc.ranking.getGlobalLeaderboard.useQuery({ period: filter });
 
     const renderItem = ({ item, index }: { item: any, index: number }) => {
         const isTop3 = index < 3;

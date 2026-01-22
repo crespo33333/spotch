@@ -15,6 +15,7 @@ export const userRouter = router({
             name: z.string(),
             avatar: z.string().default('default_seed'), // New: Accept avatar seed
             deviceId: z.string().optional(),
+            pushToken: z.string().optional(),
         }))
         .mutation(async ({ input }) => {
             const existingUser = await db.query.users.findFirst({
@@ -33,6 +34,7 @@ export const userRouter = router({
                 name: input.name,
                 avatar: input.avatar,
                 deviceId: input.deviceId,
+                pushToken: input.pushToken,
             }).returning();
 
             // Initialize Wallet with 1000 points

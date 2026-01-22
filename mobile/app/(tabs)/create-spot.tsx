@@ -6,8 +6,11 @@ import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { trpc } from '../../utils/api';
 
+import { useTranslation } from 'react-i18next';
+
 export default function CreateSpot() {
     const router = useRouter();
+    const { t } = useTranslation();
     const params = useLocalSearchParams();
     const [name, setName] = useState('');
     const [totalPoints, setTotalPoints] = useState('100'); // Default to satisfy min 100
@@ -86,7 +89,7 @@ export default function CreateSpot() {
             {/* Header is handled by Tab Layout now */}
 
             <View className="mb-4">
-                <Text className="text-gray-600 mb-2">Spot Name</Text>
+                <Text className="text-gray-600 mb-2">{t('createSpot.name')}</Text>
                 <TextInput
                     className="bg-gray-100 p-4 rounded-lg"
                     placeholder="e.g. Central Park Bench"
@@ -150,7 +153,7 @@ export default function CreateSpot() {
                 {createSpot.isLoading ? (
                     <ActivityIndicator color="white" />
                 ) : (
-                    <Text className="text-white font-bold text-lg">Create Spot</Text>
+                    <Text className="text-white font-bold text-lg">{t('createSpot.create')}</Text>
                 )}
             </TouchableOpacity>
         </SafeAreaView>

@@ -3,7 +3,10 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 
+import { useTranslation } from 'react-i18next';
+
 export default function TabLayout() {
+    const { t } = useTranslation();
     return (
         <Tabs
             screenOptions={{
@@ -21,7 +24,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Map',
+                    title: t('tabs.map'),
                     tabBarIcon: ({ color }) => <Ionicons name="map" size={24} color={color} />,
                     tabBarButton: (props) => (
                         <TouchableOpacity
@@ -37,7 +40,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="activity"
                 options={{
-                    title: 'Activity',
+                    title: t('tabs.activity'),
                     tabBarIcon: ({ color }) => <Ionicons name="notifications" size={24} color={color} />,
                     tabBarButton: (props) => (
                         <TouchableOpacity
@@ -53,7 +56,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="leaderboard"
                 options={{
-                    title: 'Ranking',
+                    title: t('tabs.ranking'),
                     tabBarIcon: ({ color }) => <Ionicons name="trophy" size={24} color={color} />,
                     tabBarButton: (props) => (
                         <TouchableOpacity
@@ -69,7 +72,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: 'Profile',
+                    title: t('tabs.profile'),
                     tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
                     tabBarButton: (props) => (
                         <TouchableOpacity
@@ -84,20 +87,12 @@ export default function TabLayout() {
             />
             {/* Hidden Internal Screens to keep Tab Bar visible */}
             <Tabs.Screen
-                name="spot/[id]"
-                options={{
-                    href: null,
-                    headerShown: true, // Show header for detail view
-                    headerShadowVisible: false,
-                }}
-            />
-            <Tabs.Screen
                 name="create-spot"
                 options={{
                     href: null,
                     headerShown: true,
                     headerShadowVisible: false,
-                    title: 'Create Spot'
+                    title: t('map.createSpot')
                 }}
             />
             <Tabs.Screen

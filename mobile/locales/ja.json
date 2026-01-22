@@ -1,0 +1,93 @@
+{
+    "common": {
+        "loading": "読み込み中...",
+        "cancel": "キャンセル",
+        "save": "保存",
+        "delete": "削除",
+        "error": "エラー",
+        "success": "成功",
+        "close": "閉じる"
+    },
+    "welcome": {
+        "title": "Spotch",
+        "subtitle": "見つけて、訪れて、稼ごう。",
+        "getStarted": "はじめる",
+        "login": "すでにアカウントをお持ちの方"
+    },
+    "auth": {
+        "enterPhone": "電話番号を入力",
+        "sendCode": "コードを送信",
+        "verifyCode": "コードを確認",
+        "resend": "再送信"
+    },
+    "onboarding": {
+        "setupProfile": "プロフィール設定",
+        "chooseAvatar": "アバターを選択",
+        "cats": "ネコ",
+        "dogs": "イヌ",
+        "nickname": "ニックネーム",
+        "nicknamePlaceholder": "ニックネームを入力",
+        "startAdventure": "冒険を始める"
+    },
+    "tabs": {
+        "map": "マップ",
+        "activity": "アクティビティ",
+        "ranking": "ランキング",
+        "profile": "プロフィール"
+    },
+    "map": {
+        "createSpot": "スポット作成",
+        "checkIn": "チェックイン",
+        "leave": "チェックアウト",
+        "stakingRate": "獲得レート",
+        "level": "Lv.",
+        "visit": "訪問する"
+    },
+    "createSpot": {
+        "title": "新しいスポットを作成",
+        "name": "スポット名",
+        "category": "カテゴリー",
+        "description": "説明",
+        "create": "作成する",
+        "cancel": "キャンセル"
+    },
+    "spotDetail": {
+        "information": "情報",
+        "board": "掲示板",
+        "rank": "ランク",
+        "likes": "いいね",
+        "host": "ホスト",
+        "leaderboard": "スポットマスター",
+        "visited": "訪問済み",
+        "stake": "ステーク",
+        "messagePlaceholder": "メッセージを入力..."
+    },
+    "profile": {
+        "edit": "編集",
+        "settings": "設定",
+        "level": "レベル",
+        "xp": "XP",
+        "points": "ポイント",
+        "wallet": "ウォレット",
+        "history": "履歴",
+        "following": "フォロー中",
+        "followers": "フォロワー"
+    },
+    "settings": {
+        "title": "設定",
+        "language": "言語",
+        "notification": "通知設定",
+        "verification": "本人確認",
+        "verified": "認証済み",
+        "unverified": "未完了",
+        "premium": "Spotchプレミアム",
+        "purchasePoints": "ポイント購入",
+        "exchangePoints": "ポイント交換",
+        "share": "友達にシェア",
+        "terms": "利用規約",
+        "privacy": "プライバシーポリシー",
+        "contact": "お問い合わせ",
+        "deleteAccount": "アカウント削除",
+        "version": "バージョン"
+    }
+}

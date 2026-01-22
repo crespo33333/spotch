@@ -1,0 +1,93 @@
+{
+    "common": {
+        "loading": "Loading...",
+        "cancel": "Cancel",
+        "save": "Save",
+        "delete": "Delete",
+        "error": "Error",
+        "success": "Success",
+        "close": "Close"
+    },
+    "welcome": {
+        "title": "Spotch",
+        "subtitle": "Discover. Visit. Earn.",
+        "getStarted": "Get Started",
+        "login": "I already have an account"
+    },
+    "auth": {
+        "enterPhone": "Enter Phone Number",
+        "sendCode": "Send Code",
+        "verifyCode": "Verify Code",
+        "resend": "Resend Code"
+    },
+    "onboarding": {
+        "setupProfile": "Setup Profile",
+        "chooseAvatar": "Choose your avatar",
+        "cats": "Cats",
+        "dogs": "Dogs",
+        "nickname": "Nickname",
+        "nicknamePlaceholder": "Enter your nickname",
+        "startAdventure": "Start Adventure"
+    },
+    "tabs": {
+        "map": "Map",
+        "activity": "Activity",
+        "ranking": "Ranking",
+        "profile": "Profile"
+    },
+    "map": {
+        "createSpot": "Create Spot",
+        "checkIn": "Check In",
+        "leave": "Leave",
+        "stakingRate": "Staking Rate",
+        "level": "Lv.",
+        "visit": "Visit"
+    },
+    "createSpot": {
+        "title": "Create New Spot",
+        "name": "Spot Name",
+        "category": "Category",
+        "description": "Description",
+        "create": "Create Spot",
+        "cancel": "Cancel"
+    },
+    "spotDetail": {
+        "information": "Information",
+        "board": "Board",
+        "rank": "Rank",
+        "likes": "Likes",
+        "host": "Host",
+        "leaderboard": "Spot Masters",
+        "visited": "Visited",
+        "stake": "Stake",
+        "messagePlaceholder": "Write a message..."
+    },
+    "profile": {
+        "edit": "Edit",
+        "settings": "Settings",
+        "level": "Level",
+        "xp": "XP",
+        "points": "Points",
+        "wallet": "Wallet",
+        "history": "History",
+        "following": "Following",
+        "followers": "Followers"
+    },
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "notification": "Notifications",
+        "verification": "Identity Verification",
+        "verified": "Verified",
+        "unverified": "Unverified",
+        "premium": "Spotch Premium",
+        "purchasePoints": "Purchase Points",
+        "exchangePoints": "Exchange Points",
+        "share": "Share App",
+        "terms": "Terms of Service",
+        "privacy": "Privacy Policy",
+        "contact": "Contact Support",
+        "deleteAccount": "Delete Account",
+        "version": "Version"
+    }
+}

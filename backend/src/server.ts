@@ -10,7 +10,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:3001', 'exp://localhost:8081', 'http://localhost:8081'],
+    credentials: true,
+}));
 
 app.use(
     '/trpc',

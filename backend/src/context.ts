@@ -11,12 +11,31 @@ export const createContext = async ({
     let user = null;
 
     try {
-        const userId = req.headers['x-user-id'] as string;
-        if (userId) {
-            user = await db.query.users.findFirst({
-                where: eq(users.id, parseInt(userId))
-            }) || null;
-            // console.log(`[Auth] User ID ${userId} -> ${user ? 'Found' : 'Not Found'}`);
+        const authHeader = req.headers.authorization;
+        // Check for Super Admin Secret (from Admin Web)
+        if (authHeader === 'Bearer super-admin-secret') {
+            user = {
+                id: 0,
+                role: 'admin',
+                name: 'Super Admin',
+                email: 'admin@spotch.app',
+                openId: 'admin_master',
+                deviceId: null,
+                pushToken: null,
+                xp: 999999,
+                level: 99,
+                createdAt: new Date(),
+                isBanned: false,
+                avatar: 'default_seed'
+            };
+        } else {
+            // Check for Mobile User ID
+            const userId = req.headers['x-user-id'] as string;
+            if (userId) {
+                user = await db.query.users.findFirst({
+                    where: eq(users.id, parseInt(userId))
+                }) || null;
+            }
         }
     } catch (e) {
         console.error('Auth Error:', e);

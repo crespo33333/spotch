@@ -7,21 +7,26 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getCreatureAvatar, getAvatarOptions, AvatarCategory } from '../utils/avatar';
 import { Avatar } from '../components/Avatar';
 import { trpc, setStoredUserId } from '../utils/api';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 const CATEGORIES: { id: AvatarCategory, label: string, icon: string }[] = [
-    { id: 'cats', label: 'Cats', icon: '🐱' },
+    { id: 'tech', label: 'Tech', icon: '🤖' },
     { id: 'dogs', label: 'Dogs', icon: '🐶' },
-    { id: 'critters', label: 'Critters', icon: '🦔' },
-    { id: 'birds', label: 'Birds', icon: '🐦' },
-    { id: 'fish', label: 'Fish', icon: '🐟' },
-    { id: 'flowers', label: 'Flowers', icon: '🌸' },
+    { id: 'space', label: 'Space', icon: '🚀' },
+    { id: 'monsters', label: 'Cool', icon: '👾' },
+    { id: 'cats', label: 'Cats', icon: '🐱' },
+    { id: 'flowers', label: 'Deco', icon: '🌸' },
 ];
+
+import { useTranslation } from 'react-i18next';
 
 export default function SetupProfileScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
+    const { expoPushToken } = usePushNotifications();
     const [nickname, setNickname] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<AvatarCategory>('cats');
-    const [avatarSeed, setAvatarSeed] = useState(getAvatarOptions('cats')[0]);
+    const [selectedCategory, setSelectedCategory] = useState<AvatarCategory>('tech');
+    const [avatarSeed, setAvatarSeed] = useState(getAvatarOptions('tech')[0]);
 
     const currentOptions = getAvatarOptions(selectedCategory);
 
@@ -29,7 +34,7 @@ export default function SetupProfileScreen() {
         onSuccess: async (data) => {
             console.log('User created:', data);
             await setStoredUserId(data.id.toString());
-            router.replace('/(tabs)');
+            router.replace('/onboarding');
         },
         onError: (error) => {
             console.error('Failed to create user:', error);
@@ -44,7 +49,8 @@ export default function SetupProfileScreen() {
             email: `user_${Date.now()}@example.com`,
             name: nickname,
             avatar: avatarSeed,
-            deviceId: 'device_id_placeholder'
+            deviceId: 'device_id_placeholder',
+            pushToken: expoPushToken
         });
     };
 
@@ -53,8 +59,8 @@ export default function SetupProfileScreen() {
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
                     <View className="items-center mb-6">
-                        <Text className="text-3xl font-black text-gray-900 mb-1">CHOOSE AVATAR</Text>
-                        <Text className="text-gray-400 font-bold text-xs uppercase">Select your vibe</Text>
+                        <Text className="text-3xl font-black text-gray-900 mb-1">{t('onboarding.chooseAvatar')}</Text>
+                        <Text className="text-gray-400 font-bold text-xs uppercase">{t('onboarding.setupProfile')}</Text>
                     </View>
 
                     {/* Category Tabs */}
@@ -99,10 +105,10 @@ export default function SetupProfileScreen() {
 
                     {/* Nickname Input */}
                     <View className="mb-12 w-full">
-                        <Text className="text-gray-400 font-black mb-2 ml-2 text-xs uppercase">Your Nickname</Text>
+                        <Text className="text-gray-400 font-black mb-2 ml-2 text-xs uppercase">{t('onboarding.nickname')}</Text>
                         <TextInput
                             className="bg-gray-50 p-4 rounded-xl border-2 border-gray-100 text-xl font-bold text-gray-800 focus:border-[#00C2FF] text-center"
-                            placeholder="Type nickname..."
+                            placeholder={t('onboarding.nicknamePlaceholder')}
                             value={nickname}
                             onChangeText={setNickname}
                             maxLength={12}
@@ -122,7 +128,7 @@ export default function SetupProfileScreen() {
                             style={{ padding: 18, borderRadius: 999, alignItems: 'center' }}
                         >
                             <Text className={`font-black text-lg tracking-widest ${nickname && !createUser.isLoading ? 'text-white' : 'text-gray-400'}`}>
-                                {createUser.isLoading ? 'CONNECTING...' : 'START'}
+                                {createUser.isLoading ? t('common.loading') : t('onboarding.startAdventure')}
                             </Text>
                         </LinearGradient>
                     </TouchableOpacity>

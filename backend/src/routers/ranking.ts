@@ -1,12 +1,38 @@
 import { router, publicProcedure, protectedProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '../db';
-import { users, spots, visits, wallets } from '../db/schema';
+import { users, spots, visits, wallets, transactions } from '../db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 
 export const rankingRouter = router({
     getGlobalLeaderboard: publicProcedure
-        .query(async () => {
+        .input(z.object({ period: z.enum(['all', 'weekly']).default('all') }))
+        .query(async ({ input }) => {
+            if (input.period === 'weekly') {
+                // Weekly Leaderboard: Sum of 'earn' transactions in the last 7 days
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+                const results = await db.select({
+                    id: users.id,
+                    name: users.name,
+                    avatar: users.avatar,
+                    xp: sql<number>`sum(${transactions.amount})`.mapWith(Number), // Use sum of transactions as XP proxy for weekly
+                    level: users.level,
+                })
+                    .from(transactions)
+                    .innerJoin(users, eq(transactions.userId, users.id))
+                    .where(
+                        sql`${transactions.type} = 'earn' AND ${transactions.createdAt} > ${oneWeekAgo}`
+                    )
+                    .groupBy(users.id, users.name, users.avatar, users.level)
+                    .orderBy(desc(sql`sum(${transactions.amount})`))
+                    .limit(20);
+
+                return results;
+            }
+
+            // All Time Leaderboard (Total XP)
             return await db.query.users.findMany({
                 orderBy: [desc(users.xp)],
                 limit: 20,

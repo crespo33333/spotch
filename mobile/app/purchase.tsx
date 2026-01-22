@@ -27,53 +27,57 @@ export default function PurchaseScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
-            // 1. Create Payment Intent
-            const { clientSecret } = await createIntent.mutateAsync({
-                amount: pack.price,
+            // 1. Check for Mock Mode
+            const isMockMode = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY?.includes('placeholder');
+
+            let clientSecret = "";
+            let paymentIntentId = "";
+
+            if (isMockMode) {
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Mock success
+                paymentIntentId = `pi_mock_${Date.now()}`;
+            } else {
+                // Real Stripe Logic
+                const intent = await createIntent.mutateAsync({
+                    amount: pack.price,
+                    points: pack.points,
+                });
+                clientSecret = intent.clientSecret!;
+                if (!clientSecret) throw new Error("Failed to create payment intent");
+
+                const { error: initError } = await initPaymentSheet({
+                    paymentIntentClientSecret: clientSecret,
+                    merchantDisplayName: 'Spotch App',
+                    defaultBillingDetails: { name: 'Spotch User' }
+                });
+                if (initError) throw new Error(initError.message);
+
+                const { error: presentError } = await presentPaymentSheet();
+                if (presentError) {
+                    if (presentError.code === 'Canceled') return;
+                    throw new Error(presentError.message);
+                }
+
+                paymentIntentId = clientSecret.split('_secret')[0];
+            }
+
+            // 4. Success! Confirm with backend
+            await confirmPurchase.mutateAsync({
+                paymentIntentId,
                 points: pack.points,
             });
 
-            if (!clientSecret) throw new Error("Failed to create payment intent");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert("Success!", `You've purchased ${pack.points} points!`);
+            utils.wallet.getBalance.invalidate(); // Update wallet balance
+            router.back();
 
-            // 2. Initialize Payment Sheet
-            const { error: initError } = await initPaymentSheet({
-                paymentIntentClientSecret: clientSecret,
-                merchantDisplayName: 'Spotch App',
-                defaultBillingDetails: {
-                    name: 'Jane Doe',
-                }
-            });
-
-            if (initError) throw new Error(initError.message);
-
-            // 3. Present Payment Sheet
-            const { error: presentError } = await presentPaymentSheet();
-
-            if (presentError) {
-                if (presentError.code === 'Canceled') {
-                    // User canceled, no biggie
-                } else {
-                    throw new Error(presentError.message);
-                }
-            } else {
-                // 4. Success! Confirm with backend
-                // In a real app, you'd wait for webhook or verify the ID
-                // For MVP, we pass the client-side success to confirm
-                // We'd need the paymentIntentId here. Client secret format is pi_xxx_secret_yyy
-                const paymentIntentId = clientSecret.split('_secret')[0];
-
-                await confirmPurchase.mutateAsync({
-                    paymentIntentId,
-                    points: pack.points,
-                });
-
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert("Success!", `You've purchased ${pack.points} points!`);
-                utils.wallet.getBalance.invalidate(); // Update wallet balance
-                router.back();
-            }
         } catch (e: any) {
-            Alert.alert("Error", e.message);
+            if (e.message !== 'Canceled') {
+                Alert.alert("Error", e.message);
+            }
         } finally {
             setLoading(false);
         }

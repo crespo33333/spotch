@@ -1,14 +1,18 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { trpc, getStoredUserId } from '../../../utils/api';
-import { Avatar } from '../../../components/Avatar';
-import { Ionicons } from '@expo/vector-icons';
+import { trpc, getStoredUserId } from '../../utils/api';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { Avatar } from '../../components/Avatar';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
 
+import { useTranslation } from 'react-i18next';
+
 export default function SpotDetailScreen() {
+    const { t } = useTranslation();
     const { id } = useLocalSearchParams();
     const spotId = parseInt(id as string);
     const router = useRouter();
@@ -135,25 +139,25 @@ export default function SpotDetailScreen() {
                         </View>
                     </View>
                     <TouchableOpacity onPress={handleClaim} className="bg-primary px-6 py-2.5 rounded-full shadow-sm active:scale-95 transition-transform">
-                        <Text className="text-white font-black">VISIT</Text>
+                        <Text className="text-white font-black">{t('map.visit').toUpperCase()}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Tabs */}
                 <View className="flex-row gap-8 mt-2">
                     <TouchableOpacity onPress={() => setTab('info')} className={`pb-2 ${tab === 'info' ? 'border-b-2 border-[#00C2FF]' : ''}`}>
-                        <Text className={`font-black uppercase text-xs ${tab === 'info' ? 'text-slate-800' : 'text-slate-400'}`}>Information</Text>
+                        <Text className={`font-black uppercase text-xs ${tab === 'info' ? 'text-slate-800' : 'text-slate-400'}`}>{t('spotDetail.information')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => setTab('board')} className={`pb-2 ${tab === 'board' ? 'border-b-2 border-[#00C2FF]' : ''}`}>
                         <View className="flex-row items-center gap-1">
-                            <Text className={`font-black uppercase text-xs ${tab === 'board' ? 'text-slate-800' : 'text-slate-400'}`}>Board</Text>
+                            <Text className={`font-black uppercase text-xs ${tab === 'board' ? 'text-slate-800' : 'text-slate-400'}`}>{t('spotDetail.board')}</Text>
                             {messages?.length ? (
                                 <View className="bg-[#FF4785] px-1 rounded-full"><Text className="text-[10px] text-white font-bold">{messages.length}</Text></View>
                             ) : null}
                         </View>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => setTab('rank')} className={`pb-2 ${tab === 'rank' ? 'border-b-2 border-[#00C2FF]' : ''}`}>
-                        <Text className={`font-black uppercase text-xs ${tab === 'rank' ? 'text-slate-800' : 'text-slate-400'}`}>Rank</Text>
+                        <Text className={`font-black uppercase text-xs ${tab === 'rank' ? 'text-slate-800' : 'text-slate-400'}`}>{t('spotDetail.rank')}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -172,7 +176,7 @@ export default function SpotDetailScreen() {
                                     color={stats?.isLiked ? "#FF4785" : "#cbd5e1"}
                                 />
                             </Animated.View>
-                            <Text className="text-[10px] font-black text-slate-400 mt-1 uppercase">{stats?.likes || 0} Likes</Text>
+                            <Text className="text-[10px] font-black text-slate-400 mt-1 uppercase">{stats?.likes || 0} {t('spotDetail.likes')}</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -183,7 +187,7 @@ export default function SpotDetailScreen() {
 
                     <View className="flex-row gap-4 mb-4">
                         <View className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <Text className="text-[10px] font-black text-slate-400 uppercase mb-1">Staking Rate</Text>
+                            <Text className="text-[10px] font-black text-slate-400 uppercase mb-1">{t('map.stakingRate')}</Text>
                             <Text className="text-xl font-black text-slate-800">{spot.pointsPerMinute} P/m</Text>
                         </View>
                         <View className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
@@ -198,7 +202,7 @@ export default function SpotDetailScreen() {
                     </View>
 
                     <View className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mt-4">
-                        <Text className="text-[10px] font-black text-slate-400 uppercase mb-2">Host Info</Text>
+                        <Text className="text-[10px] font-black text-slate-400 uppercase mb-2">{t('spotDetail.host')}</Text>
                         <View className="flex-row items-center gap-2">
                             <Ionicons name="person-circle-outline" size={20} color="#00C2FF" />
                             <Text className="text-slate-700 font-bold capitalize">{spot.spotter?.name || 'Anonymous'}</Text>
@@ -256,7 +260,7 @@ export default function SpotDetailScreen() {
                         <View className="flex-row items-center gap-2 bg-slate-50 rounded-full px-4 py-2 border border-slate-100">
                             <TextInput
                                 className="flex-1 py-1 text-slate-700 font-medium"
-                                placeholder="Write a message..."
+                                placeholder={t('spotDetail.messagePlaceholder')}
                                 value={message}
                                 onChangeText={setMessage}
                                 maxLength={280}
@@ -305,7 +309,7 @@ export default function SpotDetailScreen() {
                             ListHeaderComponent={() => (
                                 <View className="mb-6 items-center">
                                     <Ionicons name="trophy" size={48} color="#FFD700" />
-                                    <Text className="text-xl font-black text-slate-800 mt-2">SPOT MASTERS</Text>
+                                    <Text className="text-xl font-black text-slate-800 mt-2">{t('spotDetail.leaderboard')}</Text>
                                     <Text className="text-slate-400 text-xs font-bold uppercase">The top earners at this location</Text>
                                 </View>
                             )}

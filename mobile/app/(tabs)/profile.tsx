@@ -16,7 +16,10 @@ const RANKINGS = [
     { id: '5', town: 'London City', country: '🇬🇧', points: 5200, lat: 51.5123, lng: -0.0907, trend: 'mid' },
 ];
 
+import { useTranslation } from 'react-i18next';
+
 export default function ProfileScreen() {
+    const { t } = useTranslation();
     const router = useRouter();
     const [period, setPeriod] = useState<'24h' | 'week' | 'month'>('week');
 
@@ -121,27 +124,33 @@ export default function ProfileScreen() {
                         </View>
 
                         {/* Top Right Actions */}
-                        <View className="flex-row items-center gap-4">
-                            {/* Total Staked (Hidden on small screens if needed, otherwise simplified) */}
-                            <View className="items-end mr-2">
-                                <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-0.5">Total Staked</Text>
-                                <View className="flex-row items-center gap-2">
-                                    <Text className="text-xl font-black text-black tracking-tighter">
-                                        {balance?.toLocaleString() || '0'}
-                                        <Text className="text-base text-[#FF4785]"> P</Text>
-                                    </Text>
+                        <View className="flex-row items-center gap-3">
+                            {/* Total Staked */}
+                            <View className="items-end">
+                                <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-0.5">{t('map.stakingRate')}</Text>
+                                <View className="flex-row items-center gap-1">
+                                    <View className="bg-red-50 px-2 py-1 rounded-lg">
+                                        <Text className="text-lg font-black text-black">
+                                            {balance?.toLocaleString() || '0'}
+                                            <Text className="text-sm text-[#FF4785]"> P</Text>
+                                        </Text>
+                                    </View>
                                     <TouchableOpacity
                                         onPress={() => router.push('/purchase')}
-                                        className="bg-[#FF4785] px-2 py-0.5 rounded-full"
+                                        className="bg-[#FF4785] p-1 rounded-full"
                                     >
-                                        <Ionicons name="add" size={14} color="white" />
+                                        <Ionicons name="add" size={16} color="white" />
                                     </TouchableOpacity>
                                 </View>
                             </View>
 
-                            {/* Settings Icon */}
-                            <TouchableOpacity onPress={() => router.push('/settings')} className="p-2 bg-gray-50 rounded-full border border-gray-200">
-                                <Ionicons name="settings-outline" size={24} color="black" />
+                            {/* Settings Icon - Ensure visibility */}
+                            <TouchableOpacity
+                                onPress={() => router.push('/settings')}
+                                className="w-12 h-12 bg-white rounded-full border-2 border-slate-100 items-center justify-center shadow-sm"
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="settings-outline" size={24} color="#334155" />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -174,7 +183,7 @@ export default function ProfileScreen() {
                                     >
                                         {i === 6 && (
                                             <View className="absolute -top-10 -right-4 bg-black px-2 py-1 rounded-lg z-10">
-                                                <Text className="text-white font-bold text-xs">Today</Text>
+                                                <Text className="text-white font-bold text-xs">{t('common.today') || 'Today'}</Text>
                                                 <View className="absolute bottom-[-4] left-1/2 w-2 h-2 bg-black rotate-45 transform -translate-x-1/2" />
                                             </View>
                                         )}
@@ -195,17 +204,17 @@ export default function ProfileScreen() {
                         <View className="flex-row justify-center gap-8 mt-6">
                             <View className="items-center">
                                 <Text className="text-xl font-black text-slate-800">{user?.level || 1}</Text>
-                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">Level</Text>
+                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('profile.level')}</Text>
                             </View>
                             <View className="h-full w-[1px] bg-slate-200" />
                             <View className="items-center">
                                 <Text className="text-xl font-black text-slate-800">{user?.followingCount || 0}</Text>
-                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">Following</Text>
+                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('profile.following')}</Text>
                             </View>
                             <View className="h-full w-[1px] bg-slate-200" />
                             <View className="items-center">
                                 <Text className="text-xl font-black text-slate-800">{user?.followerCount || 0}</Text>
-                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">Followers</Text>
+                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('profile.followers')}</Text>
                             </View>
                         </View>
 
@@ -229,7 +238,7 @@ export default function ProfileScreen() {
                     </View>
                     {/* History List */}
                     <View className="mb-10">
-                        <Text className="text-2xl font-black italic tracking-tighter mb-4">RECENT HISTORY 📜</Text>
+                        <Text className="text-2xl font-black italic tracking-tighter mb-4">{t('profile.history')} 📜</Text>
                         <View className="bg-white rounded-[24px] border-4 border-black p-2 shadow-lg">
                             {transactions?.slice(0, 5).map((tx) => (
                                 <View key={tx.id} className="flex-row justify-between items-center p-4 border-b border-gray-100 last:border-0">
@@ -258,7 +267,7 @@ export default function ProfileScreen() {
 
                     {/* Ranking List */}
                     <View className="flex-row items-center justify-between mb-6">
-                        <Text className="text-3xl font-black italic tracking-tighter">TOP TOWNS 🏆</Text>
+                        <Text className="text-3xl font-black italic tracking-tighter">{t('spotDetail.leaderboard')} 🏆</Text>
                         <TouchableOpacity>
                             <Text className="text-[#00C2FF] font-bold text-xs">VIEW ALL</Text>
                         </TouchableOpacity>
@@ -280,7 +289,7 @@ export default function ProfileScreen() {
                             </View>
 
                             <Text className="font-black text-2xl mb-1 truncate" numberOfLines={1}>{item.name}</Text>
-                            <Text className="text-gray-400 font-bold text-xs uppercase mb-4">{item.activeUsers} Active Stakers</Text>
+                            <Text className="text-gray-400 font-bold text-xs uppercase mb-4">{item.activeUsers} {t('spotDetail.visited')}</Text>
 
                             <View className="bg-gray-50 p-3 rounded-xl flex-row justify-between items-center border border-gray-100">
                                 <Text className="font-black text-xl text-black">{item.points.toLocaleString()}<Text className="text-[#00C2FF] text-sm"> P</Text></Text>

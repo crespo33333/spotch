@@ -1,4 +1,5 @@
 import "../global.css";
+import '../utils/i18n';
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from 'react';
@@ -31,7 +32,7 @@ export default function Layout() {
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
             <QueryClientProvider client={queryClient}>
                 <StripeProvider
-                    publishableKey="pk_test_placeholder"
+                    publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder"}
                     merchantIdentifier="merchant.com.spotch" // required for Apple Pay
                 >
                     <PushController />
@@ -42,6 +43,7 @@ export default function Layout() {
                         <Stack.Screen name="welcome" />
                         <Stack.Screen name="setup-profile" />
                         <Stack.Screen name="purchase" options={{ presentation: 'modal' }} />
+                        <Stack.Screen name="spot" />
                     </Stack>
                     <StatusBar style="auto" />
                 </StripeProvider>

@@ -5,8 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCreatureAvatar } from '../utils/avatar';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useTranslation } from 'react-i18next';
+
 export default function WelcomeScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
     const { width, height } = Dimensions.get('window');
 
     return (
@@ -65,7 +68,7 @@ export default function WelcomeScreen() {
                         <Text className="text-6xl font-black tracking-tighter text-[#00C2FF]">Spo</Text>
                         <Text className="text-6xl font-black tracking-tighter text-[#FF4785]">tch</Text>
                     </View>
-                    <Text className="text-gray-400 font-bold tracking-widest uppercase mt-2 text-xs">DISCOVER • PLAY • EARN</Text>
+                    <Text className="text-gray-400 font-bold tracking-widest uppercase mt-2 text-xs">{t('welcome.subtitle')}</Text>
                 </View>
 
                 {/* Bottom Button */}
@@ -84,12 +87,15 @@ export default function WelcomeScreen() {
                             />
                         </View>
 
-                        <Text className="text-[#00C2FF] font-black text-xl tracking-widest mr-1">GET</Text>
-                        <Text className="text-[#FF4785] font-black text-xl tracking-widest">STARTED</Text>
+
+
+                        <Text className="text-[#00C2FF] font-black text-xl tracking-widest mr-1">{t('welcome.getStarted').split(' ')[0]}</Text>
+                        <Text className="text-[#FF4785] font-black text-xl tracking-widest">{t('welcome.getStarted').split(' ')[1] || '🚀'}</Text>
                     </TouchableOpacity>
                 </View>
-            </SafeAreaView>
-        </View>
+
+            </SafeAreaView >
+        </View >
     );
 }
 
