@@ -6,7 +6,8 @@
         "delete": "Delete",
         "error": "Error",
         "success": "Success",
-        "close": "Close"
+        "close": "Close",
+        "searchPlaceholder": "Search spots..."
     },
     "welcome": {
         "title": "Spotch",
@@ -89,5 +90,14 @@
         "contact": "Contact Support",
         "deleteAccount": "Delete Account",
         "version": "Version"
+    },
+    "quests": {
+        "title": "Quests",
+        "progress": "PROGRESS",
+        "claimReward": "CLAIM REWARD",
+        "claimed": "CLAIMED",
+        "keepGoing": "KEEP GOING",
+        "noQuests": "No Quests Available",
+        "emptyDescription": "Check back later for new challenges!"
     }
 }

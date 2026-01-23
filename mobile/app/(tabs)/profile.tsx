@@ -177,7 +177,7 @@ export default function ProfileScreen() {
                         <View className="flex-row justify-between items-center mb-6">
                             <View>
                                 <Text className="text-gray-400 font-black text-[10px] uppercase tracking-widest mb-1">Performance</Text>
-                                <Text className="text-2xl font-black text-black">Analytics</Text>
+                                <Text className="text-2xl font-black text-black">スタッツ統計</Text>
                             </View>
                             <View className="bg-[#00C2FF] px-3 py-1 rounded-full border-2 border-black rotate-3">
                                 <Text className="text-white font-black text-xs uppercase italic">Active</Text>
@@ -205,36 +205,33 @@ export default function ProfileScreen() {
 
                         {/* Professional Stats Breakdown */}
                         <View className="flex-row mt-6 pt-6 border-t-2 border-gray-50 items-center justify-between">
-                            <View className="flex-1">
-                                <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">Total Earned</Text>
-                                <Text className="text-xl font-black text-black">
-                                    {(transactions || []).reduce((sum, tx) => sum + ((tx.amount ?? 0) > 0 ? (tx.amount ?? 0) : 0), 0).toLocaleString()}
-                                    <Text className="text-xs text-[#FF4785]"> PTS</Text>
-                                </Text>
-                            </View>
-                            <View className="w-[1px] h-8 bg-gray-100 mx-4" />
-                            <View className="flex-1">
-                                <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">Avg / Day</Text>
-                                <Text className="text-xl font-black text-black">
-                                    {Math.round((chartData.reduce((sum, d) => sum + d.value, 0) / 7)).toLocaleString()}
-                                    <Text className="text-xs text-[#00C2FF]"> PTS</Text>
-                                </Text>
-                            </View>
+                            <Text className="text-xl font-black text-black">
+                                {(transactions || []).reduce((sum, tx) => sum + ((tx.amount ?? 0) > 0 ? (tx.amount ?? 0) : 0), 0).toLocaleString()}
+                                <Text className="text-xs text-[#FF4785]"> PTS</Text>
+                            </Text>
+                            <Text className="text-[10px] font-bold text-gray-400 mt-0.5">累計獲得ポイント</Text>
                         </View>
-
-                        {/* Status Footer */}
-                        <View className="mt-6 flex-row justify-between items-center bg-black p-4 rounded-2xl mx-[-12px] mb-[-12px]">
-                            <View className="flex-row items-center gap-2">
-                                <View className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                                <Text className="font-black text-white text-[10px] tracking-widest uppercase">Network Live</Text>
-                            </View>
-                            <TouchableOpacity className="flex-row items-center gap-1">
-                                <Text className="text-gray-400 font-bold text-[10px] uppercase">Insights</Text>
-                                <Ionicons name="chevron-forward" size={10} color="gray" />
-                            </TouchableOpacity>
+                        <View className="w-[1px] h-8 bg-gray-100 mx-4" />
+                        <View className="flex-1">
+                            <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">Avg / Day</Text>
+                            <Text className="text-xl font-black text-black">
+                                {Math.round((chartData.reduce((sum, d) => sum + d.value, 0) / 7)).toLocaleString()}
+                                <Text className="text-xs text-[#00C2FF]"> PTS</Text>
+                            </Text>
                         </View>
                     </View>
 
+                    {/* Status Footer */}
+                    <View className="mt-6 flex-row justify-between items-center bg-black p-4 rounded-2xl mx-[-12px] mb-[-12px]">
+                        <View className="flex-row items-center gap-2">
+                            <View className="w-2 h-2 rounded-full bg-green-400" />
+                            <Text className="font-black text-white text-[10px] tracking-widest uppercase">Network Live</Text>
+                        </View>
+                        <TouchableOpacity className="flex-row items-center gap-1">
+                            <Text className="text-gray-400 font-bold text-[10px] uppercase">Insights</Text>
+                            <Ionicons name="chevron-forward" size={10} color="gray" />
+                        </TouchableOpacity>
+                    </View>
                     {/* Stats Row */}
                     <View className="flex-row justify-center gap-8 mb-6 bg-slate-50 p-6 rounded-[32px] border-2 border-slate-100">
                         <View className="items-center">
@@ -338,6 +335,7 @@ export default function ProfileScreen() {
                     )}
                 </ScrollView>
             </ScrollView>
-        </SafeAreaView >
+        </SafeAreaView>
     );
 }
+

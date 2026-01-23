@@ -9,13 +9,13 @@ import { Avatar } from '../components/Avatar';
 import { trpc, setStoredUserId } from '../utils/api';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
-const CATEGORIES: { id: AvatarCategory, label: string, icon: string }[] = [
-    { id: 'tech', label: 'Tech', icon: '🤖' },
-    { id: 'dogs', label: 'Dogs', icon: '🐶' },
-    { id: 'space', label: 'Space', icon: '🚀' },
-    { id: 'monsters', label: 'Cool', icon: '👾' },
-    { id: 'cats', label: 'Cats', icon: '🐱' },
-    { id: 'flowers', label: 'Deco', icon: '🌸' },
+const CATEGORIES: { id: AvatarCategory, labelKey: string, icon: string }[] = [
+    { id: 'tech', labelKey: 'categories.tech', icon: '🤖' },
+    { id: 'dogs', labelKey: 'categories.dogs', icon: '🐶' },
+    { id: 'space', labelKey: 'categories.space', icon: '🚀' },
+    { id: 'monsters', labelKey: 'categories.monsters', icon: '👾' },
+    { id: 'cats', labelKey: 'categories.cats', icon: '🐱' },
+    { id: 'flowers', labelKey: 'categories.flowers', icon: '🌸' },
 ];
 
 import { useTranslation } from 'react-i18next';
@@ -77,7 +77,7 @@ export default function SetupProfileScreen() {
                                 className={`px-4 py-2 rounded-full border ${selectedCategory === cat.id ? 'bg-gray-800 border-gray-800' : 'bg-white border-gray-200'}`}
                             >
                                 <Text className={`font-bold ${selectedCategory === cat.id ? 'text-white' : 'text-gray-600'}`}>
-                                    {cat.icon} {cat.label}
+                                    {cat.icon} {t(cat.labelKey)}
                                 </Text>
                             </TouchableOpacity>
                         ))}

@@ -19,13 +19,13 @@ export default function SettingsScreen() {
 
     // Mock Notification State
     const handleNotificationToggle = () => {
-        Alert.alert('通知設定', '通知機能は現在開発中です。');
+        Alert.alert(t('settings.notifAlertTitle'), t('settings.notifAlertMsg'));
     };
 
     const handleShare = async () => {
         try {
             await Share.share({
-                message: 'Spotchで街のホットスポットを見つけたよ！今すぐチェック！ https://spotch.app',
+                message: t('settings.shareMsg'),
                 title: 'Spotch - Street Spot Watcher',
             });
         } catch (error) {
@@ -34,19 +34,19 @@ export default function SettingsScreen() {
     };
 
     const handleContact = () => {
-        Linking.openURL('mailto:support@spotch.app?subject=お問い合わせ');
+        Linking.openURL('mailto:support@spotch.app?subject=' + encodeURIComponent(t('settings.contact')));
     };
 
     const handleDeleteAccount = () => {
         Alert.alert(
-            'アカウント削除',
-            '本当にアカウントを削除しますか？この操作は取り消せません。',
+            t('settings.confirmDeleteTitle'),
+            t('settings.confirmDeleteMsg'),
             [
-                { text: 'キャンセル', style: 'cancel' },
+                { text: t('settings.cancel'), style: 'cancel' },
                 {
-                    text: '削除',
+                    text: t('settings.delete'),
                     style: 'destructive',
-                    onPress: () => Alert.alert('削除完了', 'アカウントを削除しました。（デモ）')
+                    onPress: () => Alert.alert(t('settings.delete'), 'Account deleted. (Demo)')
                 }
             ]
         );
@@ -58,7 +58,7 @@ export default function SettingsScreen() {
         </View>
     );
 
-    const Item = ({ label, value, isLast, isDestructive, hasArrow = true, onPress }: { label: string, value?: string, isLast?: boolean, isDestructive?: boolean, hasArrow?: boolean, onPress?: () => void }) => (
+    const Item = ({ label, value, isLast, isDestructive, hasArrow = true, onPress, highlightValue }: { label: string, value?: string, isLast?: boolean, isDestructive?: boolean, hasArrow?: boolean, onPress?: () => void, highlightValue?: boolean }) => (
         <TouchableOpacity
             className={`flex-row justify-between items-center p-4 bg-white ${!isLast ? 'border-b border-gray-100' : ''}`}
             activeOpacity={0.7}
@@ -67,8 +67,8 @@ export default function SettingsScreen() {
             <Text className={`text-base font-bold ${isDestructive ? 'text-red-500' : 'text-gray-800'}`}>{label}</Text>
             <View className="flex-row items-center gap-2">
                 {value && (
-                    <Text className={`text-sm font-bold ${value === '認証済み' ? 'text-green-500' : 'text-gray-400'}`}>
-                        {value === '認証済み' && <Ionicons name="checkmark-circle" size={14} color="#22c55e" style={{ marginRight: 4 }} />}
+                    <Text className={`text-sm font-bold ${highlightValue ? 'text-green-500' : 'text-gray-400'}`}>
+                        {highlightValue && <Ionicons name="checkmark-circle" size={14} color="#22c55e" style={{ marginRight: 4 }} />}
                         {value}
                     </Text>
                 )}
@@ -100,6 +100,7 @@ export default function SettingsScreen() {
                     <Item
                         label={t('settings.verification')}
                         value={isVerified ? t('settings.verified') : t('settings.unverified')}
+                        highlightValue={isVerified}
                         onPress={() => !isVerified && router.push('/verify-identity')}
                         hasArrow={!isVerified}
                     />
@@ -120,7 +121,7 @@ export default function SettingsScreen() {
                 </Section>
 
                 <View className="items-center mt-4 mb-8">
-                    <Text className="text-gray-400 font-bold">バージョン 1.0.0 (Build 1)</Text>
+                    <Text className="text-gray-400 font-bold">{t('settings.version')} 1.0.0 (Build 2)</Text>
                     <Text className="text-gray-300 text-xs mt-1">Powered by Spotch</Text>
                 </View>
 

@@ -130,26 +130,30 @@ export default function CreateSpot() {
                                 Haptics.selectionAsync();
                                 setRadius(r.toString());
                             }}
-                            // @ts-ignore
+                            {/* @ts-ignore */}
                             className={`px-3 py-2 rounded-full border border-gray-300 ${radius === r.toString() ? 'bg-primary border-primary' : 'bg-white'}`}
                         >
-                            // @ts-ignore
-                            <Text className={radius === r.toString() ? 'text-white font-bold' : 'text-gray-600'}>{r}m</Text>
+                            <Text
+                                /* @ts-ignore */
+                                className={radius === r.toString() ? 'text-white font-bold' : 'text-gray-600'}
+                            >
+                                {r}m
+                            </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
+                {/* @ts-ignore */}
                 <TextInput
-                    // @ts-ignore
                     className="bg-gray-100 p-4 rounded-lg"
                     placeholder="Radius (10 - 500)"
                     keyboardType="numeric"
                     value={radius}
                     onChangeText={setRadius}
                 />
-            </View>
+            </View >
 
             <TouchableOpacity
-                // @ts-ignore
+                /* @ts-ignore */
                 className={`bg-primary p-4 rounded-full items-center ${createSpot.isLoading ? 'opacity-50' : ''}`}
                 onPress={handleCreate}
                 disabled={createSpot.isLoading}
@@ -157,10 +161,14 @@ export default function CreateSpot() {
                 {createSpot.isLoading ? (
                     <ActivityIndicator color="white" />
                 ) : (
-                    // @ts-ignore
-                    <Text className="text-white font-bold text-lg">{t('createSpot.create')}</Text>
+                    <Text
+                        /* @ts-ignore */
+                        className="text-white font-bold text-lg"
+                    >
+                        {t('createSpot.create')}
+                    </Text>
                 )}
             </TouchableOpacity>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }

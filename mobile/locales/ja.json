@@ -6,7 +6,8 @@
         "delete": "削除",
         "error": "エラー",
         "success": "成功",
-        "close": "閉じる"
+        "close": "閉じる",
+        "searchPlaceholder": "スポットを検索..."
     },
     "welcome": {
         "title": "Spotch",
@@ -89,5 +90,14 @@
         "contact": "お問い合わせ",
         "deleteAccount": "アカウント削除",
         "version": "バージョン"
+    },
+    "quests": {
+        "title": "クエスト",
+        "progress": "進捗",
+        "claimReward": "報酬を受け取る",
+        "claimed": "受取済み",
+        "keepGoing": "進行中",
+        "noQuests": "クエストがありません",
+        "emptyDescription": "新しいクエストが追加されるのをお待ちください。"
     }
 }

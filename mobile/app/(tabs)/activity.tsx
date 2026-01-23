@@ -55,7 +55,7 @@ export default function ActivityScreen() {
                     onPress={() => setActiveTab('footprints')}
                     className={`flex-1 py-3 items-center border-b-2 ${activeTab === 'footprints' ? 'border-[#00C2FF]' : 'border-transparent'}`}
                 >
-                    <Text className={`font-bold ${activeTab === 'footprints' ? 'text-[#00C2FF]' : 'text-gray-400'}`}>ヒストリー</Text>
+                    <Text className={`font-bold ${activeTab === 'footprints' ? 'text-[#00C2FF]' : 'text-gray-400'}`}>タイムライン</Text>
                 </TouchableOpacity>
             </View>
 
@@ -159,8 +159,8 @@ export default function ActivityScreen() {
                         {(!feed || feed.length === 0) && !isFeedLoading && (
                             <View className="items-center py-20">
                                 <Ionicons name="people-outline" size={48} color="#cbd5e1" />
-                                <Text className="mt-4 text-slate-400 font-bold">まだアクティビティはありません</Text>
-                                <Text className="text-slate-300 text-xs">友達をフォローして動きをチェックしよう！</Text>
+                                <Text className="mt-4 text-slate-400 font-bold">まだ投稿はありません</Text>
+                                <Text className="text-slate-300 text-xs">友達をフォローして、最新の動きをチェックしよう！</Text>
                             </View>
                         )}
                         {isFeedLoading && (

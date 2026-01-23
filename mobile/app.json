@@ -57,8 +57,8 @@
             "modularHeaders": true
           },
           "android": {
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
           }
         }
       ],

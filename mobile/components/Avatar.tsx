@@ -4,19 +4,19 @@ import { getCreatureAvatar } from '../utils/avatar';
 
 // Import newly generated high-quality assets
 const CUSTOM_ASSETS: Record<string, any> = {
-    'app_avatar_robot': require('../assets/generated/app_avatar_robot_1769077985738.png'),
-    'avatar_gold_robot': require('../assets/generated/avatar_gold_robot_1769078567461.png'),
-    'avatar_cool_shiba': require('../assets/generated/avatar_cool_shiba_1769078178747.png'),
-    'avatar_shiba_samurai': require('../assets/generated/avatar_shiba_samurai_1769078550174.png'),
-    'avatar_space_astronaut': require('../assets/generated/avatar_space_astronaut_1769078214471.png'),
-    'avatar_alien_dj': require('../assets/generated/avatar_alien_dj_1769078584965.png'),
-    'avatar_neon_monster': require('../assets/generated/avatar_neon_monster_1769078199515.png'),
-    'avatar_pixel_dragon': require('../assets/generated/avatar_pixel_dragon_1769078234335.png'),
-    'avatar_crystal_skull_pink': require('../assets/generated/avatar_crystal_skull_pink_1769078601726.png'),
-    'avatar_tech_orb_cyan_blue': require('../assets/generated/avatar_tech_orb_cyan_blue_1769078617580.png'),
-    'avatar_cute_ghost_glass': require('../assets/generated/avatar_cute_ghost_glass_1769078633160.png'),
-    'app_onboarding_staking': require('../assets/generated/app_onboarding_staking_1769077956863.png'),
-    'app_onboarding_rewards': require('../assets/generated/app_onboarding_rewards_1769077973828.png'),
+    'app_avatar_robot': require('../assets/generated/av_robot.png'),
+    'avatar_gold_robot': require('../assets/generated/av_robot_gold.png'),
+    'avatar_cool_shiba': require('../assets/generated/av_shiba.png'),
+    'avatar_shiba_samurai': require('../assets/generated/av_shiba_samurai.png'),
+    'avatar_space_astronaut': require('../assets/generated/av_astronaut.png'),
+    'avatar_alien_dj': require('../assets/generated/av_alien.png'),
+    'avatar_neon_monster': require('../assets/generated/av_monster.png'),
+    'avatar_pixel_dragon': require('../assets/generated/av_dragon.png'),
+    'avatar_crystal_skull_pink': require('../assets/generated/av_skull.png'),
+    'avatar_tech_orb_cyan_blue': require('../assets/generated/av_orb.png'),
+    'avatar_cute_ghost_glass': require('../assets/generated/av_ghost.png'),
+    'app_onboarding_staking': require('../assets/generated/onb_staking.png'),
+    'app_onboarding_rewards': require('../assets/generated/onb_rewards.png'),
 };
 
 interface Props {

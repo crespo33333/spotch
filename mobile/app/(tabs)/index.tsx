@@ -5,9 +5,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../utils/api';
+import { useTranslation } from 'react-i18next';
 
 export default function MapScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
     const params = useLocalSearchParams();
     const initialCenter = params.lat && params.lng
         ? { lat: parseFloat(params.lat as string), lng: parseFloat(params.lng as string) }
@@ -68,7 +70,14 @@ export default function MapScreen() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
-    const categories = ['All', 'Food', 'Chill', 'Adventure', 'Study', 'Other'];
+    const categories = [
+        { id: 'All', labelKey: 'categories.all' },
+        { id: 'Food', labelKey: 'categories.food' },
+        { id: 'Chill', labelKey: 'categories.chill' },
+        { id: 'Adventure', labelKey: 'categories.adventure' },
+        { id: 'Study', labelKey: 'categories.study' },
+        { id: 'Other', labelKey: 'categories.other' }
+    ];
 
     const filteredSpots = spots.filter(spot => {
         const matchesSearch = spot.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -87,7 +96,7 @@ export default function MapScreen() {
                 <View className="mx-4 bg-white rounded-full p-3 shadow-lg flex-row items-center border border-gray-100" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 5 }}>
                     <Ionicons name="search" size={20} color="#999" style={{ marginRight: 8 }} />
                     <TextInput
-                        placeholder="Search spots..."
+                        placeholder={t('common.searchPlaceholder') || "Search spots..."}
                         className="flex-1 font-bold text-gray-700"
                         placeholderTextColor="#ccc"
                         value={searchQuery}
@@ -113,12 +122,12 @@ export default function MapScreen() {
                 >
                     {categories.map(cat => (
                         <TouchableOpacity
-                            key={cat}
-                            onPress={() => setSelectedCategory(cat)}
-                            className={`mr-2 px-4 py-2 rounded-full border ${selectedCategory === cat ? 'bg-slate-800 border-slate-800' : 'bg-white border-slate-100'}`}
+                            key={cat.id}
+                            onPress={() => setSelectedCategory(cat.id)}
+                            className={`mr-2 px-4 py-2 rounded-full border ${selectedCategory === cat.id ? 'bg-slate-800 border-slate-800' : 'bg-white border-slate-100'}`}
                         >
-                            <Text className={`font-black text-[10px] uppercase tracking-tighter ${selectedCategory === cat ? 'text-white' : 'text-slate-400'}`}>
-                                {cat}
+                            <Text className={`font-black text-[10px] uppercase tracking-tighter ${selectedCategory === cat.id ? 'text-white' : 'text-slate-400'}`}>
+                                {t(cat.labelKey)}
                             </Text>
                         </TouchableOpacity>
                     ))}
