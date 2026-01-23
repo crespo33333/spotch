@@ -171,7 +171,17 @@ const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, 
     );
 };
 
-export default function AppMapView({ center, spots, onLongPressLocation }: { center?: { lat: number, lng: number }, spots?: Spot[], onLongPressLocation?: (coord: { latitude: number, longitude: number }) => void }) {
+export default function AppMapView({
+    center,
+    spots,
+    onLongPressLocation,
+    userAvatar
+}: {
+    center?: { lat: number, lng: number },
+    spots?: Spot[],
+    onLongPressLocation?: (coord: { latitude: number, longitude: number }) => void,
+    userAvatar?: string
+}) {
     const mapRef = useRef<MapView>(null);
     const router = useRouter();
     const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
@@ -220,7 +230,7 @@ export default function AppMapView({ center, spots, onLongPressLocation }: { cen
                 ref={mapRef}
                 style={styles.map}
                 provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-                showsUserLocation={true}
+                showsUserLocation={false}
                 showsMyLocationButton={true}
                 initialRegion={{
                     latitude: 35.6812,
@@ -232,6 +242,58 @@ export default function AppMapView({ center, spots, onLongPressLocation }: { cen
             >
                 {center && (
                     <Marker coordinate={{ latitude: center.lat, longitude: center.lng }} title="Selected Location" />
+                )}
+
+                {/* Custom User Location Marker */}
+                {userLocation && (
+                    <Marker
+                        coordinate={userLocation}
+                        title="Me"
+                        zIndex={100}
+                    >
+                        <View style={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: 25,
+                            backgroundColor: 'rgba(0, 194, 255, 0.2)',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <View style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: 18,
+                                borderWidth: 3,
+                                borderColor: 'white',
+                                backgroundColor: '#00C2FF',
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+                                elevation: 5,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden'
+                            }}>
+                                {(() => {
+                                    const seed = userAvatar || 'default_user';
+                                    const avatarSource = getCreatureAvatar(seed);
+
+                                    if (avatarSource.startsWith('emoji:')) {
+                                        const parts = avatarSource.split(':');
+                                        return <Text style={{ fontSize: 18 }}>{parts[1]}</Text>;
+                                    }
+
+                                    return (
+                                        <Image
+                                            source={{ uri: avatarSource }}
+                                            style={{ width: '100%', height: '100%' }}
+                                        />
+                                    );
+                                })()}
+                            </View>
+                        </View>
+                    </Marker>
                 )}
                 {spots?.map(spot => (
                     <AnimatedMarker key={spot.id} spot={spot} router={router} pulseAnim={pulseAnim} />

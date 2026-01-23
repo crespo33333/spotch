@@ -77,6 +77,9 @@ export default function MapScreen() {
         return matchesSearch && matchesCategory;
     });
 
+    // Fetch User Profile for Avatar
+    const { data: user } = trpc.user.getProfile.useQuery({});
+
     return (
         <View className="flex-1">
             <View className="absolute top-12 left-0 right-0 z-10">
@@ -135,6 +138,7 @@ export default function MapScreen() {
                 center={initialCenter}
                 spots={filteredSpots}
                 onLongPressLocation={setCreatingLocation}
+                userAvatar={user?.avatar as string | undefined}
             />
             <CreateSpotSheet
                 visible={!!creatingLocation}

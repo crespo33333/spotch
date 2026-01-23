@@ -14,7 +14,15 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { StripeProvider } from '@stripe/stripe-react-native';
 
 function PushController() {
-    usePushNotifications();
+    const { expoPushToken } = usePushNotifications();
+    const updateToken = trpc.user.updatePushToken.useMutation();
+
+    useEffect(() => {
+        if (expoPushToken) {
+            updateToken.mutate({ token: expoPushToken });
+        }
+    }, [expoPushToken]);
+
     return null;
 }
 

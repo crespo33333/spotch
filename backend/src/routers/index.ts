@@ -5,6 +5,7 @@ import { spotRouter } from './spot';
 import { adminRouter } from './admin';
 import { paymentRouter } from './payment';
 import { rankingRouter } from './ranking';
+import { activityRouter } from './activity';
 
 export const appRouter = router({
     health: publicProcedure.query(() => {
@@ -16,6 +17,7 @@ export const appRouter = router({
     admin: adminRouter,
     payment: paymentRouter,
     ranking: rankingRouter,
+    activity: activityRouter,
 });
 
 export type AppRouter = typeof appRouter;

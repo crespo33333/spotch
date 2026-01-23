@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors({
-    origin: ['http://localhost:3001', 'exp://localhost:8081', 'http://localhost:8081'],
+    origin: true, // Allow all origins for dev
     credentials: true,
 }));
 
@@ -33,6 +33,6 @@ app.get('/', (req, res) => {
 });
 
 // Bind to 0.0.0.0 to allow access from other devices on the network
-app.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`Server is running on port ${PORT} (0.0.0.0)`);
+app.listen(Number(PORT), () => {
+    console.log(`Server is running on port ${PORT}`);
 });

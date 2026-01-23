@@ -171,16 +171,20 @@ export default function ProfileScreen() {
                         <PeriodButton label="Mo" value="month" />
                     </View>
 
-                    {/* Main Chart Area (Real Data) */}
-                    <View className="bg-white p-6 rounded-[32px] border-4 border-black mb-6 shadow-xl relative overflow-hidden">
-                        {/* Decorative background grid */}
-                        <View className="absolute inset-0 opacity-5 flex-row">
-                            {[...Array(10)].map((_, i) => (
-                                <View key={i} className="flex-1 border-r border-black" />
-                            ))}
+                    {/* Main Chart Area (Refined Analytics) */}
+                    <View className="bg-white p-6 rounded-[40px] border-4 border-black mb-6 shadow-2xl relative overflow-hidden">
+                        {/* Title & Badge */}
+                        <View className="flex-row justify-between items-center mb-6">
+                            <View>
+                                <Text className="text-gray-400 font-black text-[10px] uppercase tracking-widest mb-1">Performance</Text>
+                                <Text className="text-2xl font-black text-black">Analytics</Text>
+                            </View>
+                            <View className="bg-[#00C2FF] px-3 py-1 rounded-full border-2 border-black rotate-3">
+                                <Text className="text-white font-black text-xs uppercase italic">Active</Text>
+                            </View>
                         </View>
 
-                        <View className="items-center justify-center pb-2">
+                        <View className="items-center justify-center pb-2 bg-slate-50/50 rounded-3xl pt-6 border border-slate-100">
                             <BarChart
                                 data={chartData}
                                 barWidth={22}
@@ -190,56 +194,81 @@ export default function ProfileScreen() {
                                 hideRules
                                 xAxisThickness={0}
                                 yAxisThickness={0}
-                                yAxisTextStyle={{ color: 'gray' }}
+                                yAxisTextStyle={{ color: '#cbd5e1', fontSize: 10, fontWeight: 'bold' as 'bold' }}
                                 noOfSections={3}
-                                maxValue={Math.max(...chartData.map(d => d.value), 100)} // Dynamic max
+                                maxValue={Math.max(...chartData.map(d => d.value), 100)}
                                 isAnimated
+                                animationDuration={1000}
+                                barBorderRadius={6}
                             />
                         </View>
-                        <View className="border-t-4 border-black pt-4 flex-row justify-between items-center">
-                            <Text className="font-black text-gray-400 text-xs tracking-widest">ACTIVITY TREND</Text>
 
-                            <View className="flex-row items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm">
-                                <Ionicons name="location" size={12} color="#00C2FF" />
-                                <Text className="text-slate-600 font-bold text-xs">Tokyo, JP</Text>
+                        {/* Professional Stats Breakdown */}
+                        <View className="flex-row mt-6 pt-6 border-t-2 border-gray-50 items-center justify-between">
+                            <View className="flex-1">
+                                <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">Total Earned</Text>
+                                <Text className="text-xl font-black text-black">
+                                    {(transactions || []).reduce((sum, tx) => sum + ((tx.amount ?? 0) > 0 ? (tx.amount ?? 0) : 0), 0).toLocaleString()}
+                                    <Text className="text-xs text-[#FF4785]"> PTS</Text>
+                                </Text>
+                            </View>
+                            <View className="w-[1px] h-8 bg-gray-100 mx-4" />
+                            <View className="flex-1">
+                                <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">Avg / Day</Text>
+                                <Text className="text-xl font-black text-black">
+                                    {Math.round((chartData.reduce((sum, d) => sum + d.value, 0) / 7)).toLocaleString()}
+                                    <Text className="text-xs text-[#00C2FF]"> PTS</Text>
+                                </Text>
                             </View>
                         </View>
 
-                        {/* Stats Row */}
-                        <View className="flex-row justify-center gap-8 mt-6">
-                            <View className="items-center">
-                                <Text className="text-xl font-black text-slate-800">{user?.level || 1}</Text>
-                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('profile.level')}</Text>
+                        {/* Status Footer */}
+                        <View className="mt-6 flex-row justify-between items-center bg-black p-4 rounded-2xl mx-[-12px] mb-[-12px]">
+                            <View className="flex-row items-center gap-2">
+                                <View className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                                <Text className="font-black text-white text-[10px] tracking-widest uppercase">Network Live</Text>
                             </View>
-                            <View className="h-full w-[1px] bg-slate-200" />
-                            <View className="items-center">
-                                <Text className="text-xl font-black text-slate-800">{user?.followingCount || 0}</Text>
-                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('profile.following')}</Text>
-                            </View>
-                            <View className="h-full w-[1px] bg-slate-200" />
-                            <View className="items-center">
-                                <Text className="text-xl font-black text-slate-800">{user?.followerCount || 0}</Text>
-                                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('profile.followers')}</Text>
-                            </View>
-                        </View>
-
-                        {/* Social & Quest Actions */}
-                        <View className="flex-row gap-3 mt-6">
-                            <TouchableOpacity
-                                onPress={() => router.push('/search-users')}
-                                className="flex-1 flex-row items-center justify-center gap-2 bg-slate-100 py-3 rounded-xl active:bg-slate-200"
-                            >
-                                <Ionicons name="person-add" size={16} color="#475569" />
-                                <Text className="font-bold text-slate-600">Find Friends</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => router.push('/quests')}
-                                className="flex-1 flex-row items-center justify-center gap-2 bg-pink-50 py-3 rounded-xl border border-pink-100 active:bg-pink-100"
-                            >
-                                <Ionicons name="gift" size={16} color="#db2777" />
-                                <Text className="font-bold text-pink-600">Quests</Text>
+                            <TouchableOpacity className="flex-row items-center gap-1">
+                                <Text className="text-gray-400 font-bold text-[10px] uppercase">Insights</Text>
+                                <Ionicons name="chevron-forward" size={10} color="gray" />
                             </TouchableOpacity>
                         </View>
+                    </View>
+
+                    {/* Stats Row */}
+                    <View className="flex-row justify-center gap-8 mb-6 bg-slate-50 p-6 rounded-[32px] border-2 border-slate-100">
+                        <View className="items-center">
+                            <Text className="text-xl font-black text-slate-800">{user?.level || 1}</Text>
+                            <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('profile.level')}</Text>
+                        </View>
+                        <View className="h-full w-[1px] bg-slate-200" />
+                        <View className="items-center">
+                            <Text className="text-xl font-black text-slate-800">{user?.followingCount || 0}</Text>
+                            <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('profile.following')}</Text>
+                        </View>
+                        <View className="h-full w-[1px] bg-slate-200" />
+                        <View className="items-center">
+                            <Text className="text-xl font-black text-slate-800">{user?.followerCount || 0}</Text>
+                            <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('profile.followers')}</Text>
+                        </View>
+                    </View>
+
+                    {/* Social & Quest Actions */}
+                    <View className="flex-row gap-3 mb-8">
+                        <TouchableOpacity
+                            onPress={() => router.push('/search-users')}
+                            className="flex-1 flex-row items-center justify-center gap-2 bg-slate-100 py-4 rounded-2xl active:bg-slate-200 border border-slate-200"
+                        >
+                            <Ionicons name="person-add" size={18} color="#475569" />
+                            <Text className="font-black text-slate-600">Find Friends</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => router.push('/quests')}
+                            className="flex-1 flex-row items-center justify-center gap-2 bg-pink-50 py-4 rounded-2xl border border-pink-100 active:bg-pink-100"
+                        >
+                            <Ionicons name="gift" size={18} color="#db2777" />
+                            <Text className="font-black text-pink-600">Quests</Text>
+                        </TouchableOpacity>
                     </View>
                     {/* History List */}
                     <View className="mb-10">

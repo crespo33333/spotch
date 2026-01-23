@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,16 +18,24 @@ const FOOTPRINT_ITEMS = [
 export default function ActivityScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'news' | 'footprints'>('news');
+    const [refreshing, setRefreshing] = useState(false);
 
     // Fetch real activity feed
-    const { data: feed, isLoading: isFeedLoading } = trpc.activity.getFeed.useQuery(undefined, {
+    const { data: feed, isLoading: isFeedLoading, refetch: refetchFeed } = trpc.activity.getFeed.useQuery(undefined, {
         enabled: activeTab === 'footprints',
     });
 
     // Fetch personal notifications
-    const { data: notifications, isLoading: isNotifLoading } = trpc.activity.getNotifications.useQuery(undefined, {
+    const { data: notifications, isLoading: isNotifLoading, refetch: refetchNotifs } = trpc.activity.getNotifications.useQuery(undefined, {
         enabled: activeTab === 'news',
     });
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        if (activeTab === 'news') await refetchNotifs();
+        else await refetchFeed();
+        setRefreshing(false);
+    };
 
     return (
         <SafeAreaView className="flex-1 bg-white" edges={['top']}>
@@ -66,11 +74,16 @@ export default function ActivityScreen() {
                 <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
             </TouchableOpacity>
 
-            <ScrollView className="flex-1 bg-white">
+            <ScrollView
+                className="flex-1 bg-white"
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#00C2FF']} />
+                }
+            >
                 {activeTab === 'news' ? (
                     <View>
                         {/* System News (Fethed from Backend) */}
-                        {notifications?.filter(n => n.type === 'system').map((item: any) => (
+                        {notifications?.filter((n: any) => n.type === 'system').map((item: any) => (
                             <View key={item.id} className="p-4 border-b border-gray-100 flex-row gap-3 bg-slate-50">
                                 <View className="w-10 h-10 rounded-full bg-[#E0F7FF] items-center justify-center">
                                     <Ionicons name="megaphone" size={20} color="#00C2FF" />
@@ -89,7 +102,7 @@ export default function ActivityScreen() {
                         ))}
 
                         {/* Empty System News State */}
-                        {notifications?.filter(n => n.type === 'system').length === 0 && (
+                        {notifications?.filter((n: any) => n.type === 'system').length === 0 && (
                             <View className="p-4 bg-slate-50 items-center">
                                 <Text className="text-gray-400 text-xs">お知らせはありません</Text>
                             </View>
@@ -97,7 +110,7 @@ export default function ActivityScreen() {
 
 
                         {/* Real Notifications (Likes/Follows) */}
-                        {notifications?.filter(n => n.type !== 'system').map((item) => (
+                        {notifications?.filter((n: any) => n.type !== 'system').map((item: any) => (
                             <View key={item.id} className="p-4 border-b border-gray-100 flex-row gap-3">
                                 <View className={`w-10 h-10 rounded-full items-center justify-center ${item.type === 'like' ? 'bg-pink-100' : 'bg-green-100'}`}>
                                     <Ionicons
@@ -121,7 +134,7 @@ export default function ActivityScreen() {
                     </View>
                 ) : (
                     <View>
-                        {feed?.map((item) => (
+                        {feed?.map((item: any) => (
                             <View key={item.id} className="p-4 border-b border-gray-50 flex-row items-center gap-3">
                                 <TouchableOpacity onPress={() => router.push(`/user/${item.userId}`)}>
                                     <Avatar
