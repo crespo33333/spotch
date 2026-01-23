@@ -11,7 +11,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
         trpc.createClient({
             links: [
                 httpBatchLink({
-                    url: 'http://127.0.0.1:4000/trpc',
+                    url: 'http://localhost:4000/trpc',
                     // You might need to add headers for auth in production
                     async headers() {
                         return {
