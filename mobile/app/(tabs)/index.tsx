@@ -25,8 +25,16 @@ export default function MapScreen() {
         radiusKm: 10,
     });
 
+    // DUMMY DATA FOR DEMO
+    const DUMMY_SPOTS: Spot[] = [
+        { id: 'd1', name: 'Shibuya Crossing', latitude: 35.6595, longitude: 139.7004, radius: 100, pointsPerMinute: 100, category: 'Adventure', activeUsers: [], spotter: { id: 'admin', name: 'Spotch Team', avatarUrl: 'https://robohash.org/admin?set=set4' } },
+        { id: 'd2', name: 'Hachiko Statue', latitude: 35.6591, longitude: 139.7007, radius: 50, pointsPerMinute: 50, category: 'Chill', activeUsers: [], spotter: { id: 'admin', name: 'Spotch Team', avatarUrl: 'https://robohash.org/hachi?set=set4' } },
+        { id: 'd3', name: 'Yoyogi Park', latitude: 35.6717, longitude: 139.6949, radius: 200, pointsPerMinute: 10, category: 'Chill', activeUsers: [], spotter: { id: 'admin', name: 'Spotch Team', avatarUrl: 'https://robohash.org/park?set=set4' } },
+        { id: 'd5', name: 'Harajuku Takeshita', latitude: 35.6715, longitude: 139.7031, radius: 80, pointsPerMinute: 80, category: 'Food', activeUsers: [], spotter: { id: 'admin', name: 'Spotch Team', avatarUrl: 'https://robohash.org/hara?set=set4' } },
+    ];
+
     useEffect(() => {
-        if (serverSpots) {
+        if (serverSpots && serverSpots.length > 0) {
             // Map backend spot to frontend spot interface
             const mappedSpots: Spot[] = serverSpots.map((s: any) => ({
                 id: s.id,
@@ -44,6 +52,8 @@ export default function MapScreen() {
                 } : undefined
             }));
             setSpots(mappedSpots);
+        } else {
+            setSpots(DUMMY_SPOTS);
         }
     }, [serverSpots]);
 

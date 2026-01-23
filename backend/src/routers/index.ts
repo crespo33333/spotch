@@ -6,6 +6,8 @@ import { adminRouter } from './admin';
 import { paymentRouter } from './payment';
 import { rankingRouter } from './ranking';
 import { activityRouter } from './activity';
+import { questRouter } from './quest';
+import { visitRouter } from './visit';
 
 export const appRouter = router({
     health: publicProcedure.query(() => {
@@ -14,10 +16,12 @@ export const appRouter = router({
     user: userRouter,
     wallet: walletRouter,
     spot: spotRouter,
+    visit: visitRouter,
     admin: adminRouter,
     payment: paymentRouter,
     ranking: rankingRouter,
     activity: activityRouter,
+    quest: questRouter,
 });
 
 export type AppRouter = typeof appRouter;

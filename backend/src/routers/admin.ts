@@ -100,4 +100,38 @@ export const adminRouter = router({
 
             return { success: true, sent: tokens.length };
         }),
+
+    sendPushToUser: protectedProcedure
+        .input(z.object({ userId: z.number(), title: z.string(), body: z.string(), data: z.any().optional() }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+
+            const targetUser = await db.query.users.findFirst({
+                where: eq(users.id, input.userId),
+            });
+
+            if (!targetUser || !targetUser.pushToken) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "User not found or has no push token" });
+            }
+
+            if (!Expo.isExpoPushToken(targetUser.pushToken)) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid push token" });
+            }
+
+            try {
+                const tickets = await expo.sendPushNotificationsAsync([{
+                    to: targetUser.pushToken,
+                    sound: 'default',
+                    title: input.title,
+                    body: input.body,
+                    data: input.data
+                }]);
+                return { success: true, ticket: tickets[0] };
+            } catch (error: any) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: `Failed to send push: ${error.message}`
+                });
+            }
+        }),
 });

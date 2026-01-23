@@ -101,10 +101,18 @@ export default function ActivityScreen() {
                             </View>
                         ))}
 
-                        {/* Empty System News State */}
-                        {notifications?.filter((n: any) => n.type === 'system').length === 0 && (
-                            <View className="p-4 bg-slate-50 items-center">
-                                <Text className="text-gray-400 text-xs">お知らせはありません</Text>
+                        {/* Empty System News State -> Show Dummy */}
+                        {(!notifications || notifications.filter((n: any) => n.type === 'system').length === 0) && (
+                            <View>
+                                <View className="p-4 border-b border-gray-100 flex-row gap-3 bg-slate-50">
+                                    <View className="w-10 h-10 rounded-full bg-[#E0F7FF] items-center justify-center">
+                                        <Ionicons name="megaphone" size={20} color="#00C2FF" />
+                                    </View>
+                                    <View className="flex-1">
+                                        <Text className="text-gray-800 font-bold mb-1">ようこそ Spotchへ！🚀</Text>
+                                        <Text className="text-gray-600 text-sm">現在ベータテスト中です。たくさんのスポットを見つけてポイントを稼ごう！</Text>
+                                    </View>
+                                </View>
                             </View>
                         )}
 

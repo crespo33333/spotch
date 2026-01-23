@@ -9,6 +9,14 @@
         "close": "Close",
         "searchPlaceholder": "Search spots..."
     },
+    "categories": {
+        "all": "All",
+        "food": "Food",
+        "chill": "Chill",
+        "adventure": "Adventure",
+        "study": "Study",
+        "other": "Other"
+    },
     "welcome": {
         "title": "Spotch",
         "subtitle": "Discover. Visit. Earn.",

@@ -18,6 +18,7 @@ export const users = pgTable('users', {
     role: roleEnum('role').default('user'),
     isBanned: boolean('is_banned').default(false),
     pushToken: varchar('push_token', { length: 255 }),
+    isPremium: boolean('is_premium').default(false),
     createdAt: timestamp('created_at').defaultNow(),
 });
 

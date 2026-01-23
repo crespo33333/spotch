@@ -19,6 +19,8 @@ export default function AdminDashboard() {
   const [pushTitle, setPushTitle] = useState('');
   const [pushBody, setPushBody] = useState('');
 
+  const [targetUser, setTargetUser] = useState<{ id: number, name: string } | null>(null);
+
   const stats = trpc.admin.getStats.useQuery();
   const usersList = trpc.admin.getAllUsers.useQuery();
 
@@ -31,16 +33,33 @@ export default function AdminDashboard() {
     onError: (err) => alert("Failed: " + err.message)
   });
 
+  const sendDirect = trpc.admin.sendPushToUser.useMutation({
+    onSuccess: (data) => {
+      alert(`Sent push to ${targetUser?.name} (Ticket: ${data.ticket.status})`);
+      setPushTitle('');
+      setPushBody('');
+      setTargetUser(null);
+    },
+    onError: (err) => alert("Failed: " + err.message)
+  });
+
   const toggleBan = trpc.admin.toggleUserBan.useMutation({
     onSuccess: () => {
       usersList.refetch();
     }
   });
 
-  const handleBroadcast = (e: React.FormEvent) => {
+  const handlePushSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pushTitle || !pushBody) return;
-    broadcast.mutate({ title: pushTitle, body: pushBody });
+
+    if (targetUser) {
+      sendDirect.mutate({ userId: targetUser.id, title: pushTitle, body: pushBody });
+    } else {
+      if (confirm('Are you sure you want to send this to ALL users?')) {
+        broadcast.mutate({ title: pushTitle, body: pushBody });
+      }
+    }
   };
 
   return (
@@ -156,7 +175,15 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-8 py-4 text-right flex justify-end gap-2">
                       <button
+                        onClick={() => setTargetUser({ id: user.id, name: user.name || 'Anonymous' })}
+                        title="Prepare Push"
+                        className="p-2 bg-slate-800 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-500 rounded-lg transition-all"
+                      >
+                        <Send size={16} />
+                      </button>
+                      <button
                         onClick={() => toggleBan.mutate({ userId: user.id, isBanned: !user.isBanned })}
+                        title={user.isBanned ? "Unban" : "Ban"}
                         className="p-2 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 rounded-lg transition-all"
                       >
                         <Ban size={16} />
@@ -171,10 +198,23 @@ export default function AdminDashboard() {
           {/* Push Console Side */}
           <div className="col-span-1 border border-slate-800 bg-slate-900 rounded-3xl p-8 sticky top-6 self-start">
             <h3 className="font-black uppercase tracking-widest text-sm text-slate-500 mb-6 flex items-center gap-2">
-              <Send size={14} className="text-cyan-500" /> GLOBAL BROADCAST
+              <Send size={14} className={targetUser ? "text-emerald-500" : "text-cyan-500"} />
+              {targetUser ? `SEND TO @${targetUser.name}` : 'GLOBAL BROADCAST'}
             </h3>
 
-            <form onSubmit={handleBroadcast} className="flex flex-col gap-4">
+            {targetUser && (
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex justify-between items-center">
+                <span className="text-xs text-emerald-400 font-bold">Targeting: {targetUser.name}</span>
+                <button
+                  onClick={() => setTargetUser(null)}
+                  className="text-[10px] text-slate-400 hover:text-white bg-slate-800 px-2 py-1 rounded"
+                >
+                  CANCEL
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handlePushSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">Notice Title</label>
                 <input
@@ -189,23 +229,24 @@ export default function AdminDashboard() {
                 <textarea
                   value={pushBody}
                   onChange={e => setPushBody(e.target.value)}
-                  placeholder="Write your global message here..."
+                  placeholder="Write your message here..."
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm h-32 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={broadcast.isPending}
-                className="mt-4 w-full bg-gradient-to-r from-cyan-600 to-fuchsia-600 py-4 rounded-xl font-black tracking-widest text-xs uppercase hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-cyan-500/10"
+                disabled={broadcast.isPending || sendDirect.isPending}
+                className={`mt-4 w-full bg-gradient-to-r ${targetUser ? 'from-emerald-600 to-teal-600' : 'from-cyan-600 to-fuchsia-600'} py-4 rounded-xl font-black tracking-widest text-xs uppercase hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-cyan-500/10`}
               >
-                {broadcast.isPending ? 'BROADCASTING...' : 'SEND TO ALL DEVICES'}
+                {broadcast.isPending || sendDirect.isPending ? 'SENDING...' : targetUser ? 'SEND MESSAGE' : 'SEND TO ALL DEVICES'}
               </button>
             </form>
 
             <div className="mt-8 p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
               <p className="text-[10px] text-amber-500 font-bold leading-relaxed">
-                <ShieldAlert size={10} className="inline mr-1" /> WARNING: This will send a notification to every user in the database. Use with caution.
+                <ShieldAlert size={10} className="inline mr-1" />
+                {targetUser ? 'Only this specific user will receive the notification.' : 'WARNING: This will send a notification to every user in the database. Use with caution.'}
               </p>
             </div>
           </div>

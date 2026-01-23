@@ -16,10 +16,20 @@
       "ios": {
         "resourceClass": "m-medium"
       }
+    },
+    "apk": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6758146993"
+      }
+    }
   },
   "cli": {
     "appVersionSource": "remote"

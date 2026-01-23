@@ -13,7 +13,7 @@ function Root() {
     trpc.createClient({
       links: [
         httpBatchLink({
-          url: 'http://localhost:2024/trpc',
+          url: 'http://localhost:4000/trpc',
           async headers() {
             const adminId = localStorage.getItem('spotch_admin_id');
             return adminId ? {

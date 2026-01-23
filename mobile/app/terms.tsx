@@ -1,41 +1,32 @@
+import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Markdown from 'react-native-markdown-display';
+import { TERMS_OF_SERVICE_JA } from '../constants/Terms';
 
 export default function TermsScreen() {
     const router = useRouter();
 
     return (
-        <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-            <View className="flex-row items-center justify-between px-4 py-2 border-b border-gray-100">
-                <TouchableOpacity onPress={() => router.back()} className="p-2">
-                    <Ionicons name="chevron-back" size={28} color="black" />
+        <SafeAreaView className="flex-1 bg-white">
+            <View className="px-6 py-4 border-b border-gray-100 flex-row items-center">
+                <TouchableOpacity onPress={() => router.back()} className="mr-4">
+                    <Ionicons name="arrow-back" size={24} color="black" />
                 </TouchableOpacity>
-                <Text className="text-lg font-bold text-black">利用規約</Text>
-                <View className="w-10" />
+                <Text className="text-xl font-bold">利用規約</Text>
             </View>
-
-            <ScrollView className="flex-1 p-6">
-                <Text className="font-bold text-2xl mb-4">利用規約</Text>
-
-                <Text className="text-base leading-6 text-gray-700 mb-4">
-                    この利用規約（以下，「本規約」といいます。）は，Spotch運営チーム（以下，「当社」といいます。）がこのウェブサイト上で提供するサービス（以下，「本サービス」といいます。）の利用条件を定めるものです。登録ユーザーの皆さま（以下，「ユーザー」といいます。）には，本規約に従って，本サービスをご利用いただきます。
-                </Text>
-
-                <Text className="font-bold text-lg mt-4 mb-2">第1条（適用）</Text>
-                <Text className="text-base leading-6 text-gray-700 mb-4">
-                    本規約は，ユーザーと当社との間の本サービスの利用に関わる一切の関係に適用されるものとします。
-                </Text>
-
-                <Text className="font-bold text-lg mt-4 mb-2">第2条（利用登録）</Text>
-                <Text className="text-base leading-6 text-gray-700 mb-4">
-                    登録希望者が当社の定める方法によって利用登録を申請し，当社がこれを承認することによって，利用登録が完了するものとします。
-                </Text>
-
-                <Text className="text-gray-400 text-sm mt-8">
-                    （以下、省略。これはダミーテキストです。）
-                </Text>
+            <ScrollView className="flex-1 px-6 py-4">
+                <Markdown style={{
+                    heading1: { fontSize: 24, fontWeight: 'bold', marginBottom: 16, marginTop: 8 },
+                    heading2: { fontSize: 18, fontWeight: 'bold', marginBottom: 12, marginTop: 24, color: '#333' },
+                    body: { fontSize: 14, lineHeight: 24, color: '#4b5563', marginBottom: 8 },
+                    list_item: { marginBottom: 8 },
+                }}>
+                    {TERMS_OF_SERVICE_JA}
+                </Markdown>
+                <View className="h-20" />
             </ScrollView>
         </SafeAreaView>
     );

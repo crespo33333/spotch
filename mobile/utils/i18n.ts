@@ -28,8 +28,7 @@ const initI18n = async () => {
             console.warn('Localization module not found, defaulting to en');
         }
 
-        // Force English default for now as per "English Unification", but keep logic ready
-        savedLanguage = 'en';
+        savedLanguage = deviceLanguage;
     }
 
     await i18n

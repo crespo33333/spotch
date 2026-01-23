@@ -121,7 +121,7 @@ export default function SettingsScreen() {
                 </Section>
 
                 <View className="items-center mt-4 mb-8">
-                    <Text className="text-gray-400 font-bold">{t('settings.version')} 1.0.0 (Build 2)</Text>
+                    <Text className="text-gray-400 font-bold">{t('settings.version')} 1.0.0 (Build 27)</Text>
                     <Text className="text-gray-300 text-xs mt-1">Powered by Spotch</Text>
                 </View>
 

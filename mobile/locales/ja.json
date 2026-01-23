@@ -9,6 +9,14 @@
         "close": "閉じる",
         "searchPlaceholder": "スポットを検索..."
     },
+    "categories": {
+        "all": "すべて",
+        "food": "食事",
+        "chill": "休憩",
+        "adventure": "冒険",
+        "study": "勉強",
+        "other": "その他"
+    },
     "welcome": {
         "title": "Spotch",
         "subtitle": "見つけて、訪れて、稼ごう。",
