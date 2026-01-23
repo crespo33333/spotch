@@ -31,12 +31,12 @@ export default function SetupProfileScreen() {
     const currentOptions = getAvatarOptions(selectedCategory);
 
     const createUser = trpc.user.loginOrRegister.useMutation({
-        onSuccess: async (data) => {
+        onSuccess: async (data: any) => {
             console.log('User created:', data);
             await setStoredUserId(data.id.toString());
             router.replace('/onboarding');
         },
-        onError: (error) => {
+        onError: (error: any) => {
             console.error('Failed to create user:', error);
             Alert.alert('エラー', 'ユーザー登録に失敗しました。サーバーの状態を確認してください。');
         }

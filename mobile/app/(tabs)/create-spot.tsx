@@ -130,11 +130,11 @@ export default function CreateSpot() {
                                 Haptics.selectionAsync();
                                 setRadius(r.toString());
                             }}
-                            {/* @ts-ignore */}
+                            // @ts-ignore
                             className={`px-3 py-2 rounded-full border border-gray-300 ${radius === r.toString() ? 'bg-primary border-primary' : 'bg-white'}`}
                         >
                             <Text
-                                /* @ts-ignore */
+                                // @ts-ignore
                                 className={radius === r.toString() ? 'text-white font-bold' : 'text-gray-600'}
                             >
                                 {r}m
@@ -142,7 +142,7 @@ export default function CreateSpot() {
                         </TouchableOpacity>
                     ))}
                 </View>
-                {/* @ts-ignore */}
+                // @ts-ignore
                 <TextInput
                     className="bg-gray-100 p-4 rounded-lg"
                     placeholder="Radius (10 - 500)"
@@ -153,7 +153,7 @@ export default function CreateSpot() {
             </View >
 
             <TouchableOpacity
-                /* @ts-ignore */
+                // @ts-ignore
                 className={`bg-primary p-4 rounded-full items-center ${createSpot.isLoading ? 'opacity-50' : ''}`}
                 onPress={handleCreate}
                 disabled={createSpot.isLoading}
@@ -162,7 +162,7 @@ export default function CreateSpot() {
                     <ActivityIndicator color="white" />
                 ) : (
                     <Text
-                        /* @ts-ignore */
+                        // @ts-ignore
                         className="text-white font-bold text-lg"
                     >
                         {t('createSpot.create')}

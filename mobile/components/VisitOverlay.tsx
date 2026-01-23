@@ -22,11 +22,11 @@ export default function VisitOverlay({ spot, userLocation, onClose }: VisitOverl
 
     // Mutations
     const checkInMutation = trpc.visit.checkIn.useMutation({
-        onSuccess: (data) => {
+        onSuccess: (data: { id: number }) => {
             setStatus('active');
             setVisitId(data.id);
         },
-        onError: (err) => {
+        onError: (err: any) => {
             setStatus('error');
             console.error(err);
         }
