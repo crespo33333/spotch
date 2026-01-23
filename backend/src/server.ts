@@ -36,7 +36,7 @@ app.get('/', (req, res) => {
     res.send('Spotch API is running');
 });
 
-// Bind to 0.0.0.0 to allow access from other devices on the network
+// Bind to default host (usually localhost/0.0.0.0 depending on node version)
 app.listen(Number(PORT), () => {
     console.log(`Server is running on port ${PORT}`);
 });
