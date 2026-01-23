@@ -72,7 +72,19 @@
         "wallet": "Wallet",
         "history": "History",
         "following": "Following",
-        "followers": "Followers"
+        "followers": "Followers",
+        "performance": "Performance",
+        "statsTitle": "Weekly Stats",
+        "active": "Active",
+        "totalEarned": "Total Earned",
+        "avgDay": "Avg / Day",
+        "networkLive": "Network Live",
+        "insights": "Insights",
+        "findFriends": "Find Friends",
+        "quests": "Quests",
+        "viewAll": "VIEW ALL",
+        "noTransactions": "No transactions yet.",
+        "startEarning": "Visit a spot to start earning!"
     },
     "settings": {
         "title": "Settings",

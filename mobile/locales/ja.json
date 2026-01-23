@@ -72,7 +72,19 @@
         "wallet": "ウォレット",
         "history": "履歴",
         "following": "フォロー中",
-        "followers": "フォロワー"
+        "followers": "フォロワー",
+        "performance": "パフォーマンス",
+        "statsTitle": "週間スタッツ",
+        "active": "アクティブ",
+        "totalEarned": "累計獲得",
+        "avgDay": "1日平均",
+        "networkLive": "ネットワーク稼働中",
+        "insights": "詳細",
+        "findFriends": "友達を探す",
+        "quests": "クエスト",
+        "viewAll": "すべて見る",
+        "noTransactions": "履歴がありません",
+        "startEarning": "スポットを訪れてポイントを稼ごう！"
     },
     "settings": {
         "title": "設定",

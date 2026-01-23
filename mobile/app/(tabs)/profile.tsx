@@ -174,13 +174,14 @@ export default function ProfileScreen() {
                     {/* Main Chart Area (Refined Analytics) */}
                     <View className="bg-white p-6 rounded-[40px] border-4 border-black mb-6 shadow-2xl relative overflow-hidden">
                         {/* Title & Badge */}
+                        {/* Title & Badge */}
                         <View className="flex-row justify-between items-center mb-6">
                             <View>
-                                <Text className="text-gray-400 font-black text-[10px] uppercase tracking-widest mb-1">Performance</Text>
-                                <Text className="text-2xl font-black text-black">スタッツ統計</Text>
+                                <Text className="text-gray-400 font-black text-[10px] uppercase tracking-widest mb-1">{t('profile.performance')}</Text>
+                                <Text className="text-2xl font-black text-black">{t('profile.statsTitle')}</Text>
                             </View>
                             <View className="bg-[#00C2FF] px-3 py-1 rounded-full border-2 border-black rotate-3">
-                                <Text className="text-white font-black text-xs uppercase italic">Active</Text>
+                                <Text className="text-white font-black text-xs uppercase italic">{t('profile.active')}</Text>
                             </View>
                         </View>
 
@@ -209,11 +210,11 @@ export default function ProfileScreen() {
                                 {(transactions || []).reduce((sum, tx) => sum + ((tx.amount ?? 0) > 0 ? (tx.amount ?? 0) : 0), 0).toLocaleString()}
                                 <Text className="text-xs text-[#FF4785]"> PTS</Text>
                             </Text>
-                            <Text className="text-[10px] font-bold text-gray-400 mt-0.5">累計獲得ポイント</Text>
+                            <Text className="text-[10px] font-bold text-gray-400 mt-0.5">{t('profile.totalEarned')}</Text>
                         </View>
                         <View className="w-[1px] h-8 bg-gray-100 mx-4" />
                         <View className="flex-1">
-                            <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">Avg / Day</Text>
+                            <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">{t('profile.avgDay')}</Text>
                             <Text className="text-xl font-black text-black">
                                 {Math.round((chartData.reduce((sum, d) => sum + d.value, 0) / 7)).toLocaleString()}
                                 <Text className="text-xs text-[#00C2FF]"> PTS</Text>
@@ -225,10 +226,10 @@ export default function ProfileScreen() {
                     <View className="mt-6 flex-row justify-between items-center bg-black p-4 rounded-2xl mx-[-12px] mb-[-12px]">
                         <View className="flex-row items-center gap-2">
                             <View className="w-2 h-2 rounded-full bg-green-400" />
-                            <Text className="font-black text-white text-[10px] tracking-widest uppercase">Network Live</Text>
+                            <Text className="font-black text-white text-[10px] tracking-widest uppercase">{t('profile.networkLive')}</Text>
                         </View>
                         <TouchableOpacity className="flex-row items-center gap-1">
-                            <Text className="text-gray-400 font-bold text-[10px] uppercase">Insights</Text>
+                            <Text className="text-gray-400 font-bold text-[10px] uppercase">{t('profile.insights')}</Text>
                             <Ionicons name="chevron-forward" size={10} color="gray" />
                         </TouchableOpacity>
                     </View>
@@ -257,14 +258,14 @@ export default function ProfileScreen() {
                             className="flex-1 flex-row items-center justify-center gap-2 bg-slate-100 py-4 rounded-2xl active:bg-slate-200 border border-slate-200"
                         >
                             <Ionicons name="person-add" size={18} color="#475569" />
-                            <Text className="font-black text-slate-600">Find Friends</Text>
+                            <Text className="font-black text-slate-600">{t('profile.findFriends')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={() => router.push('/quests')}
                             className="flex-1 flex-row items-center justify-center gap-2 bg-pink-50 py-4 rounded-2xl border border-pink-100 active:bg-pink-100"
                         >
                             <Ionicons name="gift" size={18} color="#db2777" />
-                            <Text className="font-black text-pink-600">Quests</Text>
+                            <Text className="font-black text-pink-600">{t('profile.quests')}</Text>
                         </TouchableOpacity>
                     </View>
                     {/* History List */}
@@ -289,8 +290,8 @@ export default function ProfileScreen() {
                             ))}
                             {(!transactions || transactions.length === 0) && (
                                 <View className="p-8 items-center">
-                                    <Text className="text-gray-400 font-bold">No transactions yet.</Text>
-                                    <Text className="text-gray-300 text-xs mt-1">Visit a spot to start earning!</Text>
+                                    <Text className="text-gray-400 font-bold">{t('profile.noTransactions')}</Text>
+                                    <Text className="text-gray-300 text-xs mt-1">{t('profile.startEarning')}</Text>
                                 </View>
                             )}
                         </View>
@@ -300,7 +301,7 @@ export default function ProfileScreen() {
                     <View className="flex-row items-center justify-between mb-6">
                         <Text className="text-3xl font-black italic tracking-tighter">{t('spotDetail.leaderboard')} 🏆</Text>
                         <TouchableOpacity>
-                            <Text className="text-[#00C2FF] font-bold text-xs">VIEW ALL</Text>
+                            <Text className="text-[#00C2FF] font-bold text-xs">{t('profile.viewAll')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
