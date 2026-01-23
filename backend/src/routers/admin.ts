@@ -6,7 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, desc, sql, isNotNull } from "drizzle-orm";
 import { Expo } from 'expo-server-sdk';
 
-const expo = new Expo();
+const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN });
 
 export const adminRouter = router({
     getStats: protectedProcedure.query(async ({ ctx }) => {
