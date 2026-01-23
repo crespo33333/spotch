@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "904292035705",
+    "project_id": "spotch-1ca79",
+    "storage_bucket": "spotch-1ca79.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:904292035705:android:511278d26880313108b8a8",
+        "android_client_info": {
+          "package_name": "com.spotch.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsNoovR_xC5AJxukh5GB2Y1zahqx4Qkfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

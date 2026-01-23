@@ -32,31 +32,44 @@ const getBaseUrl = () => {
 };
 
 
-// Session persistence (JS Only, does not require native rebuild)
+// Session persistence
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 let sessionUserId: string | null = null;
 
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             staleTime: 1000 * 30, // 30 seconds
-            refetchOnWindowFocus: false, // Prevents aggressive refetching when switching apps
+            refetchOnWindowFocus: false,
         },
     },
 });
 
 export const setStoredUserId = async (id: string) => {
     sessionUserId = id;
+    await AsyncStorage.setItem('user_id', id);
 };
 
-export const getStoredUserId = () => sessionUserId;
+export const getStoredUserId = async () => {
+    if (sessionUserId) return sessionUserId;
+    try {
+        const id = await AsyncStorage.getItem('user_id');
+        if (id) sessionUserId = id;
+        return id;
+    } catch (e) {
+        return null;
+    }
+};
 
 export const trpcClient = trpc.createClient({
     links: [
         httpBatchLink({
             url: `${getBaseUrl()}/trpc`,
             async headers() {
+                const id = await getStoredUserId();
                 return {
-                    'x-user-id': sessionUserId || '2', // Defaults to '2' if not registered in this session
+                    'x-user-id': id || '2', // Defaults to '2' if not registered (should ideally be null and handled by backend)
                 };
             },
         }),

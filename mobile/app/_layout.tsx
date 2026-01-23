@@ -20,12 +20,12 @@ function PushController() {
 
 export default function Layout() {
     useEffect(() => {
-        // Hide sidebar after 2 seconds
-        const timer = setTimeout(async () => {
+        // Hide splash screen immediately when layout is mounted
+        // In a more complex app, we'd wait for fonts/assets
+        const hideSplash = async () => {
             await SplashScreen.hideAsync();
-        }, 2000);
-
-        return () => clearTimeout(timer);
+        };
+        hideSplash();
     }, []);
 
     return (

@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Dimensions } from 'react-native';
+import { BarChart } from "react-native-gifted-charts";
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,36 +31,44 @@ export default function ProfileScreen() {
 
     // Compute Graph Data (Daily Earnings for last 7 days)
     const chartData = (() => {
-        if (!transactions) return [40, 65, 30, 85, 50, 90, 60]; // Mock for loading
-
-        // If loaded but empty, return 0s (or maybe a small base for visuals?)
-        if (transactions.length === 0) return [0, 0, 0, 0, 0, 0, 0];
-
         const days = 7;
         const now = new Date();
-        const dailyTotals = new Array(days).fill(0);
+        // Create an array of 7 days ending with today
+        const last7Days = Array.from({ length: days }, (_, i) => {
+            const d = new Date();
+            d.setDate(now.getDate() - (days - 1 - i));
+            return d;
+        });
 
+        // Initialize with default values if loading or no transactions
+        if (!transactions || transactions.length === 0) {
+            return last7Days.map((d, i) => ({
+                value: 0,
+                label: d.toLocaleDateString('en-US', { weekday: 'narrow' }),
+                frontColor: i === days - 1 ? '#FF4785' : '#E0E0E0', // Today highlighted
+            }));
+        }
+
+        // Map transactions to days
+        const values = new Array(days).fill(0);
         transactions.forEach(tx => {
-            // Handle both Date objects and string representations from tRPC
             const txDate = tx.createdAt ? new Date(tx.createdAt) : new Date();
-            const amount = tx.amount || 0;
-
-            const diffTime = Math.abs(now.getTime() - txDate.getTime());
+            const diffTime = Math.abs(now.setHours(0, 0, 0, 0) - txDate.setHours(0, 0, 0, 0));
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays < days) {
-                // Reverse index: 0 is today (rightmost), 6 is 7 days ago (leftmost)
                 const index = (days - 1) - diffDays;
-                if (index >= 0) dailyTotals[index] += tx.amount;
+                if (index >= 0) values[index] += (tx.amount || 0);
             }
         });
 
-        // Normalize to percentage (max value = 100%)
-        // If max is 0, return all 0
-        const maxVal = Math.max(...dailyTotals);
-        if (maxVal === 0) return dailyTotals;
-
-        return dailyTotals.map(val => (val / maxVal) * 100);
+        return last7Days.map((d, i) => ({
+            value: values[i],
+            label: d.toLocaleDateString('en-US', { weekday: 'narrow' }), // M, T, W...
+            frontColor: i === days - 1 ? '#FF4785' : '#00C2FF',
+            spacing: 20,
+            labelTextStyle: { color: 'gray', fontSize: 12, fontWeight: 'bold' as 'bold' },
+        }));
     })();
 
 
@@ -171,25 +180,21 @@ export default function ProfileScreen() {
                             ))}
                         </View>
 
-                        <View className="flex-row justify-between items-end h-48 pb-4 gap-2">
-                            {chartData.map((h, i) => (
-                                <View key={i} className="flex-1 items-center gap-2">
-                                    <View
-                                        className="w-full rounded-t-xl border-2 border-black border-b-0 bg-[#00C2FF] shadow-sm relative group"
-                                        style={{
-                                            height: `${Math.max(h, 5)}%`, // Min height 5%
-                                            backgroundColor: i === 6 ? '#FF4785' : '#00C2FF' // Highlight today (last item)
-                                        }}
-                                    >
-                                        {i === 6 && (
-                                            <View className="absolute -top-10 -right-4 bg-black px-2 py-1 rounded-lg z-10">
-                                                <Text className="text-white font-bold text-xs">{t('common.today') || 'Today'}</Text>
-                                                <View className="absolute bottom-[-4] left-1/2 w-2 h-2 bg-black rotate-45 transform -translate-x-1/2" />
-                                            </View>
-                                        )}
-                                    </View>
-                                </View>
-                            ))}
+                        <View className="items-center justify-center pb-2">
+                            <BarChart
+                                data={chartData}
+                                barWidth={22}
+                                spacing={24}
+                                roundedTop
+                                roundedBottom
+                                hideRules
+                                xAxisThickness={0}
+                                yAxisThickness={0}
+                                yAxisTextStyle={{ color: 'gray' }}
+                                noOfSections={3}
+                                maxValue={Math.max(...chartData.map(d => d.value), 100)} // Dynamic max
+                                isAnimated
+                            />
                         </View>
                         <View className="border-t-4 border-black pt-4 flex-row justify-between items-center">
                             <Text className="font-black text-gray-400 text-xs tracking-widest">ACTIVITY TREND</Text>
