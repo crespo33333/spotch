@@ -7,10 +7,7 @@ import { trpc } from '../../utils/api';
 import { Avatar } from '../../components/Avatar';
 
 // Mock Data
-const NEWS_ITEMS = [
-    { id: '1', type: 'system', text: 'よっ友プレミアムが新登場！今なら初月無料キャンペーン中🎉', date: '2時間前' },
-    { id: '2', type: 'system', text: 'バージョン3.0.10にアップデートしました。新機能を確認しましょう。', date: '1日前' },
-];
+
 
 const FOOTPRINT_ITEMS = [
     { id: '1', type: 'like', user: 'くーぱー', action: 'があなたの投稿をいいねしました', avatar: 'https://robohash.org/cooper?set=set4' },
@@ -72,24 +69,35 @@ export default function ActivityScreen() {
             <ScrollView className="flex-1 bg-white">
                 {activeTab === 'news' ? (
                     <View>
-                        {/* System News (Hardcoded for now) */}
-                        {NEWS_ITEMS.map((item) => (
+                        {/* System News (Fethed from Backend) */}
+                        {notifications?.filter(n => n.type === 'system').map((item: any) => (
                             <View key={item.id} className="p-4 border-b border-gray-100 flex-row gap-3 bg-slate-50">
                                 <View className="w-10 h-10 rounded-full bg-[#E0F7FF] items-center justify-center">
                                     <Ionicons name="megaphone" size={20} color="#00C2FF" />
                                 </View>
                                 <View className="flex-1">
                                     <View className="flex-row justify-between">
-                                        <Text className="text-gray-800 leading-5 mb-1 font-bold">運営チーム</Text>
-                                        <Text className="text-gray-400 text-xs">{item.date}</Text>
+                                        <Text className="text-gray-800 leading-5 mb-1 font-bold">{item.user.name}</Text>
+                                        <Text className="text-gray-400 text-xs">
+                                            {new Date(item.createdAt || '').toLocaleDateString()}
+                                        </Text>
                                     </View>
-                                    <Text className="text-gray-600 text-sm">{item.text}</Text>
+                                    <Text className="text-gray-800 font-bold mb-1">{item.message}</Text>
+                                    <Text className="text-gray-600 text-sm">{item.body || item.message}</Text>
                                 </View>
                             </View>
                         ))}
 
-                        {/* Real Notifications */}
-                        {notifications?.map((item) => (
+                        {/* Empty System News State */}
+                        {notifications?.filter(n => n.type === 'system').length === 0 && (
+                            <View className="p-4 bg-slate-50 items-center">
+                                <Text className="text-gray-400 text-xs">お知らせはありません</Text>
+                            </View>
+                        )}
+
+
+                        {/* Real Notifications (Likes/Follows) */}
+                        {notifications?.filter(n => n.type !== 'system').map((item) => (
                             <View key={item.id} className="p-4 border-b border-gray-100 flex-row gap-3">
                                 <View className={`w-10 h-10 rounded-full items-center justify-center ${item.type === 'like' ? 'bg-pink-100' : 'bg-green-100'}`}>
                                     <Ionicons

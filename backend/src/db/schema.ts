@@ -104,11 +104,20 @@ export const spotLikes = pgTable('spot_likes', {
     unq: uniqueIndex('spot_like_unq').on(t.userId, t.spotId),
 }));
 
+// Messages
 export const spotMessages = pgTable('spot_messages', {
     id: serial('id').primaryKey(),
     spotId: integer('spot_id').references(() => spots.id, { onDelete: 'cascade' }).notNull(),
     userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
     content: text('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const broadcasts = pgTable('broadcasts', {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    link: text('link'),
     createdAt: timestamp('created_at').defaultNow(),
 });
 

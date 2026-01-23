@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../trpc";
 import { db } from "../db";
-import { users, spots, transactions } from "../db/schema";
+import { users, spots, transactions, broadcasts } from "../db/schema";
 import { TRPCError } from "@trpc/server";
 import { eq, desc, sql, isNotNull } from "drizzle-orm";
 import { Expo } from 'expo-server-sdk';
@@ -61,6 +61,13 @@ export const adminRouter = router({
 
             const allPushes = await db.select({ token: users.pushToken }).from(users).where(isNotNull(users.pushToken));
             const tokens = allPushes.map(u => u.token!).filter(t => Expo.isExpoPushToken(t));
+
+            // Save to Database
+            await db.insert(broadcasts).values({
+                title: input.title,
+                body: input.body,
+                link: input.data?.url || null
+            });
 
             if (tokens.length === 0) return { success: true, sent: 0 };
 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure } from '../trpc';
 import { db } from '../db';
-import { follows, spotLikes, spots, users } from '../db/schema';
+import { follows, spotLikes, spots, users, broadcasts } from '../db/schema';
 import { eq, inArray, desc } from 'drizzle-orm';
 
 export const activityRouter = router({
@@ -100,7 +100,20 @@ export const activityRouter = router({
                 limit: 20
             });
 
+            // 3. Official Broadcasts
+            const recentBroadcasts = await db.select().from(broadcasts)
+                .orderBy(desc(broadcasts.createdAt))
+                .limit(5);
+
             const notifications = [
+                ...recentBroadcasts.map(b => ({
+                    id: `broadcast-${b.id}`,
+                    type: 'system' as const,
+                    user: { name: '運営チーム', avatar: 'default_seed' }, // Mock user structure
+                    message: b.title, // Title as message? Or Body?
+                    body: b.body, // Pass body too if possible
+                    createdAt: b.createdAt
+                })),
                 ...likes.map(l => ({
                     id: `like-${l.id}`,
                     type: 'like' as const,
