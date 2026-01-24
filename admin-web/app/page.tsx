@@ -11,7 +11,8 @@ import {
   Search,
   Bell,
   Trash2,
-  Ban
+  Ban,
+  Gem
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -51,6 +52,13 @@ export default function AdminDashboard() {
       usersList.refetch();
     }
   });
+
+  const togglePremium = trpc.admin.toggleUserPremium.useMutation({
+    onSuccess: () => {
+      usersList.refetch();
+    }
+  });
+
 
   const updateBroadcast = trpc.admin.updateBroadcast.useMutation({
     onSuccess: () => {
@@ -201,7 +209,15 @@ export default function AdminDashboard() {
                         <Send size={16} />
                       </button>
                       <button
+                        onClick={() => togglePremium.mutate({ userId: user.id, isPremium: !user.isPremium })}
+                        title={user.isPremium ? "Revoke Premium" : "Grant Premium"}
+                        className="p-2 bg-slate-800 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-500 rounded-lg transition-all"
+                      >
+                        <Gem size={16} fill={user.isPremium ? "currentColor" : "none"} />
+                      </button>
+                      <button
                         onClick={() => toggleBan.mutate({ userId: user.id, isBanned: !user.isBanned })}
+
                         title={user.isBanned ? "Unban" : "Ban"}
                         className="p-2 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 rounded-lg transition-all"
                       >

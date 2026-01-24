@@ -1,7 +1,7 @@
 import { router, protectedProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '../db';
-import { spots, visits, users, wallets, transactions } from '../db/schema';
+import { spots, visits, users, wallets, transactions, userQuests, quests } from '../db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
@@ -40,8 +40,85 @@ export const visitRouter = router({
                 earnedPoints: 0,
             }).returning();
 
+            // --- Quest Logic: Update "Visit" Quests ---
+            const activeQuests = await db.select().from(userQuests)
+                .leftJoin(quests, eq(userQuests.questId, quests.id))
+                .where(and(
+                    eq(userQuests.userId, ctx.user.id),
+                    eq(userQuests.status, 'in_progress'),
+                    eq(quests.conditionType, 'visit_count')
+                ));
+
+            for (const { user_quests: uq, quests: q } of activeQuests) {
+                if (!uq || !q) continue;
+
+                const newProgress = (uq.progress || 0) + 1;
+                let updates: any = { progress: newProgress };
+
+                if (newProgress >= q.conditionValue) {
+                    updates.status = 'completed';
+                    updates.completedAt = new Date();
+
+                    await db.insert(transactions).values({
+                        userId: ctx.user.id,
+                        amount: q.rewardPoints,
+                        type: 'earn',
+                        description: `Completed Quest: ${q.title}`
+                    });
+                    await db.update(wallets)
+                        .set({ currentBalance: sql`${wallets.currentBalance} + ${q.rewardPoints}` })
+                        .where(eq(wallets.userId, ctx.user.id));
+                }
+                await db.update(userQuests).set(updates).where(eq(userQuests.id, uq.id));
+            }
+            // ------------------------------------------
+
+
             return visit;
         }),
+
+    // Check for Quests (Visit Type) => This logic could be shared
+    checkQuestProgress: protectedProcedure
+        .mutation(async ({ ctx }) => {
+            // Find active "Visit" quests
+            const activeQuests = await db.select().from(userQuests)
+                .leftJoin(quests, eq(userQuests.questId, quests.id))
+                .where(and(
+                    eq(userQuests.userId, ctx.user.id),
+                    eq(userQuests.status, 'in_progress'),
+                    eq(quests.conditionType, 'visit_count')
+                ));
+
+            for (const { user_quests: uq, quests: q } of activeQuests) {
+                if (!uq || !q) continue;
+
+                const newProgress = (uq.progress || 0) + 1;
+                let updates: any = { progress: newProgress };
+
+                // Complete Quest
+                if (newProgress >= q.conditionValue) {
+                    updates.status = 'completed';
+                    updates.completedAt = new Date();
+
+                    // Award Reward
+                    await db.insert(transactions).values({
+                        userId: ctx.user.id,
+                        amount: q.rewardPoints,
+                        type: 'earn',
+                        description: `Completed Quest: ${q.title}`
+                    });
+                    await db.update(wallets)
+                        .set({ currentBalance: sql`${wallets.currentBalance} + ${q.rewardPoints}` })
+                        .where(eq(wallets.userId, ctx.user.id));
+                }
+
+                await db.update(userQuests)
+                    .set(updates)
+                    .where(eq(userQuests.id, uq.id));
+            }
+            return { success: true };
+        }),
+
 
     checkout: protectedProcedure
         .input(z.object({

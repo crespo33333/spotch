@@ -1,6 +1,7 @@
 
-import { View, Text, TouchableOpacity, ActivityIndicator, Image, StyleSheet } from 'react-native';
-import { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, Image, StyleSheet, Animated } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spot } from './MapView';
 import { trpc } from '../utils/api';
@@ -44,6 +45,21 @@ export default function VisitOverlay({ spot, userLocation, onClose }: VisitOverl
     });
 
     const checkoutMutation = trpc.visit.checkout.useMutation();
+
+    // Animation
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    const triggerPulse = () => {
+        Animated.sequence([
+            Animated.timing(pulseAnim, { toValue: 1.2, duration: 100, useNativeDriver: true }),
+            Animated.spring(pulseAnim, { toValue: 1, friction: 3, useNativeDriver: true })
+        ]).start();
+    };
+
+    useEffect(() => {
+        if (earned > 0) triggerPulse();
+    }, [earned]);
+
 
     // Effect: Check In on Mount
     useEffect(() => {
@@ -97,7 +113,13 @@ export default function VisitOverlay({ spot, userLocation, onClose }: VisitOverl
     };
 
     return (
-        <View style={StyleSheet.absoluteFill} className="bg-black/90 justify-center items-center">
+        <View style={StyleSheet.absoluteFill}>
+            <LinearGradient
+                colors={['rgba(0,0,0,0.85)', 'rgba(255, 71, 133, 0.9)']}
+                style={StyleSheet.absoluteFill}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+            />
             <SafeAreaView className="flex-1 w-full items-center justify-center p-6">
 
                 {/* Close Button */}
@@ -145,7 +167,12 @@ export default function VisitOverlay({ spot, userLocation, onClose }: VisitOverl
                     <View className="items-center w-full">
                         <View className="bg-white/10 p-8 rounded-3xl w-full items-center border border-white/20 mb-8">
                             <Text className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">EARNED THIS SESSION</Text>
-                            <Text className="text-6xl font-black text-[#FF4785] tracking-tighter shadow-sm">{earned}</Text>
+                            <Animated.Text
+                                style={{ transform: [{ scale: pulseAnim }] }}
+                                className="text-6xl font-black text-[#FF4785] tracking-tighter shadow-sm"
+                            >
+                                {earned}
+                            </Animated.Text>
                             <Text className="text-white font-bold mt-1">POINTS</Text>
                         </View>
 

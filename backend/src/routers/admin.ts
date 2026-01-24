@@ -45,6 +45,18 @@ export const adminRouter = router({
             return { success: true };
         }),
 
+    toggleUserPremium: protectedProcedure
+        .input(z.object({ userId: z.number(), isPremium: z.boolean() }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+
+            await db.update(users)
+                .set({ isPremium: input.isPremium })
+                .where(eq(users.id, input.userId));
+
+            return { success: true };
+        }),
+
     deleteSpot: protectedProcedure
         .input(z.object({ spotId: z.number() }))
         .mutation(async ({ ctx, input }) => {

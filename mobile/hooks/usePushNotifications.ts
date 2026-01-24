@@ -31,8 +31,12 @@ export function usePushNotifications() {
                 return;
             }
 
-            const projectId = Constants.expoConfig?.extra?.eas?.projectId || Constants.experienceId;
-            token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+            try {
+                const projectId = Constants.expoConfig?.extra?.eas?.projectId || Constants.experienceId;
+                token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+            } catch (e) {
+                console.log("Failed to get push token:", e);
+            }
         }
 
         if (Platform.OS === 'android') {
@@ -48,7 +52,9 @@ export function usePushNotifications() {
     }
 
     useEffect(() => {
-        registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+        registerForPushNotificationsAsync()
+            .then(token => setExpoPushToken(token))
+            .catch(err => console.log("Push Token Error:", err));
 
         notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
             setNotification(notification);

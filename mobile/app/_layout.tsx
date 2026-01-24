@@ -43,7 +43,7 @@ export default function Layout() {
                     publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder"}
                     merchantIdentifier="merchant.com.spotch" // required for Apple Pay
                 >
-                    <PushController />
+                    {/* <PushController /> */}
                     <Stack screenOptions={{ headerShown: false }}>
                         <Stack.Screen name="(tabs)" />
                         <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
