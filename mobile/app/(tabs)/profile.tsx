@@ -164,7 +164,23 @@ export default function ProfileScreen() {
                         </View>
                     </View>
 
+                    {/* Badge Collection */}
+                    {user?.badges && user.badges.length > 0 && (
+                        <View className="mb-6">
+                            <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-3">{t('profile.badges')}</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+                                {user.badges.map((badge: any) => (
+                                    <View key={badge.id} className="items-center bg-gray-50 border border-gray-100 p-3 rounded-2xl w-20 h-24 justify-center">
+                                        <Text className="text-3xl mb-1">{badge.icon}</Text>
+                                        <Text className="text-[10px] font-bold text-center text-gray-600 leading-3">{badge.name}</Text>
+                                    </View>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
+
                     {/* Period Selector */}
+
                     <View className="flex-row justify-between mb-8 bg-gray-50 p-1.5 rounded-full border border-gray-100">
                         <PeriodButton label="24H" value="24h" />
                         <PeriodButton label="We" value="week" />

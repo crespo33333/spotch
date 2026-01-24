@@ -60,9 +60,9 @@ export const questRouter = router({
                     isCompleted = true;
                 }
             } else if (quest.conditionType === 'premium_status') {
-                // Check premium (not implemented yet, assume false)
-                isCompleted = false;
+                isCompleted = ctx.user.isPremium || false;
             }
+
 
             if (!isCompleted) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "Quest requirements not met" });

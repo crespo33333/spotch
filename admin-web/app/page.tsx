@@ -20,15 +20,18 @@ export default function AdminDashboard() {
   const [pushBody, setPushBody] = useState('');
 
   const [targetUser, setTargetUser] = useState<{ id: number, name: string } | null>(null);
+  const [editingBroadcast, setEditingBroadcast] = useState<{ id: number; title: string; body: string; link?: string | null } | null>(null);
 
   const stats = trpc.admin.getStats.useQuery();
   const usersList = trpc.admin.getAllUsers.useQuery();
+  const broadcasts = trpc.admin.listBroadcasts.useQuery();
 
   const broadcast = trpc.admin.broadcastPush.useMutation({
     onSuccess: (data) => {
       alert(`Sent push to ${data.sent} devices!`);
       setPushTitle('');
       setPushBody('');
+      broadcasts.refetch();
     },
     onError: (err) => alert("Failed: " + err.message)
   });
@@ -47,6 +50,22 @@ export default function AdminDashboard() {
     onSuccess: () => {
       usersList.refetch();
     }
+  });
+
+  const updateBroadcast = trpc.admin.updateBroadcast.useMutation({
+    onSuccess: () => {
+      alert("Updated broadcast successfully!");
+      setEditingBroadcast(null);
+      broadcasts.refetch();
+    },
+    onError: (err) => alert("Failed update: " + err.message)
+  });
+
+  const deleteBroadcast = trpc.admin.deleteBroadcast.useMutation({
+    onSuccess: () => {
+      broadcasts.refetch();
+    },
+    onError: (err) => alert("Failed delete: " + err.message)
   });
 
   const handlePushSubmit = (e: React.FormEvent) => {
@@ -251,6 +270,109 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Broadcast History */}
+        <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden mb-12">
+          <div className="px-8 py-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur-sm sticky top-0">
+            <h3 className="font-black uppercase tracking-widest text-sm text-slate-500">Broadcast History</h3>
+            <button onClick={() => broadcasts.refetch()} className="text-xs font-bold text-cyan-500 hover:underline">Refresh</button>
+          </div>
+          <div className="divide-y divide-slate-800">
+            {broadcasts.data?.map((b) => (
+              <div key={b.id} className="p-6 hover:bg-slate-800/30 transition flex justify-between items-start group">
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <h4 className="font-bold text-slate-200">{b.title}</h4>
+                    <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">
+                      {new Date(b.createdAt as string).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-400">{b.body}</p>
+                  {b.link && <div className="text-xs text-blue-400 mt-1 font-mono">{b.link}</div>}
+                </div>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => setEditingBroadcast({ id: b.id, title: b.title, body: b.body, link: b.link })}
+                    className="p-2 text-cyan-500 hover:bg-cyan-500/10 rounded-lg font-bold text-xs"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm("Delete this broadcast?")) deleteBroadcast.mutate({ id: b.id });
+                    }}
+                    className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {(!broadcasts.data || broadcasts.data.length === 0) && (
+              <div className="p-12 text-center text-slate-500 italic">No broadcasts sent yet.</div>
+            )}
+          </div>
+        </div>
+
+        {/* Edit Modal */}
+        <AnimatePresence>
+          {editingBroadcast && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.95 }}
+                className="bg-slate-900 border border-slate-700 rounded-3xl p-8 w-full max-w-lg shadow-2xl"
+              >
+                <h3 className="text-xl font-bold mb-6">Edit Broadcast</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Title</label>
+                    <input
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-cyan-500 outline-none"
+                      value={editingBroadcast.title}
+                      onChange={e => setEditingBroadcast({ ...editingBroadcast, title: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Body</label>
+                    <textarea
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm h-32 resize-none focus:border-cyan-500 outline-none"
+                      value={editingBroadcast.body}
+                      onChange={e => setEditingBroadcast({ ...editingBroadcast, body: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={() => setEditingBroadcast(null)}
+                      className="flex-1 py-3 font-bold text-slate-400 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        updateBroadcast.mutate({
+                          id: editingBroadcast.id,
+                          title: editingBroadcast.title,
+                          body: editingBroadcast.body,
+                          link: editingBroadcast.link
+                        });
+                      }}
+                      className="flex-[2] bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-cyan-500/20"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

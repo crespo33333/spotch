@@ -1,24 +1,21 @@
-
 services:
   - type: web
     name: spotch-backend
-    runtime: docker
-    plan: starter # Assuming paid plan since user mentioned paying
-    region: singapore # Closest to Japan
-    buildCommand: ""
-    startCommand: "" # Dockerfile CMD will handle this
+    env: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: DATABASE_URL
-        sync: false # User will set this manually or via environment
-      - key: JWT_SECRET
-        generateValue: true
-      - key: PORT
-        value: 4000
-      - key: EXPO_ACCESS_TOKEN
-        sync: false
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-    dockerContext: backend
-    dockerfilePath: backend/Dockerfile
+        fromDatabase:
+          name: spotch-db
+          property: connectionString
+    autoDeploy: true
+
+databases:
+  - name: spotch-db
+    databaseName: spotch
+    user: spotch_user
+    plan: free

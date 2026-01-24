@@ -2,7 +2,7 @@ import { router, publicProcedure, protectedProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '../db';
 import { users, wallets, transactions, follows } from '../db/schema';
-import { eq, and, ilike } from 'drizzle-orm';
+import { eq, and, ilike, sql } from 'drizzle-orm';
 
 export const userRouter = router({
 
@@ -143,7 +143,9 @@ export const userRouter = router({
             // Badge Logic
             const badges = [];
             if (user.id <= 10) badges.push({ id: 'pioneer', name: 'Pioneer', icon: '🥇', color: '#FEF9C3' });
-            if ((user.wallet?.currentBalance || 0) >= 5000) badges.push({ id: 'wealthy', name: 'High Roller', icon: '💎', color: '#FCE7F3' });
+            if (user.isPremium) badges.push({ id: 'premium', name: 'Premium', icon: '💎', color: '#E0F2FE' }); // Blue-ish
+            if ((user.wallet?.currentBalance || 0) >= 5000) badges.push({ id: 'wealthy', name: 'High Roller', icon: '💰', color: '#FCE7F3' });
+
             if (user.followers.length >= 5) badges.push({ id: 'socialite', name: 'Socialite', icon: '🔥', color: '#FFEDD5' });
             if (user.visits.length >= 10) badges.push({ id: 'explorer', name: 'Explorer', icon: '🌍', color: '#DBEAFE' });
             if (user.messages.length >= 10) badges.push({ id: 'chatterbox', name: 'Chatterbox', icon: '💬', color: '#F1F5F9' });
@@ -166,4 +168,28 @@ export const userRouter = router({
                 limit: 10,
             });
         }),
+
+    upgradeToPremium: protectedProcedure
+        .mutation(async ({ ctx }) => {
+            // Mock Payment Gateway Logic
+            // In real app: Verify Stripe receipt
+
+            await db.update(users)
+                .set({ isPremium: true })
+                .where(eq(users.id, ctx.user.id));
+
+            // Award bonus points for upgrading?
+            await db.insert(transactions).values({
+                userId: ctx.user.id,
+                amount: 500,
+                type: 'earn',
+                description: 'Premium Upgrade Bonus',
+            });
+            await db.update(wallets)
+                .set({ currentBalance: sql`${wallets.currentBalance} + 500` })
+                .where(eq(wallets.userId, ctx.user.id));
+
+            return { success: true };
+        }),
 });
+

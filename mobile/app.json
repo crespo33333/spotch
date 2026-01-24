@@ -33,6 +33,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.spotch.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "config": {},
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,

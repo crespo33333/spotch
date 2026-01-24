@@ -29,6 +29,19 @@ export interface Spot {
     spotter?: User;
 }
 
+const getCategoryColor = (category: string) => {
+    switch (category) {
+        case 'Food': return 'rgba(255, 159, 64, 0.9)'; // Orange
+        case 'Chill': return 'rgba(75, 192, 192, 0.9)'; // Teal
+        case 'Adventure': return 'rgba(255, 99, 132, 0.9)'; // Red
+        case 'Study': return 'rgba(54, 162, 235, 0.9)'; // Blue
+        case 'Art': return 'rgba(153, 102, 255, 0.9)'; // Purple
+        case 'Nature': return 'rgba(76, 175, 80, 0.9)'; // Green
+        default: return 'rgba(201, 203, 207, 0.9)'; // Grey
+    }
+};
+
+
 const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, pulseAnim: any }) => {
     const scale = useSharedValue(0);
     const animatedStyle = useAnimatedStyle(() => ({
@@ -44,10 +57,11 @@ const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, 
             <Circle
                 center={{ latitude: spot.latitude, longitude: spot.longitude }}
                 radius={spot.radius}
-                fillColor={spot.color || (spot.pointsPerMinute > 50 ? "rgba(255, 71, 133, 0.4)" : spot.pointsPerMinute > 20 ? "rgba(255, 214, 0, 0.4)" : "rgba(0, 194, 255, 0.4)")}
-                strokeColor={spot.color?.replace('0.4', '0.8') || (spot.pointsPerMinute > 50 ? "rgba(255, 71, 133, 0.8)" : spot.pointsPerMinute > 20 ? "rgba(255, 214, 0, 0.8)" : "rgba(0, 194, 255, 0.8)")}
+                fillColor={getCategoryColor(spot.category).replace('0.9)', '0.4)')}
+                strokeColor={getCategoryColor(spot.category)}
                 strokeWidth={1}
             />
+
             <Marker
                 coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
                 onPress={() => router.push(`/spot/${spot.id}`)}
@@ -59,9 +73,10 @@ const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, 
                             width: 44,
                             height: 44,
                             borderRadius: 22,
-                            backgroundColor: 'rgba(255, 71, 133, 0.5)',
+                            backgroundColor: getCategoryColor(spot.category).replace('0.9)', '0.5)'),
                             transform: [{ scale: pulseAnim }]
                         }} />
+
                     )}
 
                     {(() => {
@@ -180,8 +195,10 @@ export default function AppMapView({
     center?: { lat: number, lng: number },
     spots?: Spot[],
     onLongPressLocation?: (coord: { latitude: number, longitude: number }) => void,
+    onRegionChangeComplete?: (region: { latitude: number, longitude: number, latitudeDelta: number, longitudeDelta: number }) => void,
     userAvatar?: string
 }) {
+
     const mapRef = useRef<MapView>(null);
     const router = useRouter();
     const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
@@ -239,7 +256,9 @@ export default function AppMapView({
                     longitudeDelta: 0.0421,
                 }}
                 onLongPress={handleLongPress}
+                onRegionChangeComplete={onRegionChangeComplete}
             >
+
                 {center && (
                     <Marker coordinate={{ latitude: center.lat, longitude: center.lng }} title="Selected Location" />
                 )}

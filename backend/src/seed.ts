@@ -13,104 +13,153 @@ const pool = new Pool({
 
 const db = drizzle(pool, { schema });
 
+// Helper to generate random coordinates near a center
+function randomGeo(centerLat: number, centerLng: number, radiusKm: number) {
+    const y0 = centerLat;
+    const x0 = centerLng;
+    const rd = radiusKm / 111.3; // Approx degrees
+
+    const u = Math.random();
+    const v = Math.random();
+    const w = rd * Math.sqrt(u);
+    const t = 2 * Math.PI * v;
+    const x = w * Math.cos(t);
+    const y = w * Math.sin(t);
+
+    const newLat = y + y0;
+    const newLng = x + x0;
+
+    return { latitude: newLat.toFixed(6), longitude: newLng.toFixed(6) };
+}
+
+const CITIES = [
+    { name: 'Tokyo', lat: 35.6895, lng: 139.6917 },
+    { name: 'New York', lat: 40.7128, lng: -74.0060 },
+    { name: 'London', lat: 51.5074, lng: -0.1278 },
+    { name: 'Paris', lat: 48.8566, lng: 2.3522 },
+    { name: 'Sydney', lat: -33.8688, lng: 151.2093 },
+    { name: 'San Francisco', lat: 37.7749, lng: -122.4194 },
+    { name: 'Singapore', lat: 1.3521, lng: 103.8198 },
+    { name: 'Los Angeles', lat: 34.0522, lng: -118.2437 },
+    { name: 'Seoul', lat: 37.5665, lng: 126.9780 },
+    { name: 'Shanghai', lat: 31.2304, lng: 121.4737 },
+    { name: 'Toronto', lat: 43.6510, lng: -79.3470 },
+    { name: 'Berlin', lat: 52.5200, lng: 13.4050 },
+];
+
+
 async function main() {
-    console.log('🌱 Seeding database with diverse users...');
+    console.log('🌱 Seeding database with WORLDWIDE spots...');
 
-    const dummyUsersData = [
-        { openId: 'dummy_user_1', name: 'NeonNinja', email: 'ninja@example.com', avatar: 'ninja_seed_123' },
-        { openId: 'dummy_user_2', name: 'CyberCat', email: 'cat@example.com', avatar: 'cat_seed_456' },
-        { openId: 'dummy_user_3', name: 'RetroRobot', email: 'robot@example.com', avatar: 'robot_seed_789' },
-        { openId: 'dummy_user_4', name: 'PixelPunk', email: 'punk@example.com', avatar: 'punk_seed_000' },
-        { openId: 'dummy_user_5', name: 'GlitchGhost', email: 'ghost@example.com', avatar: 'ghost_seed_111' },
-    ];
+    // 1. Ensure Dummy User exists
+    let user = await db.query.users.findFirst({
+        where: eq(schema.users.openId, 'dummy_world_seeder')
+    });
 
-    const createdUserIds: number[] = [];
-
-    // 1. Create Dummy Users
-    for (const u of dummyUsersData) {
-        let user = await db.query.users.findFirst({
-            where: eq(schema.users.openId, u.openId)
-        });
-
-        if (!user) {
-            console.log(`Creating ${u.name}...`);
-            const [newUser] = await db.insert(schema.users).values({
-                openId: u.openId,
-                name: u.name,
-                email: u.email,
-                avatar: u.avatar,
-            }).returning();
-            user = newUser;
-        } else {
-            console.log(`Updating avatar for ${u.name}...`);
-            await db.update(schema.users)
-                .set({ avatar: u.avatar }) // Ensure avatar is set if it was missing
-                .where(eq(schema.users.id, user.id));
-        }
-        createdUserIds.push(user.id);
+    if (!user) {
+        const [newUser] = await db.insert(schema.users).values({
+            openId: 'dummy_world_seeder',
+            name: 'World Traveler',
+            email: 'traveler@spotch.app',
+            avatar: 'robot_seed_999',
+        }).returning();
+        user = newUser;
     }
 
-    // 2. Create Dummy Spots assigned to these users
-    const dummySpots = [
-        {
-            name: 'Tokyo Station Treasury',
-            latitude: '35.6812',
-            longitude: '139.7671',
-            totalPoints: 10000,
-            remainingPoints: 10000,
-            ratePerMinute: 100,
-            spotterId: createdUserIds[0], // User 1
-        },
-        {
-            name: 'Shibuya Scramble Gold',
-            latitude: '35.6591',
-            longitude: '139.7005',
-            totalPoints: 5000,
-            remainingPoints: 5000,
-            ratePerMinute: 50,
-            spotterId: createdUserIds[1], // User 2
-        },
-        {
-            name: 'Skytree High Rewards',
-            latitude: '35.7100',
-            longitude: '139.8107',
-            totalPoints: 20000,
-            remainingPoints: 20000,
-            ratePerMinute: 200,
-            spotterId: createdUserIds[2], // User 3
-        },
-        {
-            name: 'Tokyo Tower Vintage',
-            latitude: '35.6586',
-            longitude: '139.7454',
-            totalPoints: 8000,
-            remainingPoints: 8000,
-            ratePerMinute: 80,
-            spotterId: createdUserIds[3], // User 4
-        },
-        {
-            name: 'Yoyogi Park Chill',
-            latitude: '35.6717',
-            longitude: '139.6949',
-            totalPoints: 3000,
-            remainingPoints: 3000,
-            ratePerMinute: 30,
-            spotterId: createdUserIds[4], // User 5
+    // 2. Generate Spots
+    const spotsToInsert: any[] = [];
+    const TOTAL_SPOTS_PER_CITY = 500;
+
+    for (const city of CITIES) {
+        console.log(`Generating ${TOTAL_SPOTS_PER_CITY} spots for ${city.name}...`);
+        for (let i = 0; i < TOTAL_SPOTS_PER_CITY; i++) {
+            const coords = randomGeo(city.lat, city.lng, 15); // 15km radius
+            const categories = ['Food', 'Chill', 'Adventure', 'Study', 'Art', 'Nature'];
+            spotsToInsert.push({
+                spotterId: user!.id,
+                name: `${city.name} Spot #${i + 1}`,
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+                totalPoints: Math.floor(Math.random() * 5000) + 100,
+                remainingPoints: Math.floor(Math.random() * 5000) + 100,
+                ratePerMinute: Math.floor(Math.random() * 50) + 1,
+                active: true,
+                category: categories[Math.floor(Math.random() * categories.length)],
+                radius: Math.floor(Math.random() * 200) + 50,
+            });
+
         }
-    ];
+    }
 
-    console.log('Inserting/Updating spots...');
-    // Simple verification check to avoid duplicate names for seed script simplicity (or just delete all first?)
-    // Let's delete all dummy spots first to ensure clean slate for this demo
-    // await db.delete(schema.spots); // Risky if user created spots, but okay for dev.
-    // Better: Upsert or ignore.
+    // Batch Insert (Chunking to avoid SQL limits)
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < spotsToInsert.length; i += CHUNK_SIZE) {
+        const chunk = spotsToInsert.slice(i, i + CHUNK_SIZE);
+        await db.insert(schema.spots).values(chunk);
+        console.log(`Inserted chunk ${i / CHUNK_SIZE + 1}...`);
+    }
 
-    // For now, let's just insert. If they duplicate, it's fine for testing, or we can truncate spots table.
-    // Let's TRUNCATE spots to clean up the "same icon" mess.
-    await db.execute(sql`TRUNCATE TABLE ${schema.spots} CASCADE`);
-    await db.insert(schema.spots).values(dummySpots);
+    // 3. Create Dummy Broadcasts
+    console.log('📢 Creating dummy broadcasts...');
+    await db.delete(schema.broadcasts); // Clean slate
+    await db.insert(schema.broadcasts).values([
+        {
+            title: 'Version 2.0 Released! 🚀',
+            body: 'We have updated the app with better performance and a new map engine. Enjoy!',
+            link: 'https://spotch.app/blog/v2',
+            createdAt: new Date()
+        },
+        {
+            title: 'Maintenance Notice',
+            body: 'Scheduled maintenance on Sunday 2:00 AM - 4:00 AM UTC.',
+            createdAt: new Date(Date.now() - 86400000 * 2) // 2 days ago
+        },
+        {
+            title: 'Welcome to Spotch!',
+            body: 'Find hidden spots around you and earn points. Start your journey today.',
+            createdAt: new Date(Date.now() - 86400000 * 5)
+        }
+    ]);
 
-    console.log('✅ Database re-seeded with diverse users!');
+
+    // 4. Create Default Quests
+    console.log('📜 Creating default quests...');
+    await db.delete(schema.userQuests); // Clear dependencies first
+    await db.delete(schema.quests);
+    await db.insert(schema.quests).values([
+
+        {
+            title: 'First Step',
+            description: 'Visit 1 spot to start your journey.',
+            rewardPoints: 100,
+            conditionType: 'visit_count',
+            conditionValue: 1,
+        },
+        {
+            title: 'Explorer',
+            description: 'Visit 5 different spots.',
+            rewardPoints: 500,
+            conditionType: 'visit_count',
+            conditionValue: 5,
+        },
+        {
+            title: 'Spot Master',
+            description: 'Visit 20 spots to become a Master.',
+            rewardPoints: 2000,
+            conditionType: 'visit_count',
+            conditionValue: 20,
+        },
+        {
+            title: 'Premium Member',
+            description: 'Upgrade to Premium status.',
+            rewardPoints: 5000,
+            conditionType: 'premium_status',
+            conditionValue: 1, // boolean check
+        }
+    ]);
+
+    console.log(`✅ Successfully planted ${spotsToInsert.length} spots worldwide! 🌍`);
+
     process.exit(0);
 }
 

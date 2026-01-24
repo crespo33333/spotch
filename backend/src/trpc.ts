@@ -1,5 +1,6 @@
 import { initTRPC, TRPCError } from '@trpc/server';
-import { Context } from './context';
+import type { Context } from './context';
+
 
 const t = initTRPC.context<Context>().create();
 
@@ -8,6 +9,9 @@ export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
     if (!ctx.user) {
         throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+    if (ctx.user.isBanned) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Your account has been suspended.' });
     }
     return next({
         ctx: {

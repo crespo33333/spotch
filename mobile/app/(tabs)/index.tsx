@@ -15,15 +15,22 @@ export default function MapScreen() {
         ? { lat: parseFloat(params.lat as string), lng: parseFloat(params.lng as string) }
         : undefined;
 
-    const [spots, setSpots] = useState<Spot[]>([]);
-
-    // Fetch spots from backend
-    // For MVP we fetch all or nearby. getNearby is implemented in backend.
-    const { data: serverSpots, refetch } = trpc.spot.getNearby.useQuery({
+    const [currentRegion, setCurrentRegion] = useState({
         latitude: initialCenter?.lat || 35.6581,
         longitude: initialCenter?.lng || 139.7017,
-        radiusKm: 10,
+        radiusKm: 10
     });
+
+
+    const [spots, setSpots] = useState<Spot[]>([]);
+
+    // For MVP we fetch all or nearby. getNearby is implemented in backend.
+    const { data: serverSpots, refetch } = trpc.spot.getNearby.useQuery({
+        latitude: currentRegion.latitude,
+        longitude: currentRegion.longitude,
+        radiusKm: currentRegion.radiusKm,
+    });
+
 
     // DUMMY DATA FOR DEMO
     const DUMMY_SPOTS: Spot[] = [
@@ -66,17 +73,19 @@ export default function MapScreen() {
         }
     });
 
-    const handleCreateSpot = (data: { category: string, totalPoints: number, rate: number, radius: number }) => {
+    const handleCreateSpot = (data: { name: string, category: string, totalPoints: number, rate: number, radius: number }) => {
         if (!creatingLocation) return;
 
         createSpotMutation.mutate({
-            name: data.category,
+            name: data.name,
             latitude: creatingLocation.latitude,
             longitude: creatingLocation.longitude,
             totalPoints: data.totalPoints,
-            ratePerMinute: data.rate
+            ratePerMinute: data.rate,
+            // category: data.category // If backend supports it, add it here.
         });
     };
+
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
@@ -98,6 +107,17 @@ export default function MapScreen() {
 
     // Fetch User Profile for Avatar
     const { data: user } = trpc.user.getProfile.useQuery({});
+
+    const handleRegionChange = (region: { latitude: number, longitude: number, latitudeDelta: number }) => {
+        // Calculate approx radius from delta. 1 deg lat ~ 111km.
+        const radiusKm = Math.min(50, Math.ceil(region.latitudeDelta * 111));
+        setCurrentRegion({
+            latitude: region.latitude,
+            longitude: region.longitude,
+            radiusKm: Math.max(5, radiusKm)
+        });
+    };
+
 
     return (
         <View className="flex-1">
@@ -157,8 +177,10 @@ export default function MapScreen() {
                 center={initialCenter}
                 spots={filteredSpots}
                 onLongPressLocation={setCreatingLocation}
+                onRegionChangeComplete={handleRegionChange}
                 userAvatar={user?.avatar as string | undefined}
             />
+
             <CreateSpotSheet
                 visible={!!creatingLocation}
                 coordinate={creatingLocation}

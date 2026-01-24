@@ -16,22 +16,37 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 
 interface CreateSpotSheetProps {
     visible: boolean;
     coordinate: { latitude: number; longitude: number } | null;
     onClose: () => void;
-    onSubmit: (data: { category: string; totalPoints: number; rate: number; radius: number }) => void;
+    onSubmit: (data: { name: string; category: string; totalPoints: number; rate: number; radius: number }) => void;
 }
 
-const CATEGORIES = ['☕ Cafe', '🍽️ Food', '💻 Work', '🌳 Park', '🛍️ Shop', '🏠 Chill'];
+
+const CATEGORIES = [
+    { label: '🍽️ Food', value: 'Food' },
+    { label: '🏠 Chill', value: 'Chill' },
+    { label: '🧗 Adventure', value: 'Adventure' },
+    { label: '📚 Study', value: 'Study' },
+    { label: '🎨 Art', value: 'Art' },
+    { label: '🌳 Nature', value: 'Nature' }
+];
+
 
 export default function CreateSpotSheet({ visible, coordinate, onClose, onSubmit }: CreateSpotSheetProps) {
-    const [category, setCategory] = useState(CATEGORIES[0]);
-    const [totalPoints, setTotalPoints] = useState('');
-    const [rate, setRate] = useState('');
+    const [name, setName] = useState('');
+    const [category, setCategory] = useState(CATEGORIES[0].value);
+    const [totalPoints, setTotalPoints] = useState('100');
+
+    const [rate, setRate] = useState('1');
     const [radius, setRadius] = useState(50);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
 
     // Animation for swipe to close
     const pan = useRef(new Animated.ValueXY()).current;
@@ -45,7 +60,7 @@ export default function CreateSpotSheet({ visible, coordinate, onClose, onSubmit
             },
             onPanResponderMove: Animated.event(
                 [null, { dy: pan.y }],
-                { useNativeDriver: false }
+                { useNativeDriver: false } // translateY can handle true, but event needs adjustment if switching
             ),
             onPanResponderRelease: (_, gestureState) => {
                 if (gestureState.dy > 100) {
@@ -62,30 +77,51 @@ export default function CreateSpotSheet({ visible, coordinate, onClose, onSubmit
 
     // Reset form when opening/closing
     React.useEffect(() => {
-        if (!visible) {
+        if (visible) {
             pan.setValue({ x: 0, y: 0 });
+            setError(null);
+            setName('');
+            setTotalPoints('100');
+            setRate('1');
+        } else {
             Keyboard.dismiss();
         }
     }, [visible]);
 
+
     const handleSubmit = () => {
-        if (!totalPoints || !rate) return;
+        setError(null);
+        if (!name.trim()) {
+            setError('Please enter a spot name');
+            return;
+        }
+
+        const pts = parseInt(totalPoints);
+        const r = parseInt(rate);
+
+        if (isNaN(pts) || pts < 100) {
+            setError('Minimum budget is 100 points');
+            return;
+        }
+        if (isNaN(r) || r < 1) {
+            setError('Minimum rate is 1 pt/min');
+            return;
+        }
+
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            onSubmit({
-                category,
-                totalPoints: parseInt(totalPoints),
-                rate: parseInt(rate),
-                radius
-            });
-            setLoading(false);
-            setCategory(CATEGORIES[0]);
-            setTotalPoints('');
-            setRate('');
-            setRadius(50);
-        }, 1000);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+        // Finalize
+        onSubmit({
+            name: name.trim(),
+            category,
+            totalPoints: pts,
+            rate: r,
+            radius
+        });
+        setLoading(false);
     };
+
 
     return (
         <Modal
@@ -106,24 +142,47 @@ export default function CreateSpotSheet({ visible, coordinate, onClose, onSubmit
                                 {...panResponder.panHandlers}
                             >
                                 <View style={styles.handle} />
-                                <View className="flex-row justify-between items-center mb-6">
+                                <View className="flex-row justify-between items-center mb-4">
                                     <Text className="text-2xl font-black text-primary tracking-tight">CREATE SPOT</Text>
                                     <TouchableOpacity onPress={onClose} className="bg-gray-100 p-1 rounded-full">
                                         <Ionicons name="close" size={24} color="#666" />
                                     </TouchableOpacity>
                                 </View>
 
+                                {error && (
+                                    <View className="bg-red-50 p-3 rounded-xl mb-4 border border-red-100">
+                                        <Text className="text-red-500 font-bold text-xs text-center">{error}</Text>
+                                    </View>
+                                )}
+
+                                <View className="mb-4">
+                                    <Text className="text-gray-500 font-bold mb-2 text-xs uppercase tracking-wider">Spot Name</Text>
+                                    <TextInput
+                                        className="bg-gray-50 p-4 rounded-2xl font-bold border-2 border-gray-100 focus:border-primary"
+                                        placeholder="Enter spot name..."
+                                        value={name}
+                                        onChangeText={setName}
+                                        autoFocus={false}
+                                    />
+                                </View>
+
+
                                 <View className="mb-6">
                                     <Text className="text-gray-500 font-bold mb-2 text-xs uppercase tracking-wider">Category</Text>
                                     <View className="flex-row flex-wrap gap-2">
                                         {CATEGORIES.map(cat => (
                                             <TouchableOpacity
-                                                key={cat}
-                                                onPress={() => setCategory(cat)}
-                                                className={`px-4 py-2 rounded-full border-2 ${category === cat ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
+                                                key={cat.value}
+                                                onPress={() => {
+                                                    setCategory(cat.value);
+                                                    Haptics.selectionAsync();
+                                                }}
+                                                className={`px-4 py-2 rounded-full border-2 ${category === cat.value ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                                             >
-                                                <Text className={`font-bold ${category === cat ? 'text-white' : 'text-gray-500'}`}>{cat}</Text>
+                                                <Text className={`font-bold ${category === cat.value ? 'text-white' : 'text-gray-500'}`}>{cat.label}</Text>
                                             </TouchableOpacity>
+
+
                                         ))}
                                     </View>
                                 </View>
@@ -162,11 +221,17 @@ export default function CreateSpotSheet({ visible, coordinate, onClose, onSubmit
                                         maximumValue={500}
                                         step={10}
                                         value={radius}
-                                        onValueChange={setRadius}
+                                        onValueChange={(val) => {
+                                            if (Math.abs(val - radius) >= 10) {
+                                                Haptics.selectionAsync();
+                                                setRadius(val);
+                                            }
+                                        }}
                                         minimumTrackTintColor="#00C2FF"
                                         maximumTrackTintColor="#F3F4F6"
                                         thumbTintColor="#FF4785"
                                     />
+
                                 </View>
 
                                 <TouchableOpacity

@@ -3,9 +3,22 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { trpc } from '../utils/api';
+
 
 export default function PremiumScreen() {
     const router = useRouter();
+    const utils = trpc.useUtils();
+
+    const upgradeMutation = trpc.user.upgradeToPremium.useMutation({
+        onSuccess: () => {
+            alert("Welcome to Premium! You received 500 bonus points.");
+            utils.user.getProfile.invalidate();
+            router.back();
+        },
+        onError: (err) => alert(err.message)
+    });
+
 
     const Feature = ({ icon, title, desc }: { icon: keyof typeof Ionicons.glyphMap, title: string, desc: string }) => (
         <View className="flex-row items-center bg-white/10 p-4 rounded-2xl mb-4 border border-white/20">
@@ -74,9 +87,14 @@ export default function PremiumScreen() {
                             <Text className="text-5xl font-black text-black">$11</Text>
                             <Text className="text-gray-500 font-bold ml-1">/ month</Text>
                         </View>
-                        <TouchableOpacity className="w-full bg-black py-4 rounded-full items-center">
-                            <Text className="text-white font-black text-lg">登録する (1ヶ月無料)</Text>
+                        <TouchableOpacity
+                            onPress={() => upgradeMutation.mutate()}
+                            disabled={upgradeMutation.isLoading}
+                            className={`w-full bg-black py-4 rounded-full items-center ${upgradeMutation.isLoading ? 'opacity-50' : ''}`}
+                        >
+                            <Text className="text-white font-black text-lg">{upgradeMutation.isLoading ? 'Processing...' : '登録する (1ヶ月無料)'}</Text>
                         </TouchableOpacity>
+
                         <Text className="text-gray-400 text-[10px] mt-3 text-center">
                             いつでもキャンセル可能です。
                         </Text>

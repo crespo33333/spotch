@@ -26,6 +26,7 @@ export const createContext = async ({
                 level: 99,
                 createdAt: new Date(),
                 isBanned: false,
+                isPremium: true,
                 avatar: 'default_seed'
             };
         } else {

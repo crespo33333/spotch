@@ -134,4 +134,40 @@ export const adminRouter = router({
                 });
             }
         }),
+
+    listBroadcasts: protectedProcedure
+        .query(async ({ ctx }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            return await db.query.broadcasts.findMany({
+                orderBy: [desc(broadcasts.createdAt)],
+                limit: 50,
+            });
+        }),
+
+    updateBroadcast: protectedProcedure
+        .input(z.object({
+            id: z.number(),
+            title: z.string(),
+            body: z.string(),
+            link: z.string().nullable().optional()
+        }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            await db.update(broadcasts)
+                .set({
+                    title: input.title,
+                    body: input.body,
+                    link: input.link
+                })
+                .where(eq(broadcasts.id, input.id));
+            return { success: true };
+        }),
+
+    deleteBroadcast: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            await db.delete(broadcasts).where(eq(broadcasts.id, input.id));
+            return { success: true };
+        }),
 });

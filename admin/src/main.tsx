@@ -8,11 +8,13 @@ import { httpBatchLink } from '@trpc/client';
 import { trpc } from './utils/trpc';
 
 const getBaseUrl = () => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  const { hostname } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
     return 'http://localhost:4000/trpc';
   }
   return 'https://spotch-backend.onrender.com/trpc';
 };
+
 
 function Root() {
   const [queryClient] = useState(() => new QueryClient());
@@ -23,10 +25,16 @@ function Root() {
           url: getBaseUrl(),
           async headers() {
             const adminId = localStorage.getItem('spotch_admin_id');
+            if (adminId === 'super-admin-secret') {
+              return {
+                'authorization': `Bearer ${adminId}`,
+              };
+            }
             return adminId ? {
               'x-user-id': adminId,
             } : {};
           },
+
         }),
       ],
     }),

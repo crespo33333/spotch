@@ -1,7 +1,7 @@
 import { router, protectedProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '../db';
-import { spots, wallets, transactions, users } from '../db/schema';
+import { spots, wallets, transactions, users, visits } from '../db/schema';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
@@ -70,17 +70,48 @@ export const spotRouter = router({
             // Since we don't have relations set up in schema.ts yet, let's just fetch users map or use a manual join query if possible.
             // Drizzle query builder is easier if we set up relations, but let's just join manually or fetch all users for now (MVP).
 
-            const allSpots = await db.select({
+            // Bounding Box Optimization
+            console.log('📍 getNearby called:', input);
+
+            // 1 degree lat ~= 111.32 km. 1 degree lng ~= 111.32 * cos(lat) km.
+
+            const latDeg = input.radiusKm / 111.32;
+            const lngDeg = input.radiusKm / (111.32 * Math.cos(deg2rad(input.latitude)));
+
+            const minLat = input.latitude - latDeg;
+            const maxLat = input.latitude + latDeg;
+            const minLng = input.longitude - Math.abs(lngDeg);
+            const maxLng = input.longitude + Math.abs(lngDeg);
+
+            console.log('📦 Bounding Box:', { minLat, maxLat, minLng, maxLng });
+
+            // Drizzle SQL query with casting for decimal comparisons
+
+            const nearbySpots = await db.select({
                 spot: spots,
                 user: users,
             })
                 .from(spots)
                 .leftJoin(users, eq(spots.spotterId, users.id))
-                .where(eq(spots.active, true));
+                .where(and(
+                    eq(spots.active, true),
+                    // Cast to numeric/decimal for comparison if needed, though usually string comparison works for simple range if formatted correctly.
+                    // Safer to rely on raw SQL comparisons for string-stored decimals in SQLite/PG without strict typing.
+                    sql`${spots.latitude} >= ${minLat}::decimal`,
+                    sql`${spots.latitude} <= ${maxLat}::decimal`,
+                    sql`${spots.longitude} >= ${minLng}::decimal`,
+                    sql`${spots.longitude} <= ${maxLng}::decimal`
+                ));
 
-            return allSpots
+            // Filtering circle distance in memory (much faster on small subset)
+            return nearbySpots
                 .filter(({ spot }) => {
-                    const dist = getDistanceFromLatLonInKm(input.latitude, input.longitude, parseFloat(spot.latitude!), parseFloat(spot.longitude!));
+                    const dist = getDistanceFromLatLonInKm(
+                        input.latitude,
+                        input.longitude,
+                        parseFloat(spot.latitude!),
+                        parseFloat(spot.longitude!)
+                    );
                     return dist <= input.radiusKm;
                 })
                 .map(({ spot, user }) => ({
@@ -93,6 +124,7 @@ export const spotRouter = router({
                     } : null
                 }));
         }),
+
 
     getById: publicProcedure
         .input(z.object({ id: z.number() }))
@@ -121,24 +153,30 @@ export const spotRouter = router({
 
     getRankings: publicProcedure
         .query(async () => {
-            const allSpots = await db.select()
+            // Get most visited/popular spots
+            const popularSpots = await db.select({
+                spot: spots,
+                visits_count: sql<number>`count(${visits.id})`.mapWith(Number)
+            })
                 .from(spots)
-                .where(eq(spots.active, true));
+                .leftJoin(visits, eq(spots.id, visits.spotId))
+                .where(eq(spots.active, true))
+                .groupBy(spots.id)
+                .orderBy(desc(sql`count(${visits.id})`))
+                .limit(10);
 
-            // Calculate consumed points and sort
-            const ranked = allSpots.map(s => ({
-                id: s.id,
-                name: s.name,
-                country: '📍', // Mock flag for now, or infer from coords later
-                points: (s.totalPoints || 0) - (s.remainingPoints || 0),
-                lat: parseFloat(s.latitude || '0'),
-                lng: parseFloat(s.longitude || '0'),
-                trend: Math.random() > 0.5 ? 'up' : 'down', // 100% Mock trend for MVP
-                activeUsers: Math.floor(Math.random() * 50) // Mock active users
-            })).sort((a, b) => b.points - a.points).slice(0, 10);
-
-            return ranked;
+            return popularSpots.map(({ spot, visits_count }) => ({
+                id: spot.id,
+                name: spot.name,
+                country: '📍',
+                points: (spot.totalPoints || 0) - (spot.remainingPoints || 0),
+                lat: parseFloat(spot.latitude || '0'),
+                lng: parseFloat(spot.longitude || '0'),
+                trend: visits_count > 5 ? 'up' : 'stable', // Simple trend logic
+                activeUsers: visits_count,
+            })).sort((a, b) => b.activeUsers - a.activeUsers);
         }),
+
 
     getMessages: publicProcedure
         .input(z.object({ spotId: z.number() }))
