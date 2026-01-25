@@ -37,7 +37,7 @@ export const visitRouter = router({
                 spotId: spot.id,
                 getterId: ctx.user.id,
                 checkInTime: new Date(),
-                earnedPoints: 0,
+                earnedPoints: '0',
             }).returning();
 
             // --- Quest Logic: Update "Visit" Quests ---
@@ -149,51 +149,81 @@ export const visitRouter = router({
             }
 
             // Calculate Points & XP (Scale based on spot's rate)
-            // If rate is 100 P/min, a 5s heartbeat should give ~8 points (100 / 12).
+            // Heartbeats happen every 5 seconds. 60 / 5 = 12 heartbeats per minute.
             const ratePerMin = (visit.spot as any).ratePerMinute || 10;
-            const earnedAmount = Math.max(1, Math.floor(ratePerMin / 12));
-            const earnedXp = Math.max(1, Math.floor(earnedAmount / 2));
+            const increment = ratePerMin / 12; // Fractional increment
+            const xpIncrement = increment / 2;
 
-            // 1. Update Spot Activity & Level Up
+            // 1. Update Visit Record (Accumulate fractional points)
+            const oldEarned = parseFloat(visit.earnedPoints || '0');
+            const newEarned = oldEarned + increment;
+
+            await db.update(visits)
+                .set({ earnedPoints: newEarned.toString() })
+                .where(eq(visits.id, visit.id));
+
+            // 2. Calculate Wallet Update (Only add if integer part increased)
+            const walletAward = Math.floor(newEarned) - Math.floor(oldEarned);
+
+            if (walletAward > 0) {
+                await db.update(wallets)
+                    .set({
+                        currentBalance: sql`${wallets.currentBalance} + ${walletAward}`,
+                        lastTransactionAt: new Date()
+                    })
+                    .where(eq(wallets.userId, ctx.user.id));
+
+                // Log Transaction (only for integer gains to avoid spamming tx history)
+                await db.insert(transactions).values({
+                    userId: ctx.user.id,
+                    amount: walletAward,
+                    type: 'earn',
+                    description: `Farmed at ${visit.spot.name}`
+                });
+            }
+
+            // 3. Update Spot Activity & Level Up
             const currentSpot = await db.query.spots.findFirst({ where: eq(spots.id, visit.spot.id) });
             let newSpotLevel = currentSpot?.spotLevel || 1;
             let currentSpotActivity = (currentSpot?.totalActivity || 0) + 1;
 
-            // Spot levels up every 500 activity units
             if (currentSpotActivity >= newSpotLevel * 500) {
                 newSpotLevel += 1;
             }
 
             await db.update(spots)
                 .set({
-                    remainingPoints: sql`${spots.remainingPoints} - ${earnedAmount}`,
+                    remainingPoints: sql`${spots.remainingPoints} - ${increment}`, // Spot points also drain fractionally
                     totalActivity: currentSpotActivity,
                     spotLevel: newSpotLevel
                 })
                 .where(eq(spots.id, visit.spot.id));
 
-            // 2. Add to User Wallet
-            await db.update(wallets)
-                .set({
-                    currentBalance: sql`${wallets.currentBalance} + ${earnedAmount}`,
-                    lastTransactionAt: new Date()
-                })
-                .where(eq(wallets.userId, ctx.user.id));
-
-            // 3. Add XP & Check Level Up
+            // 4. Update XP & Check Level Up
             const currentUser = await db.query.users.findFirst({
                 where: eq(users.id, ctx.user.id)
             });
 
             let newLevel = currentUser?.level || 1;
-            let currentXp = (currentUser?.xp || 0) + earnedXp;
-            let didLevelUp = false;
+            let currentXp = (currentUser?.xp || 0) + Math.floor(xpIncrement * 10); // Use a multiplier for XP to avoid integer loss if xp is int
+            // Actually XP is integer. Let's just track fractional XP in user table too?
+            // For now, let's keep it simple: award 1 XP if increment > 0.5 or accumulated.
 
+            // Better: just use integer for XP but scale it up if needed.
+            // Let's assume XP is also fractional or just award 1 every few heartbeats.
+            // Let's just award 1 XP every heartbeat for now, or match it.
+            let earnedXp = Math.max(1, Math.floor(xpIncrement));
+
+            let didLevelUp = false;
             const xpNeeded = newLevel * 100;
-            if (currentXp >= xpNeeded) {
+            const totalXp = (currentUser?.xp || 0) + earnedXp;
+
+            if (totalXp >= xpNeeded) {
                 newLevel += 1;
-                currentXp -= xpNeeded;
+                currentXp = totalXp - xpNeeded;
                 didLevelUp = true;
+            } else {
+                currentXp = totalXp;
             }
 
             await db.update(users)
@@ -203,16 +233,8 @@ export const visitRouter = router({
                 })
                 .where(eq(users.id, ctx.user.id));
 
-            // 4. Log Transaction
-            await db.insert(transactions).values({
-                userId: ctx.user.id,
-                amount: earnedAmount,
-                type: 'earn',
-                description: `Farmed at ${visit.spot.name}`
-            });
-
             return {
-                earnedPoints: earnedAmount,
+                earnedPoints: walletAward,
                 earnedXp,
                 newLevel: didLevelUp ? newLevel : undefined,
                 currentXp,

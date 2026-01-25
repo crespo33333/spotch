@@ -18,7 +18,8 @@
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyCGaeG60-Fe-g9grrH7GJ290Nqq6UFrDMo"
-        }
+        },
+        "usesNonExemptEncryption": false
       },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -61,14 +62,8 @@
           }
         }
       ],
-      [
-        "@stripe/stripe-react-native",
-        {
-          "merchantIdentifier": "merchant.com.spotch.app",
-          "enableGooglePay": true
-        }
-      ],
-      "expo-localization"
+      "expo-localization",
+      "@stripe/stripe-react-native"
     ],
     "scheme": "spotch",
     "extra": {

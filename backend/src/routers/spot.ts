@@ -13,6 +13,7 @@ export const spotRouter = router({
             longitude: z.number(),
             totalPoints: z.number().min(100),
             ratePerMinute: z.number().min(1),
+            category: z.string().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
             // Check Balance
@@ -48,6 +49,7 @@ export const spotRouter = router({
                 totalPoints: input.totalPoints,
                 remainingPoints: input.totalPoints,
                 ratePerMinute: input.ratePerMinute,
+                category: input.category || 'General',
                 active: true,
             }).returning();
 

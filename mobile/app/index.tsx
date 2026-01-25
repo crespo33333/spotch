@@ -15,7 +15,7 @@ export default function Index() {
     const checkAuth = async () => {
         try {
             const userId = await getStoredUserId();
-            if (userId && userId !== '2') { // '2' is the temporary dev ID, we might want to force login if it's '2' or just allow it
+            if (userId) {
                 setHasSession(true);
             }
         } catch (e) {

@@ -19,29 +19,30 @@ export default function LeaderboardScreen() {
         return (
             <TouchableOpacity
                 onPress={() => router.push(`/user/${item.id}`)}
-                className={`flex-row items-center mb-3 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm ${isTop3 ? 'border-b-4 border-b-slate-100' : ''}`}
+                className={`flex-row items-center mb-4 bg-white p-4 rounded-[24px] border-4 border-black ${isTop3 ? 'bg-yellow-50' : ''}`}
+                style={{ shadowColor: "#000", shadowOffset: { width: 4, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}
             >
-                <View className="w-10 items-center justify-center mr-2">
-                    {isTop3 ? (
-                        <Ionicons name="trophy" size={24} color={rankColor} />
-                    ) : (
-                        <Text className="text-lg font-black text-slate-400">{index + 1}</Text>
-                    )}
+                <View className={`w-12 h-12 items-center justify-center mr-3 rounded-full border-2 border-black ${index === 0 ? 'bg-[#FFD700]' : index === 1 ? 'bg-[#C0C0C0]' : index === 2 ? 'bg-[#CD7F32]' : 'bg-white'}`}>
+                    <Text className="font-black text-lg text-black">#{index + 1}</Text>
                 </View>
 
-                <Avatar seed={item.avatar} size={48} />
+                <View className="relative">
+                    <View className="p-0.5 rounded-full border-2 border-black bg-white">
+                        <Avatar seed={item.avatar} size={48} />
+                    </View>
+                </View>
 
                 <View className="flex-1 ml-3">
                     <View className="flex-row items-center gap-2">
-                        <Text className="font-bold text-slate-800 text-lg">{item.name}</Text>
-                        {index === 0 && <View className="bg-yellow-100 px-2 py-0.5 rounded-full"><Text className="text-[10px] text-yellow-700 font-bold">KING</Text></View>}
+                        <Text className="font-black text-black text-lg tracking-tight" numberOfLines={1}>{item.name}</Text>
+                        {index === 0 && <View className="bg-black px-2 py-0.5 rounded-full"><Text className="text-[10px] text-yellow-400 font-black">KING</Text></View>}
                     </View>
-                    <Text className="text-xs text-slate-400 font-bold">Lv.{item.level || 1} Explorer</Text>
+                    <Text className="text-xs text-slate-500 font-bold uppercase tracking-wide">Lv.{item.level || 1} Explorer</Text>
                 </View>
 
-                <View className="items-end">
-                    <Text className="font-black text-slate-800 text-lg">{item.xp?.toLocaleString() || 0}</Text>
-                    <Text className="text-[10px] text-cyan-500 font-bold tracking-widest">XP</Text>
+                <View className="items-end bg-black/5 px-2 py-1 rounded-lg">
+                    <Text className="font-black text-black text-lg">{item.xp?.toLocaleString() || 0}</Text>
+                    <Text className="text-[10px] text-[#00C2FF] font-black tracking-widest">XP</Text>
                 </View>
             </TouchableOpacity>
         );
@@ -50,27 +51,27 @@ export default function LeaderboardScreen() {
     return (
         <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
             {/* Header */}
-            <View className="px-6 py-4 bg-white border-b border-slate-100">
+            <View className="px-6 py-4 bg-white border-b-4 border-black">
                 <View className="flex-row items-center justify-between mb-4">
-                    <Text className="text-3xl font-black text-slate-800 italic tracking-tighter">RANKING</Text>
-                    <TouchableOpacity className="bg-slate-100 p-2 rounded-full">
-                        <Ionicons name="filter" size={20} color="#94a3b8" />
+                    <Text className="text-4xl font-black text-black italic tracking-tighter">RANKING</Text>
+                    <TouchableOpacity className="bg-black p-2 rounded-full border-2 border-black active:bg-gray-800">
+                        <Ionicons name="filter" size={20} color="white" />
                     </TouchableOpacity>
                 </View>
 
                 {/* Filter Tabs */}
-                <View className="flex-row bg-slate-100 p-1 rounded-xl">
+                <View className="flex-row bg-slate-100 p-1.5 rounded-full border-2 border-slate-200">
                     <TouchableOpacity
                         onPress={() => setFilter('all')}
-                        className={`flex-1 py-2 items-center rounded-lg ${filter === 'all' ? 'bg-white shadow-sm' : ''}`}
+                        className={`flex-1 py-2 items-center rounded-full ${filter === 'all' ? 'bg-white border-2 border-black' : ''}`}
                     >
-                        <Text className={`font-bold ${filter === 'all' ? 'text-slate-800' : 'text-slate-400'}`}>All Time</Text>
+                        <Text className={`font-black ${filter === 'all' ? 'text-black' : 'text-slate-400'}`}>ALL TIME</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={() => setFilter('weekly')}
-                        className={`flex-1 py-2 items-center rounded-lg ${filter === 'weekly' ? 'bg-white shadow-sm' : ''}`}
+                        className={`flex-1 py-2 items-center rounded-full ${filter === 'weekly' ? 'bg-white border-2 border-black' : ''}`}
                     >
-                        <Text className={`font-bold ${filter === 'weekly' ? 'text-slate-800' : 'text-slate-400'}`}>Weekly</Text>
+                        <Text className={`font-black ${filter === 'weekly' ? 'text-black' : 'text-slate-400'}`}>WEEKLY</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -89,11 +90,11 @@ export default function LeaderboardScreen() {
                     onRefresh={refetch}
                     refreshing={isRefetching}
                     ListHeaderComponent={() => (
-                        <View className="mb-6 flex-row items-center justify-center gap-4 bg-[#00C2FF] p-6 rounded-3xl shadow-lg shadow-cyan-200">
+                        <View className="mb-6 flex-row items-center justify-center gap-4 bg-[#00C2FF] p-6 rounded-[24px] border-4 border-black" style={{ shadowColor: "#000", shadowOffset: { width: 4, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}>
                             <Ionicons name="planet" size={48} color="white" />
                             <View>
-                                <Text className="text-white font-black text-xl">GLOBAL ELITE</Text>
-                                <Text className="text-cyan-100 font-bold text-xs">Top players worldwide</Text>
+                                <Text className="text-white font-black text-2xl italic tracking-tighter">GLOBAL ELITE</Text>
+                                <Text className="text-black font-bold text-xs uppercase bg-white/30 px-2 py-0.5 rounded-full self-start mt-1">Top players worldwide</Text>
                             </View>
                         </View>
                     )}

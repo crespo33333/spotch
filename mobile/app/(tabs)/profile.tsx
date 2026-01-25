@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getCreatureAvatar } from '../../utils/avatar';
 import { Avatar } from '../../components/Avatar';
 import { trpc } from '../../utils/api';
+import { Skeleton } from '../../components/Skeleton';
 
 // ... (Mock Data stays the same for now)
 const RANKINGS = [
@@ -87,8 +88,21 @@ export default function ProfileScreen() {
 
     if (isLoadingUser || isLoadingTx) {
         return (
-            <SafeAreaView className="flex-1 bg-background justify-center items-center">
-                <ActivityIndicator size="large" color="#FF4785" />
+            <SafeAreaView className="flex-1 bg-white p-6">
+                {/* Skeleton Header */}
+                <View className="flex-row items-center gap-4 mb-8">
+                    <Skeleton width={60} height={60} borderRadius={30} />
+                    <View>
+                        <Skeleton width={120} height={24} style={{ marginBottom: 8 }} />
+                        <Skeleton width={180} height={16} />
+                    </View>
+                </View>
+                {/* Skeleton Chart */}
+                <Skeleton width="100%" height={200} borderRadius={40} style={{ marginBottom: 20 }} />
+                {/* Skeleton List */}
+                <Skeleton width="100%" height={80} borderRadius={24} style={{ marginBottom: 12 }} />
+                <Skeleton width="100%" height={80} borderRadius={24} style={{ marginBottom: 12 }} />
+                <Skeleton width="100%" height={80} borderRadius={24} />
             </SafeAreaView>
         );
     }
@@ -115,7 +129,22 @@ export default function ProfileScreen() {
                                 </View>
                             </View>
                             <View>
-                                <Text className="text-xl font-black text-black tracking-tight">{user?.name || 'Explorer'}</Text>
+                                <View className="flex-row items-center gap-2">
+                                    <Text className="text-xl font-black text-black tracking-tight">{user?.name || 'Explorer'}</Text>
+                                    <TouchableOpacity
+                                        onPress={() => router.push('/edit-profile')}
+                                        className="bg-slate-100 px-2 py-1 rounded-full"
+                                    >
+                                        <Text className="text-[10px] font-bold text-slate-500">Edit</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* Bio Snippet (New) */}
+                                {user?.bio ? (
+                                    <Text className="text-xs text-gray-400 font-medium mb-1 line-clamp-1" numberOfLines={1}>
+                                        {user.bio}
+                                    </Text>
+                                ) : null}
 
                                 {/* XP Bar */}
                                 <View className="flex-row items-center gap-2 mt-1">
@@ -270,7 +299,7 @@ export default function ProfileScreen() {
                     {/* Social & Quest Actions */}
                     <View className="flex-row gap-3 mb-8">
                         <TouchableOpacity
-                            onPress={() => router.push('/search-users')}
+                            onPress={() => router.push('/social')}
                             className="flex-1 flex-row items-center justify-center gap-2 bg-slate-100 py-4 rounded-2xl active:bg-slate-200 border border-slate-200"
                         >
                             <Ionicons name="person-add" size={18} color="#475569" />

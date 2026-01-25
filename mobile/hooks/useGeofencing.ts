@@ -58,14 +58,8 @@ export function useGeofencing(
             }
 
             if (isInside && !result.isInside && closest && !isIgnored) {
-                Notifications.scheduleNotificationAsync({
-                    content: {
-                        title: "📍 You found a Spot!",
-                        body: `Check in at ${(closest as Spot).name} to earn points!`,
-                        sound: true,
-                    },
-                    trigger: null, // Send immediately
-                });
+                // Notifications disabled to prevent crash
+                console.log("Found spot:", (closest as Spot).name);
             }
 
             setResult({

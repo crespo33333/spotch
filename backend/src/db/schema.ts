@@ -13,6 +13,7 @@ export const users = pgTable('users', {
     email: varchar('email', { length: 255 }),
     deviceId: varchar('device_id', { length: 255 }),
     avatar: varchar('avatar', { length: 255 }).default('default_seed'),
+    bio: text('bio'),
     xp: integer('xp').default(0),
     level: integer('level').default(1),
     role: roleEnum('role').default('user'),
@@ -47,7 +48,7 @@ export const visits = pgTable('visits', {
     getterId: integer('getter_id').references(() => users.id),
     checkInTime: timestamp('check_in_time'),
     checkOutTime: timestamp('check_out_time'),
-    earnedPoints: integer('earned_points'),
+    earnedPoints: decimal('earned_points', { precision: 12, scale: 4 }).default('0'),
     createdAt: timestamp('created_at').defaultNow(),
 });
 

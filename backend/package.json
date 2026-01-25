@@ -4,7 +4,7 @@
     "description": "Backend for Spotch app",
     "main": "src/server.ts",
     "scripts": {
-        "build": "echo 'Skipping build for tsx'",
+        "build": "echo 'Skipping build for tsx mode'",
         "start": "tsx src/server.ts",
         "dev": "tsx watch src/server.ts",
         "db:push": "drizzle-kit push:pg",

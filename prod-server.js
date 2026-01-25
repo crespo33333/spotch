@@ -1,15 +1,15 @@
-import express from 'express';
-import cors from 'cors';
-import * as trpcExpress from '@trpc/server/adapters/express';
-import { appRouter } from './routers';
-import { createContext } from './context';
-import * as dotenv from 'dotenv';
-import path from 'path';
-import { db } from './db';
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 
-dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 4000;
+
+app.use(cors());
 
 // --- CONSTANTS ---
+// --- STYLES ---
 const COMMON_STYLE = `
     <style>
         body { background: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #334155; line-height: 1.6; padding: 40px 20px; }
@@ -25,6 +25,7 @@ const COMMON_STYLE = `
     </style>
 `;
 
+// --- CONSTANTS ---
 const PRIVACY_POLICY = `
 <!DOCTYPE html>
 <html>
@@ -79,114 +80,89 @@ const PRIVACY_POLICY = `
 </html>
 `;
 
-const app = express();
-const PORT = process.env.PORT || 4000;
+const SUPPORT_PAGE = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotch Support</title>
+    ${COMMON_STYLE}
+    <style> .center-content { text-align: center; } </style>
+</head>
+<body>
+    <div class="container center-content">
+        <h1>Need Help?</h1>
+        <p>We are here to assist you with any questions or issues.</p>
+        
+        <div style="background: #f1f5f9; padding: 30px; border-radius: 15px; margin: 30px 0;">
+            <p style="margin-bottom: 10px; font-weight: bold; color: #64748b;">Contact Support</p>
+            <a href="mailto:support@spotch.app" style="font-size: 1.5rem; font-weight: bold; color: #00C2FF; text-decoration: none;">support@spotch.app</a>
+        </div>
 
-app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        return callback(null, true);
-    },
-    credentials: true,
-}));
+        <p style="color: #64748b; font-size: 0.9rem;">Typical response time: Within 24 hours</p>
 
-app.use(
-    '/trpc',
-    trpcExpress.createExpressMiddleware({
-        router: appRouter,
-        createContext,
-    })
-);
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+</body>
+</html>
+`;
 
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
-});
+// --- ROUTES ---
 
-// Robust Static Path Resolution
-import fs from 'fs';
+app.get('/privacy', (req, res) => res.send(PRIVACY_POLICY));
+app.get('/support', (req, res) => res.send(SUPPORT_PAGE));
+app.get('/health', (req, res) => res.send('OK'));
+
+// --- STATIC FILES (Best Effort) ---
+// Try to find the public folder in common locations
 const searchPaths = [
-    path.join(__dirname, '../public'),
     path.join(__dirname, 'public'),
+    path.join(__dirname, '../public'),
     path.join(process.cwd(), 'public'),
-    path.join(process.cwd(), 'backend/public'),
+    path.join(process.cwd(), 'backend/public')
 ];
 
-let PUBLIC_PATH = path.join(__dirname, '../public'); // Default
+let PUBLIC_PATH = null;
 for (const p of searchPaths) {
     if (fs.existsSync(p)) {
-        console.log(`✅ Found public folder at: ${p}`);
+        console.log(`[PROD] Found public folder at: ${p}`);
         PUBLIC_PATH = p;
         break;
-    } else {
-        console.log(`❌ Public folder not found at: ${p}`);
     }
 }
 
-app.use(express.static(PUBLIC_PATH));
-
-app.get('/', (req, res) => {
-    const indexPath = path.join(PUBLIC_PATH, 'index.html');
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
+if (PUBLIC_PATH) {
+    app.use(express.static(PUBLIC_PATH));
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(PUBLIC_PATH, 'index.html'));
+    });
+} else {
+    // Fallback if static files fail
+    app.get('/', (req, res) => {
         res.send(`
-            <h1>Maintenance Mode</h1>
-            <p>Landing page is compiling...</p>
-            <p>Debug Info: Public Path = ${PUBLIC_PATH}</p>
+            <html>
+                <body style="font-family:sans-serif; text-align:center; padding:50px;">
+                    <h1>Spotch Server is Running (v1.0.8)</h1>
+                    <p>Privacy Policy and Support pages are active.</p>
+                    <p style="color:red">Warning: Static assets not found.</p>
+                    <a href="/privacy">Privacy Policy</a> | <a href="/support">Support</a>
+                </body>
+            </html>
         `);
-    }
-});
+    });
+}
 
-app.get('/health', (req, res) => res.send('OK'));
-
-app.get('/db-test', async (req, res) => {
-    try {
-        const result = await db.query.users.findMany({ limit: 1 });
-        res.json({ status: 'OK', userCount: result.length, message: 'Database is connected!' });
-    } catch (e: any) {
-        console.error('DB Test Failed:', e);
-        res.status(500).json({ status: 'ERROR', error: e.message });
-    }
-});
-
-app.get('/debug-fs', (req, res) => {
-    try {
-        const rootFiles = fs.readdirSync(process.cwd());
-        const distFiles = fs.existsSync(path.join(process.cwd(), 'dist')) ? fs.readdirSync(path.join(process.cwd(), 'dist')) : ['No dist'];
-        const publicFiles = fs.existsSync(PUBLIC_PATH) ? fs.readdirSync(PUBLIC_PATH) : ['No public'];
-        res.json({
-            cwd: process.cwd(),
-            __dirname,
-            rootFiles,
-            distFiles,
-            publicFiles,
-            env: process.env.NODE_ENV
-        });
-    } catch (e) {
-        res.json({ error: String(e) });
-    }
-});
-
-// Catch-all for debugging (MUST BE LAST)
+// --- CATCH ALL ---
 app.use('*', (req, res) => {
-    console.log(`Fallback hit for: ${req.url} - Current Public Path: ${PUBLIC_PATH}`);
-    res.status(200).send(`
-        <html>
-            <body style="font-family:sans-serif; text-align:center; padding:50px;">
-                <h1>Spotch is Alive</h1>
-                <p>You requested: ${req.url}</p>
-                <p>But we couldn't find the specific resource.</p>
-                <p>Landing page path: ${PUBLIC_PATH}</p>
-                <hr/>
-                <a href="/images/screenshot_05_fixed.png">Check Image</a>
-            </body>
-        </html>
-    `);
+    res.status(200).send(PUBLIC_PATH ? `
+        <h1>Spotch Global Fallback</h1>
+        <p>Resource not found.</p>
+        <a href="/">Go Home</a>
+    ` : 'Spotch Server Active (No Static Assets)');
 });
 
-// Bind to default host
+// --- START ---
 app.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`[PROD] Server running on port ${PORT}`);
 });

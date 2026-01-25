@@ -11,22 +11,50 @@ export default function VisitScreen() {
 
     const [seconds, setSeconds] = useState(0);
     const [earned, setEarned] = useState(0);
+    const [sessionVisit, setSessionVisit] = useState<any>(null);
 
+    const checkInMutation = trpc.visit.checkIn.useMutation();
+    const heartbeatMutation = trpc.visit.heartbeat.useMutation();
+
+    // 1. Initial Check-in
     useEffect(() => {
-        const interval = setInterval(() => {
-            setSeconds(s => {
-                const newSeconds = s + 1;
-                // Calculate earned points: (seconds / 60) * rate
-                setEarned(Math.floor((newSeconds / 60) * rate));
-                return newSeconds;
-            });
-        }, 1000);
+        const startVisit = async () => {
+            try {
+                const res = await checkInMutation.mutateAsync({
+                    spotId: parseInt(params.id as string),
+                    latitude: parseFloat(params.lat as string),
+                    longitude: parseFloat(params.lng as string),
+                });
+                setSessionVisit(res);
+            } catch (e: any) {
+                Alert.alert('Error', e.message || 'Failed to check in');
+                router.replace('/(tabs)');
+            }
+        };
+        startVisit();
+    }, []);
+
+    // 2. Heartbeat Timer (5s interval as requested)
+    useEffect(() => {
+        if (!sessionVisit) return;
+
+        const interval = setInterval(async () => {
+            setSeconds(s => s + 5);
+            try {
+                const res = await heartbeatMutation.mutateAsync({
+                    visitId: sessionVisit.id
+                });
+                // Accumulate earned points from response
+                setEarned(prev => prev + res.earnedPoints);
+            } catch (e) {
+                console.error('Heartbeat failed:', e);
+            }
+        }, 5000);
 
         return () => clearInterval(interval);
-    }, [rate]);
+    }, [sessionVisit]);
 
     const handleEndVisit = () => {
-        // TODO: Call Backend API to finalize visit
         Alert.alert('Visit Ended', `You earned ${earned} points!`, [
             { text: 'OK', onPress: () => router.replace('/(tabs)') }
         ]);

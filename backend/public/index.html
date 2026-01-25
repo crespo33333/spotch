@@ -142,17 +142,162 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-white py-12 border-t border-slate-200">
-        <div
-            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p class="text-slate-500 text-sm font-medium">© 2026 Spotch Team. All rights reserved.</p>
-            <div class="flex gap-6">
-                <a href="/privacy" class="text-slate-500 hover:text-black text-sm font-bold">Privacy Policy</a>
-                <a href="/support" class="text-slate-500 hover:text-black text-sm font-bold">Support</a>
+    <!-- How It Works -->
+    <section class="py-24 bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <span class="text-[#00C2FF] font-black tracking-widest uppercase text-sm">Game Guide</span>
+                <h2 class="text-4xl font-black text-slate-900 mt-2">How to Conquer</h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 relative">
+                <!-- Line connector for desktop -->
+                <div class="hidden md:block absolute top-12 left-0 w-full h-1 bg-slate-100 -z-10"></div>
+
+                <!-- Step 1 -->
+                <div class="text-center bg-white pt-4">
+                    <div
+                        class="w-24 h-24 mx-auto bg-slate-900 text-white rounded-full flex items-center justify-center text-3xl font-black mb-6 border-8 border-white shadow-xl">
+                        1</div>
+                    <h3 class="text-xl font-bold mb-2">Walk & Find</h3>
+                    <p class="text-slate-500 px-4">Open the map and walk towards the "Spots" scattered around your city.
+                    </p>
+                </div>
+                <!-- Step 2 -->
+                <div class="text-center bg-white pt-4">
+                    <div
+                        class="w-24 h-24 mx-auto bg-[#00C2FF] text-white rounded-full flex items-center justify-center text-3xl font-black mb-6 border-8 border-white shadow-xl">
+                        2</div>
+                    <h3 class="text-xl font-bold mb-2">Check-in</h3>
+                    <p class="text-slate-500 px-4">Once you are within 50 meters, tap the Check-in button to claim it.
+                    </p>
+                </div>
+                <!-- Step 3 -->
+                <div class="text-center bg-white pt-4">
+                    <div
+                        class="w-24 h-24 mx-auto bg-[#FF4785] text-white rounded-full flex items-center justify-center text-3xl font-black mb-6 border-8 border-white shadow-xl">
+                        3</div>
+                    <h3 class="text-xl font-bold mb-2">Dominance</h3>
+                    <p class="text-slate-500 px-4">Earn points, level up your rank, and become the owner of the
+                        territory.</p>
+                </div>
             </div>
         </div>
-    </footer>
+    </section>
+
+    <!-- App Showcase Gallery -->
+    <section class="py-24 bg-slate-900 text-white overflow-hidden relative">
+        <!-- Background Glow -->
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px] pointer-events-none">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <span class="text-[#00C2FF] font-black tracking-widest uppercase text-sm">Interface</span>
+                <h2 class="text-4xl font-black mb-4">Visual Experience</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">Designed with a focus on tactile checks and smooth map
+                    interactions. It feels good just to use.</p>
+            </div>
+
+            <!-- Scroll Container with Hide Scrollbar -->
+            <style>
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .no-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+            </style>
+
+            <div
+                class="flex gap-8 overflow-x-auto pb-12 snap-x snap-mandatory no-scrollbar justify-start md:justify-center px-4">
+
+                <!-- Image 1 -->
+                <div class="flex-shrink-0 snap-center transform hover:-translate-y-2 transition duration-300">
+                    <img src="/images/screenshot_02_fixed.png"
+                        class="w-72 rounded-[32px] border-8 border-slate-800 shadow-2xl bg-black">
+                    <p class="text-center mt-4 text-sm font-bold text-slate-500 uppercase tracking-widest">Quests</p>
+                </div>
+
+                <!-- Image 2 -->
+                <div class="flex-shrink-0 snap-center transform hover:-translate-y-2 transition duration-300">
+                    <img src="/images/screenshot_03_fixed.png"
+                        class="w-72 rounded-[32px] border-8 border-slate-800 shadow-2xl bg-black">
+                    <p class="text-center mt-4 text-sm font-bold text-slate-500 uppercase tracking-widest">Profile</p>
+                </div>
+
+                <!-- Image 3 -->
+                <div class="flex-shrink-0 snap-center transform hover:-translate-y-2 transition duration-300">
+                    <img src="/images/screenshot_04_fixed.png"
+                        class="w-72 rounded-[32px] border-8 border-slate-800 shadow-2xl bg-black">
+                    <p class="text-center mt-4 text-sm font-bold text-slate-500 uppercase tracking-widest">Rankings</p>
+                </div>
+
+                <!-- Image 4 -->
+                <div class="flex-shrink-0 snap-center transform hover:-translate-y-2 transition duration-300">
+                    <img src="/images/screenshot_05_fixed.png"
+                        class="w-72 rounded-[32px] border-8 border-slate-800 shadow-2xl bg-black">
+                    <p class="text-center mt-4 text-sm font-bold text-slate-500 uppercase tracking-widest">Map</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="py-24 bg-white">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-black text-center mb-16">Frequently Asked</h2>
+
+            <div class="space-y-6">
+                <div class="border-b border-slate-100 pb-6">
+                    <h3 class="font-bold text-lg mb-2">Is it free to play?</h3>
+                    <p class="text-slate-500">Yes! Spotch is completely free to download and play. We offer optional
+                        cosmetic items, but gameplay is fair for everyone.</p>
+                </div>
+                <div class="border-b border-slate-100 pb-6">
+                    <h3 class="font-bold text-lg mb-2">Does it drain my battery?</h3>
+                    <p class="text-slate-500">We optimized the location engine to only use high-accuracy GPS when the
+                        app is open. Background impact is minimal.</p>
+                </div>
+                <div class="border-b border-slate-100 pb-6">
+                    <h3 class="font-bold text-lg mb-2">Can I play in my country?</h3>
+                    <p class="text-slate-500">Yes, "Spots" are generated globally! Whether you are in Tokyo, New York,
+                        or London, you will find territories to claim.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section id="download" class="py-24 bg-[#00C2FF] text-white text-center">
+        <div class="max-w-4xl mx-auto px-4">
+            <h2 class="text-4xl md:text-6xl font-black mb-8">Ready to Explore?</h2>
+            <p class="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">Join thousands of players claiming their cities
+                today. Don't let your neighborhood be taken by someone else.</p>
+            <button
+                class="bg-white text-[#00C2FF] px-10 py-4 rounded-full font-black text-xl hover:scale-105 transition shadow-xl inline-flex items-center gap-2">
+                Download Now
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+            </button>
+        </div>
+
+        <footer class="bg-white py-12 border-t border-slate-200">
+            <div
+                class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                <p class="text-slate-500 text-sm font-medium">© 2026 Spotch Team. All rights reserved.</p>
+                <div class="flex gap-6">
+                    <a href="/privacy" class="text-slate-500 hover:text-black text-sm font-bold">Privacy Policy</a>
+                    <a href="/support" class="text-slate-500 hover:text-black text-sm font-bold">Support</a>
+                </div>
+            </div>
+        </footer>
 
 </body>
 

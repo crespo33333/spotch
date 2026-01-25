@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure } from '../trpc';
 import { db } from '../db';
-import { follows, spotLikes, spots, users, broadcasts } from '../db/schema';
+import { follows, spotLikes, spots, users, broadcasts, visits } from '../db/schema';
 import { eq, inArray, desc } from 'drizzle-orm';
 
 export const activityRouter = router({
@@ -40,6 +40,17 @@ export const activityRouter = router({
                 limit: 10,
             });
 
+            // 4. Fetch recent visits (check-ins) by following users
+            const recentVisits = await db.query.visits.findMany({
+                where: inArray(visits.getterId, followingIds),
+                with: {
+                    getter: true,
+                    spot: true,
+                },
+                orderBy: [desc(visits.createdAt)],
+                limit: 10,
+            });
+
             // Combine and format
             const activities = [
                 ...recentLikes.map(l => ({
@@ -59,6 +70,15 @@ export const activityRouter = router({
                     action: `が新しいスポット「${s.name}」を作成しました`,
                     avatar: s.spotter?.avatar,
                     createdAt: s.createdAt,
+                })),
+                ...recentVisits.map(v => ({
+                    id: `visit-${v.id}`,
+                    type: 'visit' as const,
+                    userId: v.getter.id,
+                    user: v.getter.name,
+                    action: `が「${v.spot.name}」にチェックインしました`,
+                    avatar: v.getter.avatar,
+                    createdAt: v.createdAt,
                 })),
             ];
 

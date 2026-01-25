@@ -41,7 +41,7 @@ export default function MapScreen() {
     ];
 
     useEffect(() => {
-        if (serverSpots && serverSpots.length > 0) {
+        if (serverSpots) {
             // Map backend spot to frontend spot interface
             const mappedSpots: Spot[] = serverSpots.map((s: any) => ({
                 id: s.id,
@@ -59,8 +59,6 @@ export default function MapScreen() {
                 } : undefined
             }));
             setSpots(mappedSpots);
-        } else {
-            setSpots(DUMMY_SPOTS);
         }
     }, [serverSpots]);
 

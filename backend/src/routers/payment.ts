@@ -17,10 +17,11 @@ export const paymentRouter = router({
             points: z.number().min(100)
         }))
         .mutation(async ({ ctx, input }) => {
+            console.log(`[Stripe] Creating PaymentIntent for User: ${ctx.user.id}, Amount: ${input.amount}, Points: ${input.points}`);
             try {
                 const paymentIntent = await stripe.paymentIntents.create({
                     amount: input.amount,
-                    currency: "usd",
+                    currency: "jpy", // Changed to JPY as requested/indicated by merchant country
                     automatic_payment_methods: { enabled: true },
                     metadata: {
                         userId: ctx.user.id.toString(),
@@ -28,10 +29,12 @@ export const paymentRouter = router({
                     },
                 });
 
+                console.log(`[Stripe] PaymentIntent created successfully: ${paymentIntent.id}`);
                 return {
                     clientSecret: paymentIntent.client_secret,
                 };
             } catch (error: any) {
+                console.error(`[Stripe] Error creating PaymentIntent:`, error);
                 throw new TRPCError({
                     code: "INTERNAL_SERVER_ERROR",
                     message: error.message,

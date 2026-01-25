@@ -190,6 +190,7 @@ export default function AppMapView({
     center,
     spots,
     onLongPressLocation,
+    onRegionChangeComplete,
     userAvatar
 }: {
     center?: { lat: number, lng: number },

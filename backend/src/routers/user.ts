@@ -66,6 +66,23 @@ export const userRouter = router({
             return { success: true };
         }),
 
+    updateProfile: protectedProcedure
+        .input(z.object({
+            name: z.string().min(2).max(50),
+            bio: z.string().max(160).optional(),
+            avatar: z.string().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            await db.update(users)
+                .set({
+                    name: input.name,
+                    bio: input.bio,
+                    avatar: input.avatar,
+                })
+                .where(eq(users.id, ctx.user.id));
+            return { success: true };
+        }),
+
     follow: protectedProcedure
         .input(z.object({
             targetUserId: z.number(),
@@ -161,12 +178,23 @@ export const userRouter = router({
 
     searchUsers: protectedProcedure
         .input(z.object({ query: z.string() }))
-        .query(async ({ input }) => {
-            const { ilike } = require('drizzle-orm');
-            return await db.query.users.findMany({
+        .query(async ({ ctx, input }) => {
+            const { ilike, eq, and } = require('drizzle-orm');
+
+            const searchResults = await db.query.users.findMany({
                 where: ilike(users.name, `%${input.query}%`),
                 limit: 10,
+                with: {
+                    followers: true, // Fetch followers to check relationship
+                }
             });
+
+            return searchResults.map(user => ({
+                id: user.id,
+                name: user.name,
+                avatar: user.avatar,
+                isFollowing: user.followers.some(f => f.followerId === ctx.user.id),
+            }));
         }),
 
     upgradeToPremium: protectedProcedure

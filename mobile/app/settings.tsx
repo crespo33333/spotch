@@ -111,8 +111,8 @@ export default function SettingsScreen() {
                 </Section>
 
                 <Section>
-                    <Item label={t('settings.terms')} onPress={() => router.push('/terms')} />
-                    <Item label={t('settings.privacy')} onPress={() => router.push('/privacy')} />
+                    <Item label={t('settings.terms')} onPress={() => router.push('/legal')} />
+                    <Item label={t('settings.privacy')} onPress={() => router.push('/legal')} />
                     <Item label={t('settings.contact')} onPress={handleContact} isLast />
                 </Section>
 
