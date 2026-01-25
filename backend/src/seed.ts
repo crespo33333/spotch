@@ -68,7 +68,12 @@ async function main() {
 
     // 2. Generate Spots
     const spotsToInsert: any[] = [];
-    const TOTAL_SPOTS_PER_CITY = 500;
+    const TOTAL_SPOTS_PER_CITY = 20;
+
+    // Reset Spots Table
+    console.log('Cleaning existing spots (and visits)...');
+    await db.delete(schema.visits);
+    await db.delete(schema.spots);
 
     for (const city of CITIES) {
         console.log(`Generating ${TOTAL_SPOTS_PER_CITY} spots for ${city.name}...`);
