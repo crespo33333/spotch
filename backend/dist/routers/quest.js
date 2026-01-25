@@ -54,8 +54,7 @@ exports.questRouter = (0, trpc_1.router)({
             }
         }
         else if (quest.conditionType === 'premium_status') {
-            // Check premium (not implemented yet, assume false)
-            isCompleted = false;
+            isCompleted = ctx.user.isPremium || false;
         }
         if (!isCompleted) {
             throw new server_1.TRPCError({ code: "BAD_REQUEST", message: "Quest requirements not met" });

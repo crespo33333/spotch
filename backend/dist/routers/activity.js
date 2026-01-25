@@ -88,7 +88,19 @@ exports.activityRouter = (0, trpc_1.router)({
             orderBy: [(0, drizzle_orm_1.desc)(schema_1.follows.createdAt)],
             limit: 20
         });
+        // 3. Official Broadcasts
+        const recentBroadcasts = await db_1.db.select().from(schema_1.broadcasts)
+            .orderBy((0, drizzle_orm_1.desc)(schema_1.broadcasts.createdAt))
+            .limit(5);
         const notifications = [
+            ...recentBroadcasts.map(b => ({
+                id: `broadcast-${b.id}`,
+                type: 'system',
+                user: { name: '運営チーム', avatar: 'default_seed' }, // Mock user structure
+                message: b.title, // Title as message? Or Body?
+                body: b.body, // Pass body too if possible
+                createdAt: b.createdAt
+            })),
             ...likes.map(l => ({
                 id: `like-${l.id}`,
                 type: 'like',

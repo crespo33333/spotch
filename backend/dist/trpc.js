@@ -9,6 +9,9 @@ exports.protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
     if (!ctx.user) {
         throw new server_1.TRPCError({ code: 'UNAUTHORIZED' });
     }
+    if (ctx.user.isBanned) {
+        throw new server_1.TRPCError({ code: 'FORBIDDEN', message: 'Your account has been suspended.' });
+    }
     return next({
         ctx: {
             user: ctx.user,

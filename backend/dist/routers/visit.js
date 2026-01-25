@@ -32,7 +32,65 @@ exports.visitRouter = (0, trpc_1.router)({
             checkInTime: new Date(),
             earnedPoints: 0,
         }).returning();
+        // --- Quest Logic: Update "Visit" Quests ---
+        const activeQuests = await db_1.db.select().from(schema_1.userQuests)
+            .leftJoin(schema_1.quests, (0, drizzle_orm_1.eq)(schema_1.userQuests.questId, schema_1.quests.id))
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.userQuests.userId, ctx.user.id), (0, drizzle_orm_1.eq)(schema_1.userQuests.status, 'in_progress'), (0, drizzle_orm_1.eq)(schema_1.quests.conditionType, 'visit_count')));
+        for (const { user_quests: uq, quests: q } of activeQuests) {
+            if (!uq || !q)
+                continue;
+            const newProgress = (uq.progress || 0) + 1;
+            let updates = { progress: newProgress };
+            if (newProgress >= q.conditionValue) {
+                updates.status = 'completed';
+                updates.completedAt = new Date();
+                await db_1.db.insert(schema_1.transactions).values({
+                    userId: ctx.user.id,
+                    amount: q.rewardPoints,
+                    type: 'earn',
+                    description: `Completed Quest: ${q.title}`
+                });
+                await db_1.db.update(schema_1.wallets)
+                    .set({ currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + ${q.rewardPoints}` })
+                    .where((0, drizzle_orm_1.eq)(schema_1.wallets.userId, ctx.user.id));
+            }
+            await db_1.db.update(schema_1.userQuests).set(updates).where((0, drizzle_orm_1.eq)(schema_1.userQuests.id, uq.id));
+        }
+        // ------------------------------------------
         return visit;
+    }),
+    // Check for Quests (Visit Type) => This logic could be shared
+    checkQuestProgress: trpc_1.protectedProcedure
+        .mutation(async ({ ctx }) => {
+        // Find active "Visit" quests
+        const activeQuests = await db_1.db.select().from(schema_1.userQuests)
+            .leftJoin(schema_1.quests, (0, drizzle_orm_1.eq)(schema_1.userQuests.questId, schema_1.quests.id))
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.userQuests.userId, ctx.user.id), (0, drizzle_orm_1.eq)(schema_1.userQuests.status, 'in_progress'), (0, drizzle_orm_1.eq)(schema_1.quests.conditionType, 'visit_count')));
+        for (const { user_quests: uq, quests: q } of activeQuests) {
+            if (!uq || !q)
+                continue;
+            const newProgress = (uq.progress || 0) + 1;
+            let updates = { progress: newProgress };
+            // Complete Quest
+            if (newProgress >= q.conditionValue) {
+                updates.status = 'completed';
+                updates.completedAt = new Date();
+                // Award Reward
+                await db_1.db.insert(schema_1.transactions).values({
+                    userId: ctx.user.id,
+                    amount: q.rewardPoints,
+                    type: 'earn',
+                    description: `Completed Quest: ${q.title}`
+                });
+                await db_1.db.update(schema_1.wallets)
+                    .set({ currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + ${q.rewardPoints}` })
+                    .where((0, drizzle_orm_1.eq)(schema_1.wallets.userId, ctx.user.id));
+            }
+            await db_1.db.update(schema_1.userQuests)
+                .set(updates)
+                .where((0, drizzle_orm_1.eq)(schema_1.userQuests.id, uq.id));
+        }
+        return { success: true };
     }),
     checkout: trpc_1.protectedProcedure
         .input(zod_1.z.object({

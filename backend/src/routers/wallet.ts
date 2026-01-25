@@ -5,7 +5,7 @@ import { eq, desc } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { z } from 'zod';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
     // apiVersion: '2023-10-16', // Let library handle default or use latest if needed
 });
 

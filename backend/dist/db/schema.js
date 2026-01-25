@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.spotMessagesRelations = exports.userQuestsRelations = exports.questsRelations = exports.followsRelations = exports.transactionsRelations = exports.walletsRelations = exports.visitsRelations = exports.spotLikesRelations = exports.spotsRelations = exports.usersRelations = exports.spotMessages = exports.spotLikes = exports.userQuests = exports.quests = exports.follows = exports.transactions = exports.wallets = exports.visits = exports.spots = exports.users = exports.questStatusEnum = exports.questConditionEnum = exports.txTypeEnum = exports.roleEnum = void 0;
+exports.spotMessagesRelations = exports.userQuestsRelations = exports.questsRelations = exports.followsRelations = exports.transactionsRelations = exports.walletsRelations = exports.visitsRelations = exports.spotLikesRelations = exports.spotsRelations = exports.usersRelations = exports.broadcasts = exports.spotMessages = exports.spotLikes = exports.userQuests = exports.quests = exports.follows = exports.transactions = exports.wallets = exports.visits = exports.spots = exports.users = exports.questStatusEnum = exports.questConditionEnum = exports.txTypeEnum = exports.roleEnum = void 0;
 const pg_core_1 = require("drizzle-orm/pg-core");
 const drizzle_orm_1 = require("drizzle-orm");
 exports.roleEnum = (0, pg_core_1.pgEnum)('role', ['user', 'admin']);
@@ -19,6 +19,7 @@ exports.users = (0, pg_core_1.pgTable)('users', {
     role: (0, exports.roleEnum)('role').default('user'),
     isBanned: (0, pg_core_1.boolean)('is_banned').default(false),
     pushToken: (0, pg_core_1.varchar)('push_token', { length: 255 }),
+    isPremium: (0, pg_core_1.boolean)('is_premium').default(false),
     createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
 });
 exports.spots = (0, pg_core_1.pgTable)('spots', {
@@ -96,11 +97,19 @@ exports.spotLikes = (0, pg_core_1.pgTable)('spot_likes', {
 }, (t) => ({
     unq: (0, pg_core_1.uniqueIndex)('spot_like_unq').on(t.userId, t.spotId),
 }));
+// Messages
 exports.spotMessages = (0, pg_core_1.pgTable)('spot_messages', {
     id: (0, pg_core_1.serial)('id').primaryKey(),
     spotId: (0, pg_core_1.integer)('spot_id').references(() => exports.spots.id, { onDelete: 'cascade' }).notNull(),
     userId: (0, pg_core_1.integer)('user_id').references(() => exports.users.id, { onDelete: 'cascade' }).notNull(),
     content: (0, pg_core_1.text)('content').notNull(),
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
+});
+exports.broadcasts = (0, pg_core_1.pgTable)('broadcasts', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    title: (0, pg_core_1.text)('title').notNull(),
+    body: (0, pg_core_1.text)('body').notNull(),
+    link: (0, pg_core_1.text)('link'),
     createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
 });
 // Relations

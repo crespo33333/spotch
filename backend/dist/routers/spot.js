@@ -64,14 +64,29 @@ exports.spotRouter = (0, trpc_1.router)({
         // Fetch spots and join with users to get spotter info
         // Since we don't have relations set up in schema.ts yet, let's just fetch users map or use a manual join query if possible.
         // Drizzle query builder is easier if we set up relations, but let's just join manually or fetch all users for now (MVP).
-        const allSpots = await db_1.db.select({
+        // Bounding Box Optimization
+        console.log('📍 getNearby called:', input);
+        // 1 degree lat ~= 111.32 km. 1 degree lng ~= 111.32 * cos(lat) km.
+        const latDeg = input.radiusKm / 111.32;
+        const lngDeg = input.radiusKm / (111.32 * Math.cos(deg2rad(input.latitude)));
+        const minLat = input.latitude - latDeg;
+        const maxLat = input.latitude + latDeg;
+        const minLng = input.longitude - Math.abs(lngDeg);
+        const maxLng = input.longitude + Math.abs(lngDeg);
+        console.log('📦 Bounding Box:', { minLat, maxLat, minLng, maxLng });
+        // Drizzle SQL query with casting for decimal comparisons
+        const nearbySpots = await db_1.db.select({
             spot: schema_1.spots,
             user: schema_1.users,
         })
             .from(schema_1.spots)
             .leftJoin(schema_1.users, (0, drizzle_orm_1.eq)(schema_1.spots.spotterId, schema_1.users.id))
-            .where((0, drizzle_orm_1.eq)(schema_1.spots.active, true));
-        return allSpots
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.spots.active, true), 
+        // Cast to numeric/decimal for comparison if needed, though usually string comparison works for simple range if formatted correctly.
+        // Safer to rely on raw SQL comparisons for string-stored decimals in SQLite/PG without strict typing.
+        (0, drizzle_orm_1.sql) `${schema_1.spots.latitude} >= ${minLat}::decimal`, (0, drizzle_orm_1.sql) `${schema_1.spots.latitude} <= ${maxLat}::decimal`, (0, drizzle_orm_1.sql) `${schema_1.spots.longitude} >= ${minLng}::decimal`, (0, drizzle_orm_1.sql) `${schema_1.spots.longitude} <= ${maxLng}::decimal`));
+        // Filtering circle distance in memory (much faster on small subset)
+        return nearbySpots
             .filter(({ spot }) => {
             const dist = getDistanceFromLatLonInKm(input.latitude, input.longitude, parseFloat(spot.latitude), parseFloat(spot.longitude));
             return dist <= input.radiusKm;
@@ -110,21 +125,27 @@ exports.spotRouter = (0, trpc_1.router)({
     }),
     getRankings: trpc_1.publicProcedure
         .query(async () => {
-        const allSpots = await db_1.db.select()
+        // Get most visited/popular spots
+        const popularSpots = await db_1.db.select({
+            spot: schema_1.spots,
+            visits_count: (0, drizzle_orm_1.sql) `count(${schema_1.visits.id})`.mapWith(Number)
+        })
             .from(schema_1.spots)
-            .where((0, drizzle_orm_1.eq)(schema_1.spots.active, true));
-        // Calculate consumed points and sort
-        const ranked = allSpots.map(s => ({
-            id: s.id,
-            name: s.name,
-            country: '📍', // Mock flag for now, or infer from coords later
-            points: (s.totalPoints || 0) - (s.remainingPoints || 0),
-            lat: parseFloat(s.latitude || '0'),
-            lng: parseFloat(s.longitude || '0'),
-            trend: Math.random() > 0.5 ? 'up' : 'down', // 100% Mock trend for MVP
-            activeUsers: Math.floor(Math.random() * 50) // Mock active users
-        })).sort((a, b) => b.points - a.points).slice(0, 10);
-        return ranked;
+            .leftJoin(schema_1.visits, (0, drizzle_orm_1.eq)(schema_1.spots.id, schema_1.visits.spotId))
+            .where((0, drizzle_orm_1.eq)(schema_1.spots.active, true))
+            .groupBy(schema_1.spots.id)
+            .orderBy((0, drizzle_orm_1.desc)((0, drizzle_orm_1.sql) `count(${schema_1.visits.id})`))
+            .limit(10);
+        return popularSpots.map(({ spot, visits_count }) => ({
+            id: spot.id,
+            name: spot.name,
+            country: '📍',
+            points: (spot.totalPoints || 0) - (spot.remainingPoints || 0),
+            lat: parseFloat(spot.latitude || '0'),
+            lng: parseFloat(spot.longitude || '0'),
+            trend: visits_count > 5 ? 'up' : 'stable', // Simple trend logic
+            activeUsers: visits_count,
+        })).sort((a, b) => b.activeUsers - a.activeUsers);
     }),
     getMessages: trpc_1.publicProcedure
         .input(zod_1.z.object({ spotId: zod_1.z.number() }))
@@ -175,6 +196,19 @@ exports.spotRouter = (0, trpc_1.router)({
                 spotId: input.spotId,
                 userId: ctx.user.id,
             });
+            // Notify Spot Owner
+            const spot = await db_1.db.query.spots.findFirst({
+                where: (0, drizzle_orm_1.eq)(schema_1.spots.id, input.spotId),
+                with: {
+                    spotter: {
+                        columns: { pushToken: true }
+                    }
+                }
+            });
+            if (spot?.spotter?.pushToken && spot.spotterId !== ctx.user.id) {
+                const { sendPushNotification } = require('../utils/push');
+                await sendPushNotification(spot.spotter.pushToken, "Spot Liked!", `${ctx.user.name} liked your spot "${spot.name}".`, { type: 'like', spotId: input.spotId });
+            }
             return { liked: true };
         }
     }),

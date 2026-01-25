@@ -15,6 +15,7 @@ exports.userRouter = (0, trpc_1.router)({
         name: zod_1.z.string(),
         avatar: zod_1.z.string().default('default_seed'), // New: Accept avatar seed
         deviceId: zod_1.z.string().optional(),
+        pushToken: zod_1.z.string().optional(),
     }))
         .mutation(async ({ input }) => {
         const existingUser = await db_1.db.query.users.findFirst({
@@ -31,6 +32,7 @@ exports.userRouter = (0, trpc_1.router)({
             name: input.name,
             avatar: input.avatar,
             deviceId: input.deviceId,
+            pushToken: input.pushToken,
         }).returning();
         // Initialize Wallet with 1000 points
         await db_1.db.insert(schema_1.wallets).values({
@@ -75,7 +77,15 @@ exports.userRouter = (0, trpc_1.router)({
             followerId: ctx.user.id,
             followingId: input.targetUserId,
         });
-        // TODO: Notify target user?
+        // Notify User
+        const targetUser = await db_1.db.query.users.findFirst({
+            where: (0, drizzle_orm_1.eq)(schema_1.users.id, input.targetUserId),
+            columns: { pushToken: true }
+        });
+        if (targetUser?.pushToken) {
+            const { sendPushNotification } = require('../utils/push');
+            await sendPushNotification(targetUser.pushToken, "New Follower!", `${ctx.user.name} started following you.`, { type: 'follow', userId: ctx.user.id });
+        }
         return { success: true };
     }),
     unfollow: trpc_1.protectedProcedure
@@ -108,8 +118,10 @@ exports.userRouter = (0, trpc_1.router)({
         const badges = [];
         if (user.id <= 10)
             badges.push({ id: 'pioneer', name: 'Pioneer', icon: '🥇', color: '#FEF9C3' });
+        if (user.isPremium)
+            badges.push({ id: 'premium', name: 'Premium', icon: '💎', color: '#E0F2FE' }); // Blue-ish
         if ((user.wallet?.currentBalance || 0) >= 5000)
-            badges.push({ id: 'wealthy', name: 'High Roller', icon: '💎', color: '#FCE7F3' });
+            badges.push({ id: 'wealthy', name: 'High Roller', icon: '💰', color: '#FCE7F3' });
         if (user.followers.length >= 5)
             badges.push({ id: 'socialite', name: 'Socialite', icon: '🔥', color: '#FFEDD5' });
         if (user.visits.length >= 10)
@@ -132,5 +144,24 @@ exports.userRouter = (0, trpc_1.router)({
             where: ilike(schema_1.users.name, `%${input.query}%`),
             limit: 10,
         });
+    }),
+    upgradeToPremium: trpc_1.protectedProcedure
+        .mutation(async ({ ctx }) => {
+        // Mock Payment Gateway Logic
+        // In real app: Verify Stripe receipt
+        await db_1.db.update(schema_1.users)
+            .set({ isPremium: true })
+            .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
+        // Award bonus points for upgrading?
+        await db_1.db.insert(schema_1.transactions).values({
+            userId: ctx.user.id,
+            amount: 500,
+            type: 'earn',
+            description: 'Premium Upgrade Bonus',
+        });
+        await db_1.db.update(schema_1.wallets)
+            .set({ currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + 500` })
+            .where((0, drizzle_orm_1.eq)(schema_1.wallets.userId, ctx.user.id));
+        return { success: true };
     }),
 });

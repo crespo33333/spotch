@@ -12,7 +12,7 @@ const server_1 = require("@trpc/server");
 const stripe_1 = __importDefault(require("stripe"));
 const drizzle_orm_1 = require("drizzle-orm");
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
-    apiVersion: "2025-12-15.clover",
+    apiVersion: "2023-10-16", // Downgrade to stable API version if needed, or keep latest
 });
 exports.paymentRouter = (0, trpc_1.router)({
     createPaymentIntent: trpc_1.protectedProcedure
@@ -51,9 +51,16 @@ exports.paymentRouter = (0, trpc_1.router)({
         .mutation(async ({ ctx, input }) => {
         // In production, you would verify the paymentIntent status with Stripe here
         // For MVP/Demo, we assume the client confirmed successful payment
-        const paymentIntent = await stripe.paymentIntents.retrieve(input.paymentIntentId);
-        if (paymentIntent.status !== 'succeeded') {
-            throw new server_1.TRPCError({ code: "BAD_REQUEST", message: "Payment not successful" });
+        const paymentIntentId = input.paymentIntentId;
+        // Mock Mode Check
+        if (paymentIntentId.startsWith('pi_mock_')) {
+            // Skip Stripe verification for mock IDs
+        }
+        else {
+            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+            if (paymentIntent.status !== 'succeeded') {
+                throw new server_1.TRPCError({ code: "BAD_REQUEST", message: "Payment not successful" });
+            }
         }
         // Start transaction to award points
         return await db_1.db.transaction(async (tx) => {
@@ -70,9 +77,30 @@ exports.paymentRouter = (0, trpc_1.router)({
                 userId: ctx.user.id,
                 amount: input.points,
                 type: 'earn',
-                description: `Point Purchase ($${paymentIntent.amount / 100})`,
+                description: `Point Purchase ($${input.paymentIntentId.startsWith('pi_mock_') ? 'Mock' : 'Real'})`,
             });
             return { success: true };
         });
+    }),
+    createSubscription: trpc_1.protectedProcedure
+        .input(zod_1.z.object({ priceId: zod_1.z.string() }))
+        .mutation(async ({ input, ctx }) => {
+        const user = await db_1.db.query.users.findFirst({
+            where: (0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id),
+        });
+        if (!user)
+            throw new server_1.TRPCError({ code: "NOT_FOUND" });
+        // In real production, we'd use Stripe to create a subscription
+        await db_1.db.update(schema_1.users)
+            .set({ isPremium: true })
+            .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
+        return { success: true, message: "Subscription active (Mock Mode)" };
+    }),
+    cancelSubscription: trpc_1.protectedProcedure
+        .mutation(async ({ ctx }) => {
+        await db_1.db.update(schema_1.users)
+            .set({ isPremium: false })
+            .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
+        return { success: true };
     }),
 });
