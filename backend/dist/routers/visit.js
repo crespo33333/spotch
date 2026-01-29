@@ -30,7 +30,7 @@ exports.visitRouter = (0, trpc_1.router)({
             spotId: spot.id,
             getterId: ctx.user.id,
             checkInTime: new Date(),
-            earnedPoints: 0,
+            earnedPoints: '0',
         }).returning();
         // --- Quest Logic: Update "Visit" Quests ---
         const activeQuests = await db_1.db.select().from(schema_1.userQuests)
@@ -118,44 +118,69 @@ exports.visitRouter = (0, trpc_1.router)({
             throw new Error('Invalid visit session');
         }
         // Calculate Points & XP (Scale based on spot's rate)
-        // If rate is 100 P/min, a 5s heartbeat should give ~8 points (100 / 12).
+        // Heartbeats happen every 5 seconds. 60 / 5 = 12 heartbeats per minute.
         const ratePerMin = visit.spot.ratePerMinute || 10;
-        const earnedAmount = Math.max(1, Math.floor(ratePerMin / 12));
-        const earnedXp = Math.max(1, Math.floor(earnedAmount / 2));
-        // 1. Update Spot Activity & Level Up
+        const increment = ratePerMin / 12; // Fractional increment
+        const xpIncrement = increment / 2;
+        // 1. Update Visit Record (Accumulate fractional points)
+        const oldEarned = parseFloat(visit.earnedPoints || '0');
+        const newEarned = oldEarned + increment;
+        await db_1.db.update(schema_1.visits)
+            .set({ earnedPoints: newEarned.toString() })
+            .where((0, drizzle_orm_1.eq)(schema_1.visits.id, visit.id));
+        // 2. Calculate Wallet Update (Only add if integer part increased)
+        const walletAward = Math.floor(newEarned) - Math.floor(oldEarned);
+        if (walletAward > 0) {
+            await db_1.db.update(schema_1.wallets)
+                .set({
+                currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + ${walletAward}`,
+                lastTransactionAt: new Date()
+            })
+                .where((0, drizzle_orm_1.eq)(schema_1.wallets.userId, ctx.user.id));
+            // Log Transaction (only for integer gains to avoid spamming tx history)
+            await db_1.db.insert(schema_1.transactions).values({
+                userId: ctx.user.id,
+                amount: walletAward,
+                type: 'earn',
+                description: `Farmed at ${visit.spot.name}`
+            });
+        }
+        // 3. Update Spot Activity & Level Up
         const currentSpot = await db_1.db.query.spots.findFirst({ where: (0, drizzle_orm_1.eq)(schema_1.spots.id, visit.spot.id) });
         let newSpotLevel = currentSpot?.spotLevel || 1;
         let currentSpotActivity = (currentSpot?.totalActivity || 0) + 1;
-        // Spot levels up every 500 activity units
         if (currentSpotActivity >= newSpotLevel * 500) {
             newSpotLevel += 1;
         }
         await db_1.db.update(schema_1.spots)
             .set({
-            remainingPoints: (0, drizzle_orm_1.sql) `${schema_1.spots.remainingPoints} - ${earnedAmount}`,
+            remainingPoints: (0, drizzle_orm_1.sql) `${schema_1.spots.remainingPoints} - ${increment}`, // Spot points also drain fractionally
             totalActivity: currentSpotActivity,
             spotLevel: newSpotLevel
         })
             .where((0, drizzle_orm_1.eq)(schema_1.spots.id, visit.spot.id));
-        // 2. Add to User Wallet
-        await db_1.db.update(schema_1.wallets)
-            .set({
-            currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + ${earnedAmount}`,
-            lastTransactionAt: new Date()
-        })
-            .where((0, drizzle_orm_1.eq)(schema_1.wallets.userId, ctx.user.id));
-        // 3. Add XP & Check Level Up
+        // 4. Update XP & Check Level Up
         const currentUser = await db_1.db.query.users.findFirst({
             where: (0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id)
         });
         let newLevel = currentUser?.level || 1;
-        let currentXp = (currentUser?.xp || 0) + earnedXp;
+        let currentXp = (currentUser?.xp || 0) + Math.floor(xpIncrement * 10); // Use a multiplier for XP to avoid integer loss if xp is int
+        // Actually XP is integer. Let's just track fractional XP in user table too?
+        // For now, let's keep it simple: award 1 XP if increment > 0.5 or accumulated.
+        // Better: just use integer for XP but scale it up if needed.
+        // Let's assume XP is also fractional or just award 1 every few heartbeats.
+        // Let's just award 1 XP every heartbeat for now, or match it.
+        let earnedXp = Math.max(1, Math.floor(xpIncrement));
         let didLevelUp = false;
         const xpNeeded = newLevel * 100;
-        if (currentXp >= xpNeeded) {
+        const totalXp = (currentUser?.xp || 0) + earnedXp;
+        if (totalXp >= xpNeeded) {
             newLevel += 1;
-            currentXp -= xpNeeded;
+            currentXp = totalXp - xpNeeded;
             didLevelUp = true;
+        }
+        else {
+            currentXp = totalXp;
         }
         await db_1.db.update(schema_1.users)
             .set({
@@ -163,15 +188,8 @@ exports.visitRouter = (0, trpc_1.router)({
             level: newLevel
         })
             .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
-        // 4. Log Transaction
-        await db_1.db.insert(schema_1.transactions).values({
-            userId: ctx.user.id,
-            amount: earnedAmount,
-            type: 'earn',
-            description: `Farmed at ${visit.spot.name}`
-        });
         return {
-            earnedPoints: earnedAmount,
+            earnedPoints: walletAward,
             earnedXp,
             newLevel: didLevelUp ? newLevel : undefined,
             currentXp,

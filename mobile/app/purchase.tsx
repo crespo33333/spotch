@@ -31,6 +31,7 @@ export default function PurchaseScreen() {
             const { error } = await initPaymentSheet({
                 paymentIntentClientSecret: clientSecret,
                 merchantDisplayName: 'Spotch',
+                merchantIdentifier: 'merchant.com.spotch.app', // Explicitly required for Apple Pay
                 applePay: {
                     merchantCountryCode: 'JP',
                 },
@@ -38,14 +39,16 @@ export default function PurchaseScreen() {
             });
 
             if (error) {
-                Alert.alert('Error', error.message);
+                console.error('[Stripe] initPaymentSheet error:', error);
+                Alert.alert('Payment Error', `Could not initialize the payment sheet: ${error.message} (${error.code})`);
                 setLoading(false);
                 return null;
             }
             return clientSecret;
-        } catch (e) {
-            console.error(e);
-            Alert.alert('Error', 'Failed to initialize payment.');
+        } catch (e: any) {
+            console.error('[Stripe] Initialization error:', e);
+            const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+            Alert.alert('Store Unavailable', `The store is currently unavailable. Please try again later. (Error: ${errorMessage})`);
             setLoading(false);
             return null;
         }

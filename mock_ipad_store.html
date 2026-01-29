@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotch iPad Mockup - Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .neo-brutalism {
+            border: 4px solid black;
+            box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+        }
+
+        .neo-brutalism-sm {
+            border: 2px solid black;
+            box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+        }
+    </style>
+</head>
+
+<body class="w-[1024px] h-[1366px] flex flex-col">
+    <!-- Header -->
+    <div class="px-12 py-10 flex items-center justify-between border-b-4 border-black">
+        <div
+            class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-black text-2xl border-2 border-black">
+            ✕</div>
+        <h1 class="text-4xl font-black italic tracking-tighter">STORE</h1>
+        <div class="w-12"></div>
+    </div>
+
+    <div class="flex-1 p-16">
+        <!-- Diamond Card -->
+        <div
+            class="bg-[#FFD700] p-16 rounded-[60px] border-[5px] border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center mb-16">
+            <span class="text-[120px] mb-4">💎</span>
+            <h2 class="text-6xl font-black tracking-tighter mb-2">PREMIUM POINTS</h2>
+            <p class="text-xl font-bold text-black/40 uppercase tracking-[0.3em]">Boost your gameplay</p>
+        </div>
+
+        <!-- Purchase Option -->
+        <div
+            class="bg-black p-10 rounded-[40px] flex items-center justify-between shadow-[8px_8px_0px_0px_rgba(0,194,255,1)]">
+            <div class="flex items-center gap-8">
+                <div class="w-24 h-24 bg-white rounded-full border-4 border-black flex items-center justify-center">
+                    <span class="text-5xl">💎</span>
+                </div>
+                <div>
+                    <h3 class="text-white text-5xl font-black tracking-tighter mb-1">500 Points</h3>
+                    <p class="text-gray-400 text-2xl font-bold uppercase tracking-widest">Starter Pack</p>
+                </div>
+            </div>
+            <div class="bg-[#00C2FF] px-10 py-5 rounded-full border-4 border-white">
+                <span class="text-white text-4xl font-black">¥500</span>
+            </div>
+        </div>
+
+        <div class="mt-20 text-center">
+            <p class="text-gray-400 font-bold text-xl">Secure Payment via Stripe & Apple Pay</p>
+        </div>
+    </div>
+
+    <!-- Bottom Tabs -->
+    <div class="h-32 w-full bg-white border-t-4 border-black flex items-center justify-around px-12">
+        <div class="flex flex-col items-center gap-1 opacity-30">
+            <span class="text-4xl">📍</span>
+            <span class="text-sm font-black text-gray-400">MAP</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 opacity-30">
+            <span class="text-4xl">⚡️</span>
+            <span class="text-sm font-black">ACTIVITY</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 opacity-30">
+            <span class="text-4xl">🏆</span>
+            <span class="text-sm font-black">QUESTS</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 opacity-100 scale-110">
+            <span class="text-4xl text-[#FFD700]">💎</span>
+            <span class="text-sm font-black text-[#FFD700]">STORE</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 opacity-30">
+            <span class="text-4xl">👤</span>
+            <span class="text-sm font-black">PROFILE</span>
+        </div>
+    </div>
+</body>
+
+</html>

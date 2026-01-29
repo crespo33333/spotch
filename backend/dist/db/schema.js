@@ -14,6 +14,7 @@ exports.users = (0, pg_core_1.pgTable)('users', {
     email: (0, pg_core_1.varchar)('email', { length: 255 }),
     deviceId: (0, pg_core_1.varchar)('device_id', { length: 255 }),
     avatar: (0, pg_core_1.varchar)('avatar', { length: 255 }).default('default_seed'),
+    bio: (0, pg_core_1.text)('bio'),
     xp: (0, pg_core_1.integer)('xp').default(0),
     level: (0, pg_core_1.integer)('level').default(1),
     role: (0, exports.roleEnum)('role').default('user'),
@@ -46,7 +47,7 @@ exports.visits = (0, pg_core_1.pgTable)('visits', {
     getterId: (0, pg_core_1.integer)('getter_id').references(() => exports.users.id),
     checkInTime: (0, pg_core_1.timestamp)('check_in_time'),
     checkOutTime: (0, pg_core_1.timestamp)('check_out_time'),
-    earnedPoints: (0, pg_core_1.integer)('earned_points'),
+    earnedPoints: (0, pg_core_1.decimal)('earned_points', { precision: 12, scale: 4 }).default('0'),
     createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
 });
 exports.wallets = (0, pg_core_1.pgTable)('wallets', {

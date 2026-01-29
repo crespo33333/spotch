@@ -50,7 +50,7 @@ export default function MapScreen() {
                 longitude: parseFloat(s.longitude),
                 radius: 50, // Default radius
                 pointsPerMinute: s.pointsPerMinute,
-                category: s.name || 'General',
+                category: s.category || 'General',
                 activeUsers: [],
                 spotter: s.spotter ? {
                     id: s.spotter.id.toString(),
@@ -80,7 +80,7 @@ export default function MapScreen() {
             longitude: creatingLocation.longitude,
             totalPoints: data.totalPoints,
             ratePerMinute: data.rate,
-            // category: data.category // If backend supports it, add it here.
+            category: data.category
         });
     };
 
@@ -108,11 +108,11 @@ export default function MapScreen() {
 
     const handleRegionChange = (region: { latitude: number, longitude: number, latitudeDelta: number }) => {
         // Calculate approx radius from delta. 1 deg lat ~ 111km.
-        const radiusKm = Math.min(50, Math.ceil(region.latitudeDelta * 111));
+        const radiusKm = Math.ceil(region.latitudeDelta * 111);
         setCurrentRegion({
             latitude: region.latitude,
             longitude: region.longitude,
-            radiusKm: Math.max(5, radiusKm)
+            radiusKm: Math.max(5, radiusKm) // No upper limit to allow zooming out
         });
     };
 

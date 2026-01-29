@@ -27,6 +27,10 @@ async function main() {
     }).from(schema.spots).groupBy(schema.spots.spotterId);
 
     for (const row of bySpotter) {
+        if (!row.spotterId) {
+            console.log(`User: Unknown (ID: null) -> ${row.count} spots`);
+            continue;
+        }
         const user = await db.query.users.findFirst({ where: eq(schema.users.id, row.spotterId) });
         console.log(`User: ${user?.name} (ID: ${row.spotterId}) -> ${row.count} spots`);
     }

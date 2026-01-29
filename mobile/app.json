@@ -63,7 +63,13 @@
         }
       ],
       "expo-localization",
-      "@stripe/stripe-react-native"
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.spotch.app",
+          "enableGooglePay": true
+        }
+      ]
     ],
     "scheme": "spotch",
     "extra": {

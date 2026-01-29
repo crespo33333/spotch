@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.db = void 0;
+exports.db = exports.initDB = void 0;
 const node_postgres_1 = require("drizzle-orm/node-postgres");
 const pg_1 = require("pg");
 const schema = __importStar(require("./schema"));
@@ -42,15 +42,18 @@ dotenv.config();
 const client = new pg_1.Client({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
+    connectionTimeoutMillis: 10000, // 10s timeout
 });
-const connectDB = async () => {
+const initDB = async () => {
     try {
         await client.connect();
-        console.log("Connected to PostgreSQL");
+        console.log("✅ Connected to PostgreSQL");
+        return true;
     }
     catch (error) {
-        console.error("Postgres Connection Error:", error);
+        console.error("❌ Postgres Connection Error:", error);
+        throw error;
     }
 };
-connectDB();
+exports.initDB = initDB;
 exports.db = (0, node_postgres_1.drizzle)(client, { schema });

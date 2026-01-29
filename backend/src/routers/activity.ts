@@ -64,7 +64,7 @@ export const activityRouter = router({
                 })),
                 ...recentSpots.map(s => ({
                     id: `spot-${s.id}`,
-                    type: 'visit' as const, // Reusing icon for now
+                    type: 'create_spot' as const,
                     userId: s.spotter?.id,
                     user: s.spotter?.name || '不明',
                     action: `が新しいスポット「${s.name}」を作成しました`,
@@ -74,10 +74,10 @@ export const activityRouter = router({
                 ...recentVisits.map(v => ({
                     id: `visit-${v.id}`,
                     type: 'visit' as const,
-                    userId: v.getter.id,
-                    user: v.getter.name,
-                    action: `が「${v.spot.name}」にチェックインしました`,
-                    avatar: v.getter.avatar,
+                    userId: v.getter?.id,
+                    user: v.getter?.name || '不明',
+                    action: `が「${v.spot?.name || '不明なスポット'}」にチェックインしました`,
+                    avatar: v.getter?.avatar,
                     createdAt: v.createdAt,
                 })),
             ];

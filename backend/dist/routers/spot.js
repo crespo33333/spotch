@@ -15,6 +15,7 @@ exports.spotRouter = (0, trpc_1.router)({
         longitude: zod_1.z.number(),
         totalPoints: zod_1.z.number().min(100),
         ratePerMinute: zod_1.z.number().min(1),
+        category: zod_1.z.string().optional(),
     }))
         .mutation(async ({ ctx, input }) => {
         // Check Balance
@@ -46,6 +47,7 @@ exports.spotRouter = (0, trpc_1.router)({
             totalPoints: input.totalPoints,
             remainingPoints: input.totalPoints,
             ratePerMinute: input.ratePerMinute,
+            category: input.category || 'General',
             active: true,
         }).returning();
         return spot;

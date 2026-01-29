@@ -1,0 +1,53 @@
+[
+  {
+    "id": "23656f6f-29d4-4ac1-a914-4d726dbc2d95",
+    "status": "FINISHED",
+    "platform": "IOS",
+    "artifacts": {
+      "buildUrl": "https://expo.dev/artifacts/eas/5nvCEDZ18f9XMpcwJcKjWH.ipa",
+      "xcodeBuildLogsUrl": "https://job-logs.eascdn.net/production-xcode-logs/23656f6f-29d4-4ac1-a914-4d726dbc2d95?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260128%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260128T052531Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=03ce7793f1f5dee955b6282ea76cd815671fd239499db5803138dc40a372d56a7491c96173caef1f08a07538f76335037f3d02b399d5f2b1cc7df2b9cee05910fd2d5a16d94189810bdbf4bbf2fd5965ab739a3a8dfc266920b6b5e2797f59e67359721243b8c70e20208f05c95855b1f89bc44e067c44e191408e988835ebc040318e95acbbbb7700b3c762803f05aebd59aa70f81b1695b4870e2f1565c26ec67844fd600abfd9c0221f47e6f61a45f1a489c4c8672e76a8f3356f284cc392585a1961185eddb360ee7136907e4a66949b1aa67f7d71e3691a764df6427c97f4dc36d7e79173127ef376acf9ce8e478117341db667b15a0f0623eba875751d",
+      "applicationArchiveUrl": "https://expo.dev/artifacts/eas/5nvCEDZ18f9XMpcwJcKjWH.ipa"
+    },
+    "fingerprint": {
+      "id": "019c02cc-ec38-7af6-be5a-97a82b25af97",
+      "hash": "846802e757c974d0996b38bc1dbbbd64f5bddacd"
+    },
+    "initiatingActor": {
+      "id": "31597aca-d738-4608-98c8-9d3a7712f489",
+      "displayName": "crespo1129"
+    },
+    "logFiles": [
+      "https://job-logs.eascdn.net/production/23656f6f-29d4-4ac1-a914-4d726dbc2d95/1769573510389-8c80b76d-5714-4edf-acec-b9a5d50227dc.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260128%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260128T052531Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=6488a1771fd7530b9d7be74696907dcd07a9c320e1ef98e8907a3c6aa74ea39783157e9f02742b52da583d4521a39fe5049f7b86e47840702c3f0d1c9acf12b88785fdc22f8b64d8362475531180d7de8ed24884236030581904a7f6c1ad57da88ed998f7c857be2ce3326933bfd647bf83e2e3647f7ff4df5fd016e8d7444fc8eeb85fbe48000fb44b2c4a712ed46129fad36ea52427edd5bf2bea110ffd1df0696b0edd31155d7ee1a0b8716cae6db850e2c9e51a30ed1ab58bf295225daf63e95c1e937d05bc7e08d69650f155e6d1cac1ab0d2e328f4e3762e4aa8d4512bb200644baa1db39187d1278f9fe94ee66e1825854d8c6649d92e88ac64346f33",
+      "https://job-logs.eascdn.net/production/23656f6f-29d4-4ac1-a914-4d726dbc2d95/1769573514994-d098467f-2fb9-46d4-bf29-ba8aed1912f8.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260128%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260128T052531Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=07817075965f7f36c232ac32d5c66dff97a7a2d79f9e95c8bb5c6a186c81be1f59c06f004443582a2237f1ce435f6df48a2dc515dbd10a09f49bed82d952c1096a0f8c4681b870de3eb99f86cf6390ac7c4a66b6fa2889bffae56f73f26ff59d229f4cb403074df8a4b6c3fb7d64510df57c41a864fd7c226b1438b6c75455749b4dfbb055192dd38ef63cf23533b53e85823c53fe81d05658951b9c9d293a33f8b171092c19659deae654fadc7a6de148cc0aa5dd4a8d400c921de3052f990b45cf2ce978964692a037f4c8da31849b7212bda665961aff2d5971cabf6712db573f81373ab230a2efb53099c3157cd0522f0348b58b2543bb48fa934a14a664",
+      "https://job-logs.eascdn.net/production/23656f6f-29d4-4ac1-a914-4d726dbc2d95/1769573515290-80e8ce20-4f47-4212-ac57-5123da9f4417.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260128%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260128T052531Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=5f961c6e05e537add8ff29953fe5978fab90eb32e22cdd2eaec690ee5d702146d90dce095348d6e5d1088001ef4331be5570508e50a4ea9b4b5fdd7acf5904e0126e0bfbb152e18b91844aabc16a6b264b0947213660bb252b7572c5658f54569d2abfbd8ad49c688acb5f24bebecc6ddcc4a742c91cad2ee69e97dd5381b8f0b2a6884249ab98829f2debac22e48913fc3ea30c6f19064ec3fff3790035d710edace303c7b03d44b3f385cbace909bab096a58f335094272e59d68d90af253b45bffe224e99bfd62f72c0770d32dff573d1ce8c3b92a460b2cf0b034caa50a793ca519676b3f199a96d925aa758d8c0770c1947a251ffed421c981f2bef8a77",
+      "https://job-logs.eascdn.net/production/23656f6f-29d4-4ac1-a914-4d726dbc2d95/1769573515542-e4c7179e-3256-4078-ad40-0d74ffa95968.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260128%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260128T052531Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=2af92c73c501a72034c17749cf6ea31c95a69551c3c8e3a13830f52f4a299e1b349f968fb22a6c5a0ab9cb84dc1201aa0c2a66f4fec0bfec5f911f36aced787adf74bcbb3ab6ec1b203597ad9fd914b344087c58d8fcf47726049a85afc7856d0413123c171d69c557d30e6aadccfe2224dab3b009088908ce8dd4dc4c15329e349834441b699e7d50cca42328e8906f7f71bfdb7a9c28005dde1f1debf6ca2efa194c79ecb0022c914b5f7274f059fb13390b3ef2e17e3a0a38d95aca23a4e966c733326614d8503e6bcd5b4137d804c36f3f4064e92ce23c473f42a6befd200ad43e10fe490134334f1e691d100d3bd5d9f6bbcbcc7ec0cf505a95a6cad38e"
+    ],
+    "project": {
+      "id": "407aeb71-808c-4a83-ab5e-d0507191f1b7",
+      "name": "spotch",
+      "slug": "spotch",
+      "ownerAccount": {
+        "id": "fa53d5ff-065e-427d-9086-1b7d74053115",
+        "name": "crespo1129"
+      }
+    },
+    "distribution": "STORE",
+    "buildProfile": "production",
+    "sdkVersion": "52.0.0",
+    "appVersion": "1.0.0",
+    "appBuildVersion": "17",
+    "gitCommitHash": "62ceeae2d2aee5c01bea548f35937b5f4c0c6253",
+    "gitCommitMessage": "chore: Add root package.json for monorepo deployment",
+    "priority": "HIGH",
+    "createdAt": "2026-01-28T04:11:50.161Z",
+    "updatedAt": "2026-01-28T04:18:18.626Z",
+    "completedAt": "2026-01-28T04:18:13.873Z",
+    "expirationDate": "2026-02-27T04:11:50.189Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 120,
+      "buildQueueTime": 45427,
+      "buildDuration": 333975
+    }
+  }
+]

@@ -5,7 +5,7 @@ import { appRouter } from './routers';
 import { createContext } from './context';
 import * as dotenv from 'dotenv';
 import path from 'path';
-import { db } from './db';
+import { db, initDB } from './db';
 
 dotenv.config();
 
@@ -186,7 +186,18 @@ app.use('*', (req, res) => {
     `);
 });
 
-// Bind to default host
-app.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// Bind to default host and start
+const start = async () => {
+    try {
+        console.log("🚀 Starting Spotch Backend...");
+        await initDB();
+        app.listen(Number(PORT), '0.0.0.0', () => {
+            console.log(`✅ Server is running on port ${PORT}`);
+        });
+    } catch (e) {
+        console.error("❌ Fatal startup error:", e);
+        process.exit(1);
+    }
+};
+
+start();

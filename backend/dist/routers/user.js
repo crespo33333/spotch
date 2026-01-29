@@ -59,6 +59,22 @@ exports.userRouter = (0, trpc_1.router)({
             .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
         return { success: true };
     }),
+    updateProfile: trpc_1.protectedProcedure
+        .input(zod_1.z.object({
+        name: zod_1.z.string().min(2).max(50),
+        bio: zod_1.z.string().max(160).optional(),
+        avatar: zod_1.z.string().optional(),
+    }))
+        .mutation(async ({ ctx, input }) => {
+        await db_1.db.update(schema_1.users)
+            .set({
+            name: input.name,
+            bio: input.bio,
+            avatar: input.avatar,
+        })
+            .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
+        return { success: true };
+    }),
     follow: trpc_1.protectedProcedure
         .input(zod_1.z.object({
         targetUserId: zod_1.z.number(),
@@ -138,12 +154,21 @@ exports.userRouter = (0, trpc_1.router)({
     }),
     searchUsers: trpc_1.protectedProcedure
         .input(zod_1.z.object({ query: zod_1.z.string() }))
-        .query(async ({ input }) => {
-        const { ilike } = require('drizzle-orm');
-        return await db_1.db.query.users.findMany({
+        .query(async ({ ctx, input }) => {
+        const { ilike, eq, and } = require('drizzle-orm');
+        const searchResults = await db_1.db.query.users.findMany({
             where: ilike(schema_1.users.name, `%${input.query}%`),
             limit: 10,
+            with: {
+                followers: true, // Fetch followers to check relationship
+            }
         });
+        return searchResults.map(user => ({
+            id: user.id,
+            name: user.name,
+            avatar: user.avatar,
+            isFollowing: user.followers.some(f => f.followerId === ctx.user.id),
+        }));
     }),
     upgradeToPremium: trpc_1.protectedProcedure
         .mutation(async ({ ctx }) => {

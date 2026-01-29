@@ -36,6 +36,16 @@ exports.activityRouter = (0, trpc_1.router)({
             orderBy: [(0, drizzle_orm_1.desc)(schema_1.spots.createdAt)],
             limit: 10,
         });
+        // 4. Fetch recent visits (check-ins) by following users
+        const recentVisits = await db_1.db.query.visits.findMany({
+            where: (0, drizzle_orm_1.inArray)(schema_1.visits.getterId, followingIds),
+            with: {
+                getter: true,
+                spot: true,
+            },
+            orderBy: [(0, drizzle_orm_1.desc)(schema_1.visits.createdAt)],
+            limit: 10,
+        });
         // Combine and format
         const activities = [
             ...recentLikes.map(l => ({
@@ -49,12 +59,21 @@ exports.activityRouter = (0, trpc_1.router)({
             })),
             ...recentSpots.map(s => ({
                 id: `spot-${s.id}`,
-                type: 'visit', // Reusing icon for now
+                type: 'create_spot',
                 userId: s.spotter?.id,
                 user: s.spotter?.name || '不明',
                 action: `が新しいスポット「${s.name}」を作成しました`,
                 avatar: s.spotter?.avatar,
                 createdAt: s.createdAt,
+            })),
+            ...recentVisits.map(v => ({
+                id: `visit-${v.id}`,
+                type: 'visit',
+                userId: v.getter?.id,
+                user: v.getter?.name || '不明',
+                action: `が「${v.spot?.name || '不明なスポット'}」にチェックインしました`,
+                avatar: v.getter?.avatar,
+                createdAt: v.createdAt,
             })),
         ];
         return activities.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));

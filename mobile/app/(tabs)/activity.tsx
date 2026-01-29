@@ -120,11 +120,11 @@ export default function ActivityScreen() {
                         {/* Real Notifications (Likes/Follows) */}
                         {notifications?.filter((n: any) => n.type !== 'system').map((item: any) => (
                             <View key={item.id} className="p-4 border-b border-gray-100 flex-row gap-3">
-                                <View className={`w-10 h-10 rounded-full items-center justify-center ${item.type === 'like' ? 'bg-pink-100' : 'bg-green-100'}`}>
+                                <View className={`w-10 h-10 rounded-full items-center justify-center ${item.type === 'like' ? 'bg-pink-100' : item.type === 'create_spot' ? 'bg-blue-100' : 'bg-green-100'}`}>
                                     <Ionicons
-                                        name={item.type === 'like' ? "heart" : "person-add"}
+                                        name={item.type === 'like' ? "heart" : item.type === 'create_spot' ? "map" : "person-add"}
                                         size={20}
-                                        color={item.type === 'like' ? "#FF4785" : "#10B981"}
+                                        color={item.type === 'like' ? "#FF4785" : item.type === 'create_spot' ? "#00C2FF" : "#10B981"}
                                     />
                                 </View>
                                 <View className="flex-1">
