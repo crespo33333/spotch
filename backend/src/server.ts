@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { appRouter } from './routers';
@@ -139,9 +139,9 @@ app.get('/', (req, res) => {
     }
 });
 
-app.get('/health', (req, res) => res.send('OK'));
+app.get('/health', (req: Request, res: Response) => res.send('OK'));
 
-app.get('/db-test', async (req, res) => {
+app.get('/db-test', async (req: Request, res: Response) => {
     try {
         const result = await db.query.users.findMany({ limit: 1 });
         res.json({ status: 'OK', userCount: result.length, message: 'Database is connected!' });
@@ -151,7 +151,7 @@ app.get('/db-test', async (req, res) => {
     }
 });
 
-app.get('/debug-fs', (req, res) => {
+app.get('/debug-fs', (req: Request, res: Response) => {
     try {
         const rootFiles = fs.readdirSync(process.cwd());
         const distFiles = fs.existsSync(path.join(process.cwd(), 'dist')) ? fs.readdirSync(path.join(process.cwd(), 'dist')) : ['No dist'];
@@ -170,7 +170,7 @@ app.get('/debug-fs', (req, res) => {
 });
 
 // Catch-all for debugging (MUST BE LAST)
-app.use('*', (req, res) => {
+app.use('*', (req: Request, res: Response) => {
     console.log(`Fallback hit for: ${req.url} - Current Public Path: ${PUBLIC_PATH}`);
     res.status(200).send(`
         <html>
