@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { appRouter } from './routers';
@@ -83,7 +83,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
         return callback(null, true);
@@ -99,7 +99,7 @@ app.use(
     })
 );
 
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
@@ -126,7 +126,7 @@ for (const p of searchPaths) {
 
 app.use(express.static(PUBLIC_PATH));
 
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
     const indexPath = path.join(PUBLIC_PATH, 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
