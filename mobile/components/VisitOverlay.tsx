@@ -37,9 +37,20 @@ export default function VisitOverlay({ spot, userLocation, onClose }: VisitOverl
         onSuccess: (data: any) => {
             if (data?.earnedPoints) {
                 setEarned(prev => prev + data.earnedPoints);
-                // Refresh wallet balance and history in background
+
+                // Refresh data
                 utils.wallet.getBalance.invalidate();
                 utils.wallet.getTransactions.invalidate();
+                utils.user.getProfile.invalidate(); // Refresh XP/Level
+
+                // Level Up Handling
+                if (data.newLevel) {
+                    Alert.alert(
+                        "🎉 LEVEL UP!",
+                        `Congratulations! You reached Level ${data.newLevel}!`,
+                        [{ text: "Awesome!" }]
+                    );
+                }
             }
         }
     });

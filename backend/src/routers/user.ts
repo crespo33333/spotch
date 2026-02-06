@@ -152,20 +152,24 @@ export const userRouter = router({
                     wallet: true,
                     visits: true,
                     messages: true,
+                    userBadges: {
+                        with: {
+                            badge: true
+                        }
+                    }
                 }
             });
 
             if (!user) return null;
 
-            // Badge Logic
-            const badges = [];
-            if (user.id <= 10) badges.push({ id: 'pioneer', name: 'Pioneer', icon: '🥇', color: '#FEF9C3' });
-            if (user.isPremium) badges.push({ id: 'premium', name: 'Premium', icon: '💎', color: '#E0F2FE' }); // Blue-ish
-            if ((user.wallet?.currentBalance || 0) >= 5000) badges.push({ id: 'wealthy', name: 'High Roller', icon: '💰', color: '#FCE7F3' });
-
-            if (user.followers.length >= 5) badges.push({ id: 'socialite', name: 'Socialite', icon: '🔥', color: '#FFEDD5' });
-            if (user.visits.length >= 10) badges.push({ id: 'explorer', name: 'Explorer', icon: '🌍', color: '#DBEAFE' });
-            if (user.messages.length >= 10) badges.push({ id: 'chatterbox', name: 'Chatterbox', icon: '💬', color: '#F1F5F9' });
+            // Map DB badges to response format
+            const badges = user.userBadges.map(ub => ({
+                id: ub.badge.id,
+                name: ub.badge.name,
+                icon: ub.badge.icon,
+                color: '#E0F2FE', // Default color, or add color to schema if needed. Using light blue for now.
+                earnedAt: ub.earnedAt,
+            }));
 
             return {
                 ...user,

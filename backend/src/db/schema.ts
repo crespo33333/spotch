@@ -123,6 +123,34 @@ export const broadcasts = pgTable('broadcasts', {
     createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const badges = pgTable('badges', {
+    id: text('id').primaryKey(), // e.g., 'first_step'
+    name: text('name').notNull(),
+    description: text('description'),
+    icon: text('icon').notNull(), // Emoji or URL
+    conditionType: text('condition_type').notNull(), // 'steps', 'points', 'spots_created'
+    conditionValue: integer('condition_value').notNull(),
+    order: integer('order').default(0), // For display sorting
+});
+
+export const userBadges = pgTable('user_badges', {
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    badgeId: text('badge_id').references(() => badges.id, { onDelete: 'cascade' }).notNull(),
+    earnedAt: timestamp('earned_at').defaultNow(),
+}, (t) => ({
+    pk: uniqueIndex('user_badge_pk').on(t.userId, t.badgeId),
+}));
+
+// Messages (Direct)
+export const messages = pgTable('messages', {
+    id: serial('id').primaryKey(),
+    senderId: integer('sender_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    receiverId: integer('receiver_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+    readAt: timestamp('read_at'),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
     spots: many(spots),
@@ -136,6 +164,37 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     userQuests: many(userQuests),
     messages: many(spotMessages),
     likes: many(spotLikes),
+    userBadges: many(userBadges),
+    sentMessages: many(messages, { relationName: 'sentMessages' }),
+    receivedMessages: many(messages, { relationName: 'receivedMessages' }),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+    sender: one(users, {
+        fields: [messages.senderId],
+        references: [users.id],
+        relationName: 'sentMessages',
+    }),
+    receiver: one(users, {
+        fields: [messages.receiverId],
+        references: [users.id],
+        relationName: 'receivedMessages',
+    }),
+}));
+
+export const badgesRelations = relations(badges, ({ many }) => ({
+    users: many(userBadges),
+}));
+
+export const userBadgesRelations = relations(userBadges, ({ one }) => ({
+    user: one(users, {
+        fields: [userBadges.userId],
+        references: [users.id],
+    }),
+    badge: one(badges, {
+        fields: [userBadges.badgeId],
+        references: [badges.id],
+    }),
 }));
 
 export const spotsRelations = relations(spots, ({ one, many }) => ({

@@ -39,8 +39,11 @@ export default function ActivityScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-            <View className="items-center py-4 border-b border-gray-100">
+            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-100">
                 <Text className="text-[#00C2FF] text-lg font-bold">アクティビティ</Text>
+                <TouchableOpacity onPress={() => router.push('/chat')}>
+                    <Ionicons name="chatbubbles-outline" size={24} color="#00C2FF" />
+                </TouchableOpacity>
             </View>
 
             {/* Tabs */}
@@ -120,11 +123,28 @@ export default function ActivityScreen() {
                         {/* Real Notifications (Likes/Follows) */}
                         {notifications?.filter((n: any) => n.type !== 'system').map((item: any) => (
                             <View key={item.id} className="p-4 border-b border-gray-100 flex-row gap-3">
-                                <View className={`w-10 h-10 rounded-full items-center justify-center ${item.type === 'like' ? 'bg-pink-100' : item.type === 'create_spot' ? 'bg-blue-100' : 'bg-green-100'}`}>
+                                <View className={`w-10 h-10 rounded-full items-center justify-center ${item.type === 'like' ? 'bg-pink-100' :
+                                    item.type === 'create_spot' ? 'bg-blue-100' :
+                                        item.type === 'visit' ? 'bg-orange-100' :
+                                            item.type === 'comment' ? 'bg-purple-100' :
+                                                'bg-green-100' // follow
+                                    }`}>
                                     <Ionicons
-                                        name={item.type === 'like' ? "heart" : item.type === 'create_spot' ? "map" : "person-add"}
+                                        name={
+                                            item.type === 'like' ? "heart" :
+                                                item.type === 'create_spot' ? "map" :
+                                                    item.type === 'visit' ? "footsteps" :
+                                                        item.type === 'comment' ? "chatbubble" :
+                                                            "person-add" // follow
+                                        }
                                         size={20}
-                                        color={item.type === 'like' ? "#FF4785" : item.type === 'create_spot' ? "#00C2FF" : "#10B981"}
+                                        color={
+                                            item.type === 'like' ? "#FF4785" :
+                                                item.type === 'create_spot' ? "#00C2FF" :
+                                                    item.type === 'visit' ? "#F97316" :
+                                                        item.type === 'comment' ? "#A855F7" :
+                                                            "#10B981" // follow
+                                        }
                                     />
                                 </View>
                                 <View className="flex-1">

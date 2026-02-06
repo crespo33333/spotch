@@ -53,6 +53,11 @@ export const spotRouter = router({
                 active: true,
             }).returning();
 
+            // Gamification: Award XP and Check Badges
+            const { addXp, checkBadgeUnlock } = await import('../utils/gamification');
+            await addXp(ctx.user.id, 500); // 500 XP for creating a spot
+            await checkBadgeUnlock(ctx.user.id, 'spots_created');
+
             return spot;
         }),
 
@@ -212,6 +217,26 @@ export const spotRouter = router({
                 userId: ctx.user!.id,
                 content: input.content,
             }).returning()) as any[];
+
+            // Notify Spot Owner
+            const spot = await db.query.spots.findFirst({
+                where: eq(spots.id, input.spotId),
+                with: {
+                    spotter: {
+                        columns: { pushToken: true, id: true }
+                    }
+                }
+            });
+
+            if (spot?.spotter?.pushToken && spot.spotter.id !== ctx.user.id) {
+                const { sendPushNotification } = require('../utils/push');
+                await sendPushNotification(
+                    spot.spotter.pushToken,
+                    "New Comment! 💬",
+                    `${ctx.user.name} commented on "${spot.name}": ${input.content}`,
+                    { type: 'comment', spotId: input.spotId }
+                );
+            }
 
             return message;
         }),

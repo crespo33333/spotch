@@ -70,23 +70,32 @@ export default function PublicProfileScreen() {
                         </View>
                     </View>
 
-                    {/* Follow Button */}
-                    <TouchableOpacity
-                        onPress={handleFollowToggle}
-                        className="mt-10 w-full"
-                        disabled={followMutation.isLoading || unfollowMutation.isLoading}
-                    >
-                        <LinearGradient
-                            colors={profile.isFollowing ? ['#f1f5f9', '#f1f5f9'] : ['#00C2FF', '#FF4785']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            className="p-4 rounded-2xl items-center"
+                    {/* Actions */}
+                    <View className="mt-10 w-full flex-row gap-4">
+                        <TouchableOpacity
+                            onPress={handleFollowToggle}
+                            className="flex-1"
+                            disabled={followMutation.isLoading || unfollowMutation.isLoading}
                         >
-                            <Text className={`font-black text-lg ${profile.isFollowing ? 'text-gray-400' : 'text-white'}`}>
-                                {profile.isFollowing ? 'FOLLOWING' : 'FOLLOW'}
-                            </Text>
-                        </LinearGradient>
-                    </TouchableOpacity>
+                            <LinearGradient
+                                colors={profile.isFollowing ? ['#f1f5f9', '#f1f5f9'] : ['#00C2FF', '#FF4785']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                className="p-4 rounded-2xl items-center"
+                            >
+                                <Text className={`font-black text-lg ${profile.isFollowing ? 'text-gray-400' : 'text-white'}`}>
+                                    {profile.isFollowing ? 'FOLLOWING' : 'FOLLOW'}
+                                </Text>
+                            </LinearGradient>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => router.push(`/chat/${userId}?name=${profile.name}&avatar=${profile.avatar}`)}
+                            className="bg-slate-50 p-4 rounded-2xl items-center justify-center border border-slate-200 aspect-square"
+                        >
+                            <Ionicons name="chatbubble-ellipses" size={24} color="#00C2FF" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Badges */}

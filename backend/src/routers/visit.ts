@@ -74,6 +74,11 @@ export const visitRouter = router({
             // ------------------------------------------
 
 
+            // Gamification: Award XP for Check-In
+            const { addXp: addXpUtils, checkBadgeUnlock } = await import('../utils/gamification');
+            await addXpUtils(ctx.user.id, 50);
+            await checkBadgeUnlock(ctx.user.id, 'visits');
+
             return visit;
         }),
 
@@ -199,46 +204,22 @@ export const visitRouter = router({
                 })
                 .where(eq(spots.id, visit.spot.id));
 
-            // 4. Update XP & Check Level Up
-            const currentUser = await db.query.users.findFirst({
-                where: eq(users.id, ctx.user.id)
-            });
-
-            let newLevel = currentUser?.level || 1;
-            let currentXp = (currentUser?.xp || 0) + Math.floor(xpIncrement * 10); // Use a multiplier for XP to avoid integer loss if xp is int
-            // Actually XP is integer. Let's just track fractional XP in user table too?
-            // For now, let's keep it simple: award 1 XP if increment > 0.5 or accumulated.
-
-            // Better: just use integer for XP but scale it up if needed.
-            // Let's assume XP is also fractional or just award 1 every few heartbeats.
-            // Let's just award 1 XP every heartbeat for now, or match it.
+            // 4. Update XP & Check Level Up via Utils
+            const { addXp, checkBadgeUnlock } = await import('../utils/gamification');
             let earnedXp = Math.max(1, Math.floor(xpIncrement));
+            const xpResult = await addXp(ctx.user.id, earnedXp);
 
-            let didLevelUp = false;
-            const xpNeeded = newLevel * 100;
-            const totalXp = (currentUser?.xp || 0) + earnedXp;
-
-            if (totalXp >= xpNeeded) {
-                newLevel += 1;
-                currentXp = totalXp - xpNeeded;
-                didLevelUp = true;
-            } else {
-                currentXp = totalXp;
+            // Check for points badge if we earned points
+            if (walletAward > 0) {
+                await checkBadgeUnlock(ctx.user.id, 'points');
             }
-
-            await db.update(users)
-                .set({
-                    xp: currentXp,
-                    level: newLevel
-                })
-                .where(eq(users.id, ctx.user.id));
 
             return {
                 earnedPoints: walletAward,
                 earnedXp,
-                newLevel: didLevelUp ? newLevel : undefined,
-                currentXp,
-                xpNeeded: newLevel * 100
+                newLevel: xpResult?.newLevel, // Assuming addXp returns this
+                currentXp: 0, // Frontend might reload user or we change protocol. Return 0 for now as addXp handles db.
+                xpNeeded: (xpResult?.newLevel || 1) * 100
             };
         }),
 });

@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert, Linking, Share } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Linking, Share, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -104,9 +104,14 @@ export default function SettingsScreen() {
                         onPress={() => !isVerified && router.push('/verify-identity')}
                         hasArrow={!isVerified}
                     />
-                    <Item label={t('settings.premium')} value="Free" onPress={() => router.push('/premium')} />
-                    <Item label={t('settings.purchasePoints')} onPress={() => router.push('/purchase')} />
-                    <Item label={t('settings.exchangePoints')} onPress={() => router.push('/exchange')} />
+                    {/* Enabled for iOS (IAP) - Hidden for Android (Policy) */
+                        Platform.OS === 'ios' && (
+                            <>
+                                <Item label={t('settings.premium')} value="Free" onPress={() => router.push('/premium')} />
+                                <Item label={t('settings.purchasePoints')} onPress={() => router.push('/purchase')} />
+                                <Item label={t('settings.exchangePoints')} onPress={() => router.push('/exchange')} />
+                            </>
+                        )}
                     <Item label={t('settings.share')} isLast onPress={handleShare} />
                 </Section>
 

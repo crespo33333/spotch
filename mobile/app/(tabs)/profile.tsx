@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Dimensions, Platform } from 'react-native';
 import { BarChart } from "react-native-gifted-charts";
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -173,12 +173,15 @@ export default function ProfileScreen() {
                                             <Text className="text-sm text-[#FF4785]"> P</Text>
                                         </Text>
                                     </View>
-                                    <TouchableOpacity
-                                        onPress={() => router.push('/purchase')}
-                                        className="bg-[#FF4785] p-1 rounded-full"
-                                    >
-                                        <Ionicons name="add" size={16} color="white" />
-                                    </TouchableOpacity>
+                                    {/* Enabled for iOS (IAP) - Hidden for Android (Policy) */
+                                        Platform.OS === 'ios' && (
+                                            <TouchableOpacity
+                                                onPress={() => router.push('/purchase')}
+                                                className="bg-[#FF4785] p-1 rounded-full"
+                                            >
+                                                <Ionicons name="add" size={16} color="white" />
+                                            </TouchableOpacity>
+                                        )}
                                 </View>
                             </View>
 

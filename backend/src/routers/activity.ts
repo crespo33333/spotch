@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure } from '../trpc';
 import { db } from '../db';
-import { follows, spotLikes, spots, users, broadcasts, visits } from '../db/schema';
-import { eq, inArray, desc } from 'drizzle-orm';
+import { follows, spotLikes, spots, users, broadcasts, visits, spotMessages } from '../db/schema';
+import { eq, inArray, desc, and, ne } from 'drizzle-orm';
 
 export const activityRouter = router({
     getFeed: protectedProcedure
@@ -51,6 +51,17 @@ export const activityRouter = router({
                 limit: 10,
             });
 
+            // 5. Fetch recent comments by following users
+            const recentComments = await db.query.spotMessages.findMany({
+                where: inArray(spotMessages.userId, followingIds),
+                with: {
+                    user: true,
+                    spot: true,
+                },
+                orderBy: [desc(spotMessages.createdAt)],
+                limit: 10,
+            });
+
             // Combine and format
             const activities = [
                 ...recentLikes.map(l => ({
@@ -80,6 +91,15 @@ export const activityRouter = router({
                     avatar: v.getter?.avatar,
                     createdAt: v.createdAt,
                 })),
+                ...recentComments.map(c => ({
+                    id: `comment-${c.id}`,
+                    type: 'comment' as const,
+                    userId: c.user.id,
+                    user: c.user.name,
+                    action: `が「${c.spot.name}」にコメントしました: ${c.content}`,
+                    avatar: c.user.avatar,
+                    createdAt: c.createdAt,
+                })),
             ];
 
             return activities.sort((a, b) =>
@@ -98,6 +118,8 @@ export const activityRouter = router({
             const mySpotIds = mySpots.map(s => s.id);
 
             let likes: any[] = [];
+            let comments: any[] = [];
+
             if (mySpotIds.length > 0) {
                 likes = await db.query.spotLikes.findMany({
                     where: inArray(spotLikes.spotId, mySpotIds),
@@ -106,6 +128,16 @@ export const activityRouter = router({
                         spot: true,
                     },
                     orderBy: [desc(spotLikes.createdAt)],
+                    limit: 20
+                });
+
+                comments = await db.query.spotMessages.findMany({
+                    where: and(inArray(spotMessages.spotId, mySpotIds), ne(spotMessages.userId, userId)), // Exclude my own comments
+                    with: {
+                        user: true,
+                        spot: true,
+                    },
+                    orderBy: [desc(spotMessages.createdAt)],
                     limit: 20
                 });
             }
@@ -140,6 +172,13 @@ export const activityRouter = router({
                     user: l.user,
                     message: `liked your spot "${l.spot.name}"`,
                     createdAt: l.createdAt
+                })),
+                ...comments.map(c => ({
+                    id: `comment-${c.id}`,
+                    type: 'comment' as const,
+                    user: c.user,
+                    message: `commented on "${c.spot.name}": ${c.content}`,
+                    createdAt: c.createdAt
                 })),
                 ...myFollowers.map(f => ({
                     id: `follow-${f.id}`,

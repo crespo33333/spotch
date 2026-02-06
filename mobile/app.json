@@ -34,6 +34,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.spotch.app",
+      "buildNumber": "3",
       "config": {},
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -69,7 +70,8 @@
           "merchantIdentifier": "merchant.com.spotch.app",
           "enableGooglePay": true
         }
-      ]
+      ],
+      "react-native-iap"
     ],
     "scheme": "spotch",
     "extra": {
