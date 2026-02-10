@@ -1,43 +1,76 @@
-
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { trpc } from '../utils/api';
 import { StatusBar } from 'expo-status-bar';
-
-const MOCK_REWARDS = [
-    { id: 'amzn_500', name: 'Amazon Gift Card 500円分', points: 5000, color: '#FF9900', icon: 'logo-amazon' },
-    { id: 'sbux_300', name: 'Starbucks Ticket 300円', points: 3000, color: '#00704A', icon: 'logo-usd' }, // No starbucks logo in ionic v5
-    { id: 'premium_1mo', name: 'Spotch Premium (1ヶ月)', points: 10000, color: '#FF4785', icon: 'star' },
-    { id: 'don_forest', name: '森林保全団体への寄付', points: 1000, color: '#4CAF50', icon: 'leaf' },
-];
+import * as Clipboard from 'expo-clipboard';
 
 export default function ExchangeScreen() {
     const router = useRouter();
+    const utils = trpc.useUtils();
     const { data: wallet } = trpc.wallet.getBalance.useQuery();
-    const currentBalance = wallet || 0;
+    const { data: coupons, isLoading: isLoadingCoupons } = trpc.exchange.listCoupons.useQuery();
+    const { data: history, isLoading: isLoadingHistory } = trpc.exchange.getRedemptions.useQuery();
 
-    const handleRedeem = (reward: typeof MOCK_REWARDS[0]) => {
-        if (currentBalance < reward.points) {
-            Alert.alert('ポイント不足', `あと ${reward.points - currentBalance} ポイント必要です！`);
+    const currentBalance = wallet || 0;
+    const [activeTab, setActiveTab] = useState<'rewards' | 'history'>('rewards');
+    const [redeemResult, setRedeemResult] = useState<{ code: string, name: string } | null>(null);
+
+    const redeemMutation = trpc.exchange.redeem.useMutation({
+        onSuccess: (data) => {
+            utils.wallet.getBalance.invalidate();
+            utils.exchange.listCoupons.invalidate();
+            utils.exchange.getRedemptions.invalidate(); // Refresh history
+            setRedeemResult({ code: data.code, name: data.rewardName });
+        },
+        onError: (err) => {
+            Alert.alert('Exchange Failed', err.message);
+        }
+    });
+
+    const handleRedeem = (coupon: any) => {
+        if (currentBalance < coupon.cost) {
+            Alert.alert('Insufficient Points', `You need ${coupon.cost - currentBalance} more points.`);
             return;
         }
 
-        // Mock Processing
         Alert.alert(
-            '交換確認',
-            `${reward.name} と交換しますか？\n(これはデモ機能です)`,
+            'Confirm Exchange',
+            `Redeem ${coupon.cost} points for "${coupon.name}"?`,
             [
-                { text: 'キャンセル', style: 'cancel' },
+                { text: 'Cancel', style: 'cancel' },
                 {
-                    text: '交換する',
-                    onPress: () => Alert.alert('受付完了', '在庫を確認しています... (デモ)')
+                    text: 'Redeem',
+                    onPress: () => redeemMutation.mutate({ couponId: coupon.id })
                 }
             ]
         );
+    };
+
+    const copyToClipboard = async (text: string) => {
+        await Clipboard.setStringAsync(text);
+        Alert.alert('Copied', 'Code copied to clipboard!');
+    };
+
+    const getIconForType = (type: string) => {
+        switch (type) {
+            case 'gift_card': return 'card';
+            case 'donation': return 'leaf';
+            case 'premium': return 'star';
+            default: return 'gift';
+        }
+    };
+
+    const getColorForType = (type: string) => {
+        switch (type) {
+            case 'gift_card': return '#F59E0B'; // Amber
+            case 'donation': return '#10B981'; // Emerald
+            case 'premium': return '#EC4899'; // Pink
+            default: return '#3B82F6'; // Blue
+        }
     };
 
     return (
@@ -53,48 +86,135 @@ export default function ExchangeScreen() {
                 <View className="w-10" />
             </View>
 
-            <ScrollView className="flex-1 p-4">
-                {/* Balance Card */}
-                <LinearGradient
-                    colors={['#00C2FF', '#0099CC']}
-                    className="p-6 rounded-2xl mb-8 shadow-sm"
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+            {/* Tabs */}
+            <View className="flex-row p-2 bg-white mb-2">
+                <TouchableOpacity
+                    onPress={() => setActiveTab('rewards')}
+                    className={`flex-1 py-2 items-center border-b-2 ${activeTab === 'rewards' ? 'border-[#00C2FF]' : 'border-transparent'}`}
                 >
-                    <Text className="text-white/80 font-bold mb-1">Current Balance</Text>
-                    <Text className="text-4xl font-black text-white">{currentBalance.toLocaleString()} <Text className="text-xl">Pt</Text></Text>
-                </LinearGradient>
+                    <Text className={`font-bold ${activeTab === 'rewards' ? 'text-[#00C2FF]' : 'text-slate-400'}`}>Rewards</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => setActiveTab('history')}
+                    className={`flex-1 py-2 items-center border-b-2 ${activeTab === 'history' ? 'border-[#00C2FF]' : 'border-transparent'}`}
+                >
+                    <Text className={`font-bold ${activeTab === 'history' ? 'text-[#00C2FF]' : 'text-slate-400'}`}>History</Text>
+                </TouchableOpacity>
+            </View>
 
-                <Text className="text-slate-400 font-bold text-xs uppercase mb-4 ml-2">Available Rewards</Text>
-
-                <View className="gap-4">
-                    {MOCK_REWARDS.map(reward => (
-                        <TouchableOpacity
-                            key={reward.id}
-                            onPress={() => handleRedeem(reward)}
-                            activeOpacity={0.9}
-                            className="bg-white p-4 rounded-2xl border border-slate-100 flex-row items-center gap-4 shadow-sm"
+            <ScrollView className="flex-1 p-4">
+                {activeTab === 'rewards' ? (
+                    <>
+                        {/* Balance Card */}
+                        <LinearGradient
+                            colors={['#00C2FF', '#0099CC']}
+                            className="p-6 rounded-2xl mb-8 shadow-sm"
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
                         >
-                            <View className="w-12 h-12 rounded-xl items-center justify-center" style={{ backgroundColor: `${reward.color}20` }}>
-                                <Ionicons name={reward.icon as any} size={24} color={reward.color} />
+                            <Text className="text-white/80 font-bold mb-1">Current Balance</Text>
+                            <Text className="text-4xl font-black text-white">{currentBalance.toLocaleString()} <Text className="text-xl">Pt</Text></Text>
+                        </LinearGradient>
+
+                        <Text className="text-slate-400 font-bold text-xs uppercase mb-4 ml-2">Available Rewards</Text>
+
+                        {isLoadingCoupons ? (
+                            <ActivityIndicator color="#00C2FF" />
+                        ) : (
+                            <View className="gap-4 pb-20">
+                                {coupons?.map((coupon: any) => (
+                                    <TouchableOpacity
+                                        key={coupon.id}
+                                        onPress={() => handleRedeem(coupon)}
+                                        activeOpacity={0.9}
+                                        disabled={redeemMutation.isLoading}
+                                        className="bg-white p-4 rounded-2xl border border-slate-100 flex-row items-center gap-4 shadow-sm"
+                                    >
+                                        <View className="w-12 h-12 rounded-xl items-center justify-center" style={{ backgroundColor: `${getColorForType(coupon.type)}20` }}>
+                                            <Ionicons name={getIconForType(coupon.type) as any} size={24} color={getColorForType(coupon.type)} />
+                                        </View>
+                                        <View className="flex-1">
+                                            <Text className="font-bold text-slate-800 text-lg">{coupon.name}</Text>
+                                            <Text className="font-medium text-slate-500">{coupon.cost.toLocaleString()} pts</Text>
+                                            {coupon.stock !== null && (
+                                                <Text className="text-[10px] text-slate-400 mt-1">Stock: {coupon.stock}</Text>
+                                            )}
+                                        </View>
+                                        <View className={`px-3 py-1 rounded-full ${currentBalance >= coupon.cost ? 'bg-blue-50' : 'bg-slate-100'}`}>
+                                            <Text className={`text-xs font-bold ${currentBalance >= coupon.cost ? 'text-blue-500' : 'text-slate-400'}`}>
+                                                {currentBalance >= coupon.cost ? 'GET' : 'LOCKED'}
+                                            </Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                ))}
                             </View>
-                            <View className="flex-1">
-                                <Text className="font-bold text-slate-800 text-lg">{reward.name}</Text>
-                                <Text className="font-medium text-slate-500">{reward.points.toLocaleString()} pts</Text>
+                        )}
+                    </>
+                ) : (
+                    // HISTORY TAB
+                    <View className="gap-4 pb-20">
+                        {isLoadingHistory ? (
+                            <ActivityIndicator color="#00C2FF" />
+                        ) : history?.length === 0 ? (
+                            <View className="p-8 items-center">
+                                <Text className="text-slate-400 font-bold">No redemptions yet.</Text>
                             </View>
-                            <View className={`px-3 py-1 rounded-full ${currentBalance >= reward.points ? 'bg-blue-50' : 'bg-slate-100'}`}>
-                                <Text className={`text-xs font-bold ${currentBalance >= reward.points ? 'text-blue-500' : 'text-slate-400'}`}>
-                                    {currentBalance >= reward.points ? 'GET' : 'LOCKED'}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                        ) : (
+                            history?.map((item: any) => (
+                                <View key={item.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                                    <View className="flex-row justify-between mb-2">
+                                        <Text className="font-bold text-slate-800 text-lg">{item.coupon.name}</Text>
+                                        <Text className="text-xs text-slate-400 font-bold">{new Date(item.redeemedAt).toLocaleDateString()}</Text>
+                                    </View>
+                                    <View className="bg-slate-50 p-3 rounded-xl flex-row justify-between items-center border border-slate-200 border-dashed">
+                                        <Text className="font-mono text-slate-600 tracking-widest">{item.code}</Text>
+                                        <TouchableOpacity onPress={() => copyToClipboard(item.code)}>
+                                            <Ionicons name="copy-outline" size={16} color="#00C2FF" />
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            ))
+                        )}
+                    </View>
+                )}
 
                 <Text className="text-center text-slate-400 text-xs mt-8 mb-20">
                     Rewards are subject to availability and terms.
                 </Text>
             </ScrollView>
+
+            {/* Success Modal */}
+            <Modal
+                transparent
+                visible={!!redeemResult}
+                animationType="fade"
+                onRequestClose={() => setRedeemResult(null)}
+            >
+                <View className="flex-1 bg-black/50 items-center justify-center p-4">
+                    <View className="bg-white p-6 rounded-3xl w-full max-w-sm items-center">
+                        <View className="w-16 h-16 bg-green-100 rounded-full items-center justify-center mb-4">
+                            <Ionicons name="checkmark" size={40} color="#10B981" />
+                        </View>
+                        <Text className="text-2xl font-black text-slate-800 mb-2">Success!</Text>
+                        <Text className="text-slate-500 text-center mb-6">You exchanged points for:</Text>
+                        <Text className="text-lg font-bold text-[#00C2FF] mb-6 text-center">{redeemResult?.name}</Text>
+
+                        <View className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 border-dashed w-full flex-row justify-between items-center mb-6">
+                            <Text className="font-mono text-xl font-bold text-slate-700 tracking-widest">{redeemResult?.code}</Text>
+                            <TouchableOpacity onPress={() => redeemResult && copyToClipboard(redeemResult.code)}>
+                                <Ionicons name="copy" size={20} color="#00C2FF" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            onPress={() => setRedeemResult(null)}
+                            className="bg-slate-900 w-full p-4 rounded-2xl items-center"
+                        >
+                            <Text className="text-white font-bold text-lg">Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }

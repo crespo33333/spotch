@@ -55,7 +55,7 @@
         {
           "ios": {
             "useFrameworks": "static",
-            "modularHeaders": true
+            "deploymentTarget": "15.1"
           },
           "android": {
             "compileSdkVersion": 35,

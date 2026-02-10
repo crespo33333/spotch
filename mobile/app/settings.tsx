@@ -37,6 +37,15 @@ export default function SettingsScreen() {
         Linking.openURL('mailto:support@spotch.app?subject=' + encodeURIComponent(t('settings.contact')));
     };
 
+    const deleteAccountMutation = trpc.user.deleteAccount.useMutation({
+        onSuccess: () => {
+            // Logout and reset
+            router.replace('/');
+            Alert.alert(t('settings.delete'), 'Account deleted.');
+        },
+        onError: (err) => Alert.alert("Error", err.message)
+    });
+
     const handleDeleteAccount = () => {
         Alert.alert(
             t('settings.confirmDeleteTitle'),
@@ -46,7 +55,7 @@ export default function SettingsScreen() {
                 {
                     text: t('settings.delete'),
                     style: 'destructive',
-                    onPress: () => Alert.alert(t('settings.delete'), 'Account deleted. (Demo)')
+                    onPress: () => deleteAccountMutation.mutate()
                 }
             ]
         );

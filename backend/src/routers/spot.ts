@@ -1,7 +1,7 @@
 import { router, protectedProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '../db';
-import { spots, wallets, transactions, users, visits } from '../db/schema';
+import { spots, wallets, transactions, users, visits, userBlocks, reports } from '../db/schema';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
@@ -187,9 +187,19 @@ export const spotRouter = router({
 
     getMessages: publicProcedure
         .input(z.object({ spotId: z.number() }))
-        .query(async ({ input }) => {
+        .query(async ({ ctx, input }) => {
             const { spotMessages } = require('../db/schema');
-            return await db.query.spotMessages.findMany({
+
+            // Get list of users who blocked the current user OR whom the current user blocked
+            let blockedUserIds: number[] = [];
+            if (ctx.user) {
+                const blocks = await db.select().from(userBlocks).where(
+                    sql`${userBlocks.blockerId} = ${ctx.user.id} OR ${userBlocks.blockedId} = ${ctx.user.id}`
+                );
+                blockedUserIds = blocks.map(b => b.blockerId === ctx.user.id ? b.blockedId : b.blockerId);
+            }
+
+            const messages = await db.query.spotMessages.findMany({
                 where: eq(spotMessages.spotId, input.spotId),
                 with: {
                     user: {
@@ -203,6 +213,9 @@ export const spotRouter = router({
                 orderBy: (messages, { desc }) => [desc(messages.createdAt)],
                 limit: 50,
             });
+
+            // Filter out messages from blocked users
+            return messages.filter(m => !blockedUserIds.includes(m.userId));
         }),
 
     postMessage: protectedProcedure
@@ -302,6 +315,30 @@ export const spotRouter = router({
                 messages: Number(msgCount[0]?.count || 0),
                 isLiked,
             };
+        }),
+
+    reportSpot: protectedProcedure
+        .input(z.object({ spotId: z.number(), reason: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            await db.insert(reports).values({
+                reporterId: ctx.user.id,
+                targetType: 'spot',
+                targetId: input.spotId,
+                reason: input.reason,
+            });
+            return { success: true };
+        }),
+
+    reportComment: protectedProcedure
+        .input(z.object({ commentId: z.number(), reason: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            await db.insert(reports).values({
+                reporterId: ctx.user.id,
+                targetType: 'comment',
+                targetId: input.commentId,
+                reason: input.reason,
+            });
+            return { success: true };
         }),
 });
 

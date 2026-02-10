@@ -1,7 +1,7 @@
 import { router, publicProcedure, protectedProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '../db';
-import { users, wallets, transactions, follows } from '../db/schema';
+import { users, wallets, transactions, follows, userBlocks, reports } from '../db/schema';
 import { eq, and, ilike, sql } from 'drizzle-orm';
 
 export const userRouter = router({
@@ -220,6 +220,78 @@ export const userRouter = router({
             await db.update(wallets)
                 .set({ currentBalance: sql`${wallets.currentBalance} + 500` })
                 .where(eq(wallets.userId, ctx.user.id));
+
+            return { success: true };
+        }),
+    block: protectedProcedure
+        .input(z.object({ targetUserId: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.id === input.targetUserId) throw new Error("Cannot block yourself");
+
+            // 1. Create Block Record
+            await db.insert(userBlocks).values({
+                blockerId: ctx.user.id,
+                blockedId: input.targetUserId,
+            }).onConflictDoNothing();
+
+            // 2. Remove Follows (Both ways)
+            const { and, eq, or } = require('drizzle-orm');
+            await db.delete(follows).where(or(
+                and(eq(follows.followerId, ctx.user.id), eq(follows.followingId, input.targetUserId)),
+                and(eq(follows.followerId, input.targetUserId), eq(follows.followingId, ctx.user.id))
+            ));
+
+            return { success: true };
+        }),
+
+    unblock: protectedProcedure
+        .input(z.object({ targetUserId: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+            const { and, eq } = require('drizzle-orm');
+            await db.delete(userBlocks).where(and(
+                eq(userBlocks.blockerId, ctx.user.id),
+                eq(userBlocks.blockedId, input.targetUserId)
+            ));
+            return { success: true };
+        }),
+
+    report: protectedProcedure
+        .input(z.object({
+            targetType: z.enum(['user', 'spot', 'comment']),
+            targetId: z.number(),
+            reason: z.string(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            await db.insert(reports).values({
+                reporterId: ctx.user.id,
+                targetType: input.targetType,
+                targetId: input.targetId,
+                reason: input.reason,
+            });
+            return { success: true };
+        }),
+
+    deleteAccount: protectedProcedure
+        .mutation(async ({ ctx }) => {
+            // "Soft Delete" / Anonymize to preserve game integrity (Spots created by user must remain)
+            // But remove PII (Name, Email, OpenID link, Avatar)
+
+            const anonymizedName = `Deleted User ${ctx.user.id}`;
+            const anonymizedEmail = `deleted_${ctx.user.id}@spotch.app`;
+            const anonymizedOpenId = `deleted_${ctx.user.id}_${Date.now()}`;
+
+            await db.update(users)
+                .set({
+                    name: anonymizedName,
+                    email: anonymizedEmail,
+                    openId: anonymizedOpenId, // Break link to Auth Provider
+                    avatar: 'default_seed',
+                    bio: null,
+                    pushToken: null,
+                    deviceId: null,
+                    isBanned: true, // Prevent login even if somehow auth flows
+                })
+                .where(eq(users.id, ctx.user.id));
 
             return { success: true };
         }),

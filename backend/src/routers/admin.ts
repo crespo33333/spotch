@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../trpc";
 import { db } from "../db";
-import { users, spots, transactions, broadcasts } from "../db/schema";
+import { users, spots, transactions, broadcasts, coupons, quests, spotMessages } from "../db/schema";
 import { TRPCError } from "@trpc/server";
 import { eq, desc, sql, isNotNull } from "drizzle-orm";
 import { Expo } from 'expo-server-sdk';
@@ -180,6 +180,135 @@ export const adminRouter = router({
         .mutation(async ({ ctx, input }) => {
             if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
             await db.delete(broadcasts).where(eq(broadcasts.id, input.id));
+            return { success: true };
+        }),
+
+    getAllSpots: protectedProcedure
+        .query(async ({ ctx }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            return await db.query.spots.findMany({
+                with: {
+                    spotter: true,
+                },
+                orderBy: [desc(spots.createdAt)],
+                limit: 100,
+            });
+        }),
+
+    getAllRedemptions: protectedProcedure
+        .query(async ({ ctx }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { redemptions } = require('../db/schema'); // Lazy load to avoid circular dependency issues if any
+            return await db.query.redemptions.findMany({
+                with: {
+                    user: true,
+                    coupon: true,
+                },
+                orderBy: [desc(redemptions.redeemedAt)],
+                limit: 100,
+            });
+        }),
+
+    updateRedemptionStatus: protectedProcedure
+        .input(z.object({ id: z.number(), status: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { redemptions } = require('../db/schema');
+            await db.update(redemptions)
+                .set({ status: input.status })
+                .where(eq(redemptions.id, input.id));
+            return { success: true };
+        }),
+
+    // --- Coupons ---
+    getAllCoupons: protectedProcedure
+        .query(async ({ ctx }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            return await db.query.coupons.findMany({
+                orderBy: [desc(coupons.createdAt)],
+            });
+        }),
+
+    createCoupon: protectedProcedure
+        .input(z.object({
+            name: z.string(),
+            description: z.string(),
+            cost: z.number(),
+            type: z.string(),
+            stock: z.number().nullable(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { coupons } = require('../db/schema');
+            await db.insert(coupons).values(input);
+            return { success: true };
+        }),
+
+    toggleCouponStatus: protectedProcedure
+        .input(z.object({ id: z.number(), isActive: z.boolean() }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { coupons } = require('../db/schema');
+            await db.update(coupons)
+                .set({ isActive: input.isActive })
+                .where(eq(coupons.id, input.id));
+            return { success: true };
+        }),
+
+    // --- Quests ---
+    getAllQuests: protectedProcedure
+        .query(async ({ ctx }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            return await db.query.quests.findMany({
+                orderBy: [desc(quests.createdAt)],
+            });
+        }),
+
+    createQuest: protectedProcedure
+        .input(z.object({
+            title: z.string(),
+            description: z.string(),
+            rewardPoints: z.number(),
+            conditionType: z.enum(['visit_count', 'friend_count', 'premium_status']),
+            conditionValue: z.number(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { quests } = require('../db/schema');
+            await db.insert(quests).values(input);
+            return { success: true };
+        }),
+
+    deleteQuest: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { quests } = require('../db/schema');
+            await db.delete(quests).where(eq(quests.id, input.id));
+            return { success: true };
+        }),
+
+    // --- Content (Comments) ---
+    getRecentComments: protectedProcedure
+        .query(async ({ ctx }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { spotMessages } = require('../db/schema');
+            return await db.query.spotMessages.findMany({
+                with: {
+                    user: true,
+                    spot: true,
+                },
+                orderBy: [desc(spotMessages.createdAt)],
+                limit: 50,
+            });
+        }),
+
+    deleteComment: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { spotMessages } = require('../db/schema');
+            await db.delete(spotMessages).where(eq(spotMessages.id, input.id));
             return { success: true };
         }),
 });

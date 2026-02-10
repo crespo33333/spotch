@@ -10,6 +10,7 @@ import { questRouter } from './quest';
 import { visitRouter } from './visit';
 
 import { messageRouter } from './message';
+import { exchangeRouter } from './exchange';
 
 export const appRouter = router({
     health: publicProcedure.query(() => {
@@ -25,6 +26,7 @@ export const appRouter = router({
     activity: activityRouter,
     quest: questRouter,
     message: messageRouter,
+    exchange: exchangeRouter,
 });
 
 export type AppRouter = typeof appRouter;

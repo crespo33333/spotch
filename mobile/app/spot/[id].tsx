@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Share, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { trpc, getStoredUserId } from '../../utils/api';
 import { StatusBar } from 'expo-status-bar';
@@ -44,6 +44,63 @@ export default function SpotDetailScreen() {
 
     const postMutation = trpc.spot.postMessage.useMutation();
     const likeMutation = trpc.spot.toggleLike.useMutation();
+    const reportCommentMutation = trpc.spot.reportComment.useMutation();
+    const blockUserMutation = trpc.user.block.useMutation();
+
+    const handleCommentAction = (commentId: number, userId: number) => {
+        Alert.alert(
+            t('common.action'),
+            t('common.selectAction'),
+            [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: t('common.report'),
+                    style: 'destructive',
+                    onPress: () => showReportReasons(commentId)
+                },
+                {
+                    text: t('common.block'),
+                    style: 'destructive',
+                    onPress: () => {
+                        Alert.alert(t('common.blockConfirm'), t('common.blockMsg'), [
+                            { text: t('common.cancel'), style: 'cancel' },
+                            {
+                                text: t('common.block'),
+                                style: 'destructive',
+                                onPress: async () => {
+                                    try {
+                                        await blockUserMutation.mutateAsync({ targetUserId: userId });
+                                        refetchMessages(); // Refresh to hide content
+                                        Alert.alert(t('common.blocked'), t('common.blockedMsg'));
+                                    } catch (e: any) {
+                                        Alert.alert("Error", e.message);
+                                    }
+                                }
+                            }
+                        ])
+                    }
+                }
+            ]
+        );
+    };
+
+    const showReportReasons = (commentId: number) => {
+        const reasons = ['Spam', 'Harassment', 'Inappropriate Content', 'Other'];
+        Alert.alert(
+            t('common.reportReason'),
+            undefined,
+            [
+                ...reasons.map(r => ({
+                    text: r,
+                    onPress: () => {
+                        reportCommentMutation.mutate({ commentId, reason: r });
+                        Alert.alert(t('common.reported'), t('common.reportedMsg'));
+                    }
+                })),
+                { text: t('common.cancel'), style: 'cancel' }
+            ]
+        );
+    };
 
     const handleLike = async () => {
         // Heart Pop Animation
@@ -236,13 +293,17 @@ export default function SpotDetailScreen() {
                                         />
                                     </TouchableOpacity>
                                     <View className="flex-1">
-                                        <View className={`max-w-[85%] ${isMe ? 'items-end self-end' : 'items-start'}`}>
+                                        <TouchableOpacity
+                                            activeOpacity={0.8}
+                                            onLongPress={() => !isMe && handleCommentAction(item.id, item.user.id)}
+                                            className={`max-w-[85%] ${isMe ? 'items-end self-end' : 'items-start'}`}
+                                        >
                                             {!isMe && <Text className="font-black text-slate-400 text-[10px] mb-1 ml-1 uppercase">{item.user.name}</Text>}
                                             <View className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-[#00C2FF] rounded-tr-none' : 'bg-slate-100 rounded-tl-none'}`}>
                                                 <Text className={`${isMe ? 'text-white' : 'text-slate-800'} text-sm font-medium`}>{item.content}</Text>
                                             </View>
                                             <Text className="text-[8px] text-slate-300 mt-1 uppercase font-bold">{getRelativeTime(item.createdAt || '')}</Text>
-                                        </View>
+                                        </TouchableOpacity>
                                     </View>
                                 </View>
                             );

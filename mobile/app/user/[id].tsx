@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { trpc } from '../../utils/api';
 import { Avatar } from '../../components/Avatar';
@@ -24,6 +24,9 @@ export default function PublicProfileScreen() {
         onSuccess: () => utils.user.getProfile.invalidate({ userId })
     });
 
+    const reportUserMutation = trpc.user.report.useMutation();
+    const blockUserMutation = trpc.user.block.useMutation();
+
     if (isLoading) return <View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color="#00C2FF" /></View>;
     if (!profile) return <View className="flex-1 items-center justify-center"><Text>User not found</Text></View>;
 
@@ -35,12 +38,63 @@ export default function PublicProfileScreen() {
         }
     };
 
+    const handleProfileOptions = () => {
+        Alert.alert(
+            profile.name || "User",
+            undefined,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Report User',
+                    style: 'destructive',
+                    onPress: () => {
+                        const reasons = ['Spam', 'Fake Account', 'Inappropriate Content', 'Harassment'];
+                        Alert.alert("Report Reason", undefined, [
+                            ...reasons.map(r => ({
+                                text: r,
+                                onPress: () => {
+                                    reportUserMutation.mutate({ targetType: 'user', targetId: userId, reason: r });
+                                    Alert.alert("Reported", "Thank you for keeping Spotch safe.");
+                                }
+                            })),
+                            { text: "Cancel", style: "cancel" }
+                        ]);
+                    }
+                },
+                {
+                    text: 'Block User',
+                    style: 'destructive',
+                    onPress: () => {
+                        Alert.alert("Block User?", "You will no longer see their content.", [
+                            { text: "Cancel", style: "cancel" },
+                            {
+                                text: "Block",
+                                style: "destructive",
+                                onPress: async () => {
+                                    await blockUserMutation.mutateAsync({ targetUserId: userId });
+                                    utils.user.getProfile.invalidate({ userId });
+                                    router.replace('/(tabs)');
+                                    Alert.alert("Blocked", "User has been blocked.");
+                                }
+                            }
+                        ]);
+                    }
+                }
+            ]
+        );
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-white">
             <Stack.Screen options={{
                 title: profile.name ?? undefined,
                 headerShadowVisible: false,
-                headerBackTitle: 'Back'
+                headerBackTitle: 'Back',
+                headerRight: () => (
+                    <TouchableOpacity onPress={handleProfileOptions}>
+                        <Ionicons name="ellipsis-horizontal" size={24} color="black" />
+                    </TouchableOpacity>
+                )
             }} />
 
             <ScrollView className="flex-1">

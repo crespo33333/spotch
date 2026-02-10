@@ -151,6 +151,47 @@ export const messages = pgTable('messages', {
     readAt: timestamp('read_at'),
 });
 
+// Point Exchange
+export const coupons = pgTable('coupons', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 255 }).notNull(),
+    description: text('description'),
+    cost: integer('cost').notNull(),
+    type: varchar('type', { length: 50 }).notNull(), // 'gift_card', 'donation', 'premium', 'item'
+    data: text('data'), // Optional: Coupon code pattern, URL, etc.
+    stock: integer('stock'), // Null = Infinite
+    isActive: boolean('is_active').default(true),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const redemptions = pgTable('redemptions', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id).notNull(),
+    couponId: integer('coupon_id').references(() => coupons.id).notNull(),
+    redeemedAt: timestamp('redeemed_at').defaultNow(),
+    code: varchar('code', { length: 255 }), // Generated unique code for user
+    status: varchar('status', { length: 50 }).default('completed'), // 'pending', 'completed'
+});
+
+// Safety & Compliance
+export const userBlocks = pgTable('user_blocks', {
+    blockerId: integer('blocker_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    blockedId: integer('blocked_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+}, (t) => ({
+    pk: uniqueIndex('user_block_pk').on(t.blockerId, t.blockedId),
+}));
+
+export const reports = pgTable('reports', {
+    id: serial('id').primaryKey(),
+    reporterId: integer('reporter_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    targetType: varchar('target_type', { length: 50 }).notNull(), // 'user', 'spot', 'comment'
+    targetId: integer('target_id').notNull(),
+    reason: text('reason').notNull(),
+    status: varchar('status', { length: 50 }).default('pending'), // 'pending', 'resolved', 'dismissed'
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
     spots: many(spots),
@@ -167,6 +208,43 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     userBadges: many(userBadges),
     sentMessages: many(messages, { relationName: 'sentMessages' }),
     receivedMessages: many(messages, { relationName: 'receivedMessages' }),
+    redemptions: many(redemptions),
+    blockedUsers: many(userBlocks, { relationName: 'blockedUsers' }),
+    reports: many(reports),
+}));
+
+export const redemptionsRelations = relations(redemptions, ({ one }) => ({
+    user: one(users, {
+        fields: [redemptions.userId],
+        references: [users.id],
+    }),
+    coupon: one(coupons, {
+        fields: [redemptions.couponId],
+        references: [coupons.id],
+    }),
+}));
+
+export const couponsRelations = relations(coupons, ({ many }) => ({
+    redemptions: many(redemptions),
+}));
+
+export const userBlocksRelations = relations(userBlocks, ({ one }) => ({
+    blocker: one(users, {
+        fields: [userBlocks.blockerId],
+        references: [users.id],
+        relationName: 'blockedUsers',
+    }),
+    blocked: one(users, {
+        fields: [userBlocks.blockedId],
+        references: [users.id],
+    }),
+}));
+
+export const reportsRelations = relations(reports, ({ one }) => ({
+    reporter: one(users, {
+        fields: [reports.reporterId],
+        references: [users.id],
+    }),
 }));
 
 export const messagesRelations = relations(messages, ({ one }) => ({
