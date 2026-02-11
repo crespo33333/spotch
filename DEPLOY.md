@@ -45,4 +45,11 @@ DATABASE_URL="ここにコピーしたExternal_URLを貼り付け" npx tsx src/s
 2. `mobile/eas.json` の `EXPO_PUBLIC_API_URL` をそのURLに書き換え。
 3. `eas build -p ios --profile preview` でアプリ再ビルド。
 
-これで完了です！
+## 6. Admin Panel (Web) のデプロイ
+`render.yaml` に Admin Panel の設定が含まれているため、GitHubへプッシュすると自動的にデプロイされます。
+
+1. **URL**: Render Dashboard で `spotch-admin` サービスを確認し、URLを取得してください。
+2. **アクセス**: ブラウザでそのURLを開きます。
+3. **認証**: 初回は特にログイン画面はありません（`super-admin-secret` ヘッダーで保護されていますが、簡易的な実装です）。
+
+これですべて完了です！🚀

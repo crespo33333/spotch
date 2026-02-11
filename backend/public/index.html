@@ -159,7 +159,7 @@
                             </div>
                         </a>
 
-                        <button onclick="alert('Android coming soon!')"
+                        <button onclick="alert(currentLang === 'ja' ? 'Android版は近日公開予定です' : 'Android coming soon!')"
                             class="group bg-white text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl flex items-center justify-center gap-4 hover:border-green-500 hover:text-green-600 transition-all shadow-lg shadow-slate-200/50 active:scale-95">
                             <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24">
                                 <path
@@ -354,8 +354,7 @@
                 <a href="/privacy-policy" class="hover:text-white transition" data-i18n="footer.privacy">Privacy
                     Policy</a>
                 <a href="/terms" class="hover:text-white transition" data-i18n="footer.terms">Terms</a>
-                <a href="mailto:support@spotch.app" class="hover:text-white transition"
-                    data-i18n="footer.contact">Contact</a>
+                <a href="/support" class="hover:text-white transition" data-i18n="footer.contact">Contact</a>
             </div>
         </div>
     </footer>
@@ -421,7 +420,7 @@
                     title: '冒険を、始めよう。',
                     subtitle: 'あなたの街が、次の戦場だ。',
                     button: '今すぐダウンロード',
-                    note: 'iOS 15.0以降対応 / Android要件確認中'
+                    note: 'iOS 15.0以降対応 / Android版 近日公開'
                 },
                 footer: { privacy: 'プライバシーポリシー', terms: '利用規約', contact: 'お問い合わせ' }
             }

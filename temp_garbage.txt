@@ -1,0 +1,67 @@
+
+const TERMS_OF_SERVICE = `
+    < !DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="UTF-8" >
+            <meta name="viewport" content = "width=device-width, initial-scale=1.0" >
+                <title>Spotch Terms of Service </title>
+    ${ COMMON_STYLE }
+</head>
+    < body >
+    <div class="container" >
+        <h1>Terms of Service </h1>
+            < span class="date" > Last updated: January 25, 2026 </span>
+
+                < p > By using Spotch, you agree to these Terms.Please read them carefully.</p>
+
+                    < h2 > 1. Acceptance of Terms </h2>
+                        < p > By accessing or using the Spotch mobile application, you agree to be bound by these Terms of Service and all applicable laws and regulations.</p>
+
+                            < h2 > 2. User Conduct </h2>
+                                < p > You agree not to misuse the Service.Prohibited actions include: </p>
+                                    < ul >
+                                    <li>GPS spoofing or falsifying location data.</li>
+                                        < li > Harassing, bullying, or intimidating other players.</li>
+                                            < li > Posting offensive or illegal content.</li>
+                                                < li > Attempting to reverse engineer the application.</li>
+                                                    </ul>
+
+                                                    < h2 > 3. Termination </h2>
+                                                        < p > We reserve the right to suspend or terminate your account at our sole discretion, without notice, for conduct that we believe violates these Terms or is harmful to other users.</p>
+
+                                                            < h2 > 4. Disclaimer </h2>
+                                                                < p > The Service is provided "as is".We make no warranties, expressed or implied, regarding the reliability or availability of the Service.</p>
+
+                                                                    < a href = "/" class="back-link" >← Back to Home </a>
+                                                                        </div>
+                                                                        </body>
+                                                                        </html>
+                                                                            `;
+
+const SUPPORT_PAGE = `
+                                                                        < !DOCTYPE html >
+                                                                            <html>
+                                                                            <head>
+                                                                            <meta charset="UTF-8" >
+                                                                                <meta name="viewport" content = "width=device-width, initial-scale=1.0" >
+                                                                                    <title>Spotch Support </title>
+    ${ COMMON_STYLE }
+</head>
+    < body >
+    <div class="container" >
+        <h1>Support </h1>
+        < p > Need help ? We are here for you.</p>
+
+            < h2 > Contact Us </h2>
+            < p > For any issues, bug reports, or account inquiries, please email us directly: </p>
+                < p > <a href="mailto:support@spotch.app" style = "font-size: 1.2rem; color: #00C2FF; font-weight: bold;" > support@spotch.app</a></p >
+
+                    <h2>FAQ </h2>
+                    < p > Check out our < a href = "/#faq" style = "color: #00C2FF;" > Frequently Asked Questions < /a> on the home page.</p >
+
+                        <a href="/" class="back-link" >← Back to Home </a>
+                            </div>
+                            </body>
+                            </html>
+                                `;

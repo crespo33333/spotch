@@ -79,6 +79,74 @@ const PRIVACY_POLICY = `
 </html>
 `;
 
+const TERMS_OF_SERVICE = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotch Terms of Service</title>
+    ${COMMON_STYLE}
+</head>
+<body>
+    <div class="container">
+        <h1>Terms of Service</h1>
+        <span class="date">Last updated: January 25, 2026</span>
+
+        <p>By using Spotch, you agree to these Terms. Please read them carefully.</p>
+
+        <h2>1. Acceptance of Terms</h2>
+        <p>By accessing or using the Spotch mobile application, you agree to be bound by these Terms of Service and all applicable laws and regulations.</p>
+
+        <h2>2. User Conduct</h2>
+        <p>You agree not to misuse the Service. Prohibited actions include:</p>
+        <ul>
+            <li>GPS spoofing or falsifying location data.</li>
+            <li>Harassing, bullying, or intimidating other players.</li>
+            <li>Posting offensive or illegal content.</li>
+            <li>Attempting to reverse engineer the application.</li>
+        </ul>
+
+        <h2>3. Termination</h2>
+        <p>We reserve the right to suspend or terminate your account at our sole discretion, without notice, for conduct that we believe violates these Terms or is harmful to other users.</p>
+
+        <h2>4. Disclaimer</h2>
+        <p>The Service is provided "as is". We make no warranties, expressed or implied, regarding the reliability or availability of the Service.</p>
+
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+</body>
+</html>
+`;
+const SUPPORT_PAGE = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotch Support</title>
+    ${COMMON_STYLE}
+</head>
+<body>
+    <div class="container">
+        <h1>Support</h1>
+        <p>Need help? We are here for you.</p>
+        
+        <h2>Contact Us</h2>
+        <p>For any issues, bug reports, or account inquiries, please email us directly:</p>
+        <p><a href="mailto:support@spotch.app" style="font-size: 1.2rem; color: #00C2FF; font-weight: bold;">support@spotch.app</a></p>
+        
+        <h2>FAQ</h2>
+        <p>Check out our <a href="/#faq" style="color: #00C2FF;">Frequently Asked Questions</a> on the home page.</p>
+
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+</body>
+</html>
+`;
+
+
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -100,7 +168,7 @@ app.use(
 );
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} `);
     next();
 });
 
@@ -116,11 +184,11 @@ const searchPaths = [
 let PUBLIC_PATH = path.join(__dirname, '../public'); // Default
 for (const p of searchPaths) {
     if (fs.existsSync(p)) {
-        console.log(`✅ Found public folder at: ${p}`);
+        console.log(`✅ Found public folder at: ${p} `);
         PUBLIC_PATH = p;
         break;
     } else {
-        console.log(`❌ Public folder not found at: ${p}`);
+        console.log(`❌ Public folder not found at: ${p} `);
     }
 }
 
@@ -132,14 +200,20 @@ app.get('/', (req: Request, res: Response) => {
         res.sendFile(indexPath);
     } else {
         res.send(`
-            <h1>Maintenance Mode</h1>
-            <p>Landing page is compiling...</p>
-            <p>Debug Info: Public Path = ${PUBLIC_PATH}</p>
-        `);
+    < h1 > Maintenance Mode </h1>
+        < p > Landing page is compiling...</p>
+            < p > Debug Info: Public Path = ${PUBLIC_PATH} </p>
+                `);
     }
 });
 
 app.get('/health', (req: Request, res: Response) => res.send('OK'));
+
+app.get('/privacy-policy', (req: Request, res: Response) => res.send(PRIVACY_POLICY));
+app.get('/privacy', (req: Request, res: Response) => res.send(PRIVACY_POLICY)); // Alias for convenience
+app.get('/terms', (req: Request, res: Response) => res.send(TERMS_OF_SERVICE));
+app.get('/support', (req: Request, res: Response) => res.send(SUPPORT_PAGE));
+
 
 app.get('/db-test', async (req: Request, res: Response) => {
     try {
@@ -171,19 +245,19 @@ app.get('/debug-fs', (req: Request, res: Response) => {
 
 // Catch-all for debugging (MUST BE LAST)
 app.use('*', (req: Request, res: Response) => {
-    console.log(`Fallback hit for: ${req.url} - Current Public Path: ${PUBLIC_PATH}`);
+    console.log(`Fallback hit for: ${req.url} - Current Public Path: ${PUBLIC_PATH} `);
     res.status(200).send(`
-        <html>
-            <body style="font-family:sans-serif; text-align:center; padding:50px;">
-                <h1>Spotch is Alive</h1>
-                <p>You requested: ${req.url}</p>
-                <p>But we couldn't find the specific resource.</p>
-                <p>Landing page path: ${PUBLIC_PATH}</p>
-                <hr/>
-                <a href="/images/screenshot_05_fixed.png">Check Image</a>
-            </body>
-        </html>
-    `);
+    < html >
+    <body style="font-family:sans-serif; text-align:center; padding:50px;" >
+        <h1>Spotch is Alive </h1>
+            < p > You requested: ${req.url} </p>
+                < p > But we couldn't find the specific resource.</p>
+                    < p > Landing page path: ${PUBLIC_PATH} </p>
+                        < hr />
+                        <a href="/images/screenshot_05_fixed.png" > Check Image </a>
+                            </body>
+                            </html>
+                                `);
 });
 
 // Bind to default host and start
@@ -192,7 +266,7 @@ const start = async () => {
         console.log("🚀 Starting Spotch Backend...");
         await initDB();
         app.listen(Number(PORT), '0.0.0.0', () => {
-            console.log(`✅ Server is running on port ${PORT}`);
+            console.log(`✅ Server is running on port ${PORT} `);
         });
     } catch (e) {
         console.error("❌ Fatal startup error:", e);
