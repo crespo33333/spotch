@@ -106,4 +106,53 @@ exports.paymentRouter = (0, trpc_1.router)({
             .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
         return { success: true };
     }),
+    verifyIAPReceipt: trpc_1.protectedProcedure
+        .input(zod_1.z.object({
+        receipt: zod_1.z.string(),
+        platform: zod_1.z.enum(['ios', 'android']),
+        productId: zod_1.z.string(),
+    }))
+        .mutation(async ({ ctx, input }) => {
+        console.log(`[IAP] Verifying receipt for user ${ctx.user.id} on ${input.platform}`);
+        // TODO: Implement actual receipt validation with Apple/Google servers
+        // const isSandbox = process.env.NODE_ENV !== 'production';
+        // await validateReceipt(input.receipt, isSandbox);
+        // Mock Validation: Ensure receipt is not empty
+        if (!input.receipt || input.receipt.length < 10) {
+            throw new server_1.TRPCError({ code: "BAD_REQUEST", message: "Invalid receipt" });
+        }
+        console.log(`[IAP] Receipt validated (Mock). Product: ${input.productId}`);
+        // Determine points to award based on Product ID
+        let pointsToAward = 0;
+        if (input.productId.includes('point500') || input.productId.includes('points.500')) {
+            pointsToAward = 500;
+        }
+        else if (input.productId.includes('point1100') || input.productId.includes('points.1100')) {
+            pointsToAward = 1100;
+        }
+        else {
+            // Default fallback or error
+            console.warn(`[IAP] Unknown product ID: ${input.productId}, defaulting to 0 points`);
+        }
+        if (pointsToAward > 0) {
+            await db_1.db.transaction(async (tx) => {
+                // Award Points
+                await tx.insert(schema_1.wallets).values({
+                    userId: ctx.user.id,
+                    currentBalance: pointsToAward
+                }).onConflictDoUpdate({
+                    target: [schema_1.wallets.userId],
+                    set: { currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + ${pointsToAward}` }
+                });
+                // Log Transaction
+                await tx.insert(schema_1.transactions).values({
+                    userId: ctx.user.id,
+                    amount: pointsToAward,
+                    type: 'earn',
+                    description: `IAP Purchase (${input.productId})`,
+                });
+            });
+        }
+        return { success: true, pointsAwarded: pointsToAward };
+    }),
 });

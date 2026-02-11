@@ -11,6 +11,8 @@ const ranking_1 = require("./ranking");
 const activity_1 = require("./activity");
 const quest_1 = require("./quest");
 const visit_1 = require("./visit");
+const message_1 = require("./message");
+const exchange_1 = require("./exchange");
 exports.appRouter = (0, trpc_1.router)({
     health: trpc_1.publicProcedure.query(() => {
         return 'ok';
@@ -24,4 +26,6 @@ exports.appRouter = (0, trpc_1.router)({
     ranking: ranking_1.rankingRouter,
     activity: activity_1.activityRouter,
     quest: quest_1.questRouter,
+    message: message_1.messageRouter,
+    exchange: exchange_1.exchangeRouter,
 });

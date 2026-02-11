@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.spotMessagesRelations = exports.userQuestsRelations = exports.questsRelations = exports.followsRelations = exports.transactionsRelations = exports.walletsRelations = exports.visitsRelations = exports.spotLikesRelations = exports.spotsRelations = exports.usersRelations = exports.broadcasts = exports.spotMessages = exports.spotLikes = exports.userQuests = exports.quests = exports.follows = exports.transactions = exports.wallets = exports.visits = exports.spots = exports.users = exports.questStatusEnum = exports.questConditionEnum = exports.txTypeEnum = exports.roleEnum = void 0;
+exports.spotMessagesRelations = exports.userQuestsRelations = exports.questsRelations = exports.followsRelations = exports.transactionsRelations = exports.walletsRelations = exports.visitsRelations = exports.spotLikesRelations = exports.weeklySpotPointsRelations = exports.spotsRelations = exports.userBadgesRelations = exports.badgesRelations = exports.messagesRelations = exports.reportsRelations = exports.userBlocksRelations = exports.couponsRelations = exports.redemptionsRelations = exports.usersRelations = exports.reports = exports.userBlocks = exports.redemptions = exports.coupons = exports.messages = exports.userBadges = exports.badges = exports.broadcasts = exports.spotMessages = exports.spotLikes = exports.userQuests = exports.quests = exports.follows = exports.transactions = exports.wallets = exports.visits = exports.weeklySpotPoints = exports.spots = exports.users = exports.questStatusEnum = exports.questConditionEnum = exports.txTypeEnum = exports.roleEnum = void 0;
 const pg_core_1 = require("drizzle-orm/pg-core");
 const drizzle_orm_1 = require("drizzle-orm");
 exports.roleEnum = (0, pg_core_1.pgEnum)('role', ['user', 'admin']);
@@ -39,8 +39,23 @@ exports.spots = (0, pg_core_1.pgTable)('spots', {
     description: (0, pg_core_1.text)('description'),
     spotLevel: (0, pg_core_1.integer)('spot_level').default(1),
     totalActivity: (0, pg_core_1.integer)('total_activity').default(0),
+    ownerId: (0, pg_core_1.integer)('owner_id').references(() => exports.users.id),
+    taxRate: (0, pg_core_1.integer)('tax_rate').default(5),
+    lastOwnerChangeAt: (0, pg_core_1.timestamp)('last_owner_change_at'),
+    shieldExpiresAt: (0, pg_core_1.timestamp)('shield_expires_at'),
+    taxBoostExpiresAt: (0, pg_core_1.timestamp)('tax_boost_expires_at'),
     createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
 });
+exports.weeklySpotPoints = (0, pg_core_1.pgTable)('weekly_spot_points', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    spotId: (0, pg_core_1.integer)('spot_id').references(() => exports.spots.id, { onDelete: 'cascade' }).notNull(),
+    userId: (0, pg_core_1.integer)('user_id').references(() => exports.users.id, { onDelete: 'cascade' }).notNull(),
+    points: (0, pg_core_1.integer)('points').default(0).notNull(),
+    weekStart: (0, pg_core_1.timestamp)('week_start').notNull(), // Identifying the week
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
+}, (t) => ({
+    unq: (0, pg_core_1.uniqueIndex)('weekly_spot_points_unq').on(t.spotId, t.userId, t.weekStart),
+}));
 exports.visits = (0, pg_core_1.pgTable)('visits', {
     id: (0, pg_core_1.serial)('id').primaryKey(),
     spotId: (0, pg_core_1.integer)('spot_id').references(() => exports.spots.id),
@@ -48,6 +63,7 @@ exports.visits = (0, pg_core_1.pgTable)('visits', {
     checkInTime: (0, pg_core_1.timestamp)('check_in_time'),
     checkOutTime: (0, pg_core_1.timestamp)('check_out_time'),
     earnedPoints: (0, pg_core_1.decimal)('earned_points', { precision: 12, scale: 4 }).default('0'),
+    lastHeartbeatAt: (0, pg_core_1.timestamp)('last_heartbeat_at').defaultNow(),
     createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
 });
 exports.wallets = (0, pg_core_1.pgTable)('wallets', {
@@ -113,6 +129,68 @@ exports.broadcasts = (0, pg_core_1.pgTable)('broadcasts', {
     link: (0, pg_core_1.text)('link'),
     createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
 });
+exports.badges = (0, pg_core_1.pgTable)('badges', {
+    id: (0, pg_core_1.text)('id').primaryKey(), // e.g., 'first_step'
+    name: (0, pg_core_1.text)('name').notNull(),
+    description: (0, pg_core_1.text)('description'),
+    icon: (0, pg_core_1.text)('icon').notNull(), // Emoji or URL
+    conditionType: (0, pg_core_1.text)('condition_type').notNull(), // 'steps', 'points', 'spots_created'
+    conditionValue: (0, pg_core_1.integer)('condition_value').notNull(),
+    order: (0, pg_core_1.integer)('order').default(0), // For display sorting
+});
+exports.userBadges = (0, pg_core_1.pgTable)('user_badges', {
+    userId: (0, pg_core_1.integer)('user_id').references(() => exports.users.id, { onDelete: 'cascade' }).notNull(),
+    badgeId: (0, pg_core_1.text)('badge_id').references(() => exports.badges.id, { onDelete: 'cascade' }).notNull(),
+    earnedAt: (0, pg_core_1.timestamp)('earned_at').defaultNow(),
+}, (t) => ({
+    pk: (0, pg_core_1.uniqueIndex)('user_badge_pk').on(t.userId, t.badgeId),
+}));
+// Messages (Direct)
+exports.messages = (0, pg_core_1.pgTable)('messages', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    senderId: (0, pg_core_1.integer)('sender_id').references(() => exports.users.id, { onDelete: 'cascade' }).notNull(),
+    receiverId: (0, pg_core_1.integer)('receiver_id').references(() => exports.users.id, { onDelete: 'cascade' }).notNull(),
+    content: (0, pg_core_1.text)('content').notNull(),
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
+    readAt: (0, pg_core_1.timestamp)('read_at'),
+});
+// Point Exchange
+exports.coupons = (0, pg_core_1.pgTable)('coupons', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    name: (0, pg_core_1.varchar)('name', { length: 255 }).notNull(),
+    description: (0, pg_core_1.text)('description'),
+    cost: (0, pg_core_1.integer)('cost').notNull(),
+    type: (0, pg_core_1.varchar)('type', { length: 50 }).notNull(), // 'gift_card', 'donation', 'premium', 'item'
+    data: (0, pg_core_1.text)('data'), // Optional: Coupon code pattern, URL, etc.
+    stock: (0, pg_core_1.integer)('stock'), // Null = Infinite
+    isActive: (0, pg_core_1.boolean)('is_active').default(true),
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
+});
+exports.redemptions = (0, pg_core_1.pgTable)('redemptions', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    userId: (0, pg_core_1.integer)('user_id').references(() => exports.users.id).notNull(),
+    couponId: (0, pg_core_1.integer)('coupon_id').references(() => exports.coupons.id).notNull(),
+    redeemedAt: (0, pg_core_1.timestamp)('redeemed_at').defaultNow(),
+    code: (0, pg_core_1.varchar)('code', { length: 255 }), // Generated unique code for user
+    status: (0, pg_core_1.varchar)('status', { length: 50 }).default('completed'), // 'pending', 'completed'
+});
+// Safety & Compliance
+exports.userBlocks = (0, pg_core_1.pgTable)('user_blocks', {
+    blockerId: (0, pg_core_1.integer)('blocker_id').references(() => exports.users.id, { onDelete: 'cascade' }).notNull(),
+    blockedId: (0, pg_core_1.integer)('blocked_id').references(() => exports.users.id, { onDelete: 'cascade' }).notNull(),
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
+}, (t) => ({
+    pk: (0, pg_core_1.uniqueIndex)('user_block_pk').on(t.blockerId, t.blockedId),
+}));
+exports.reports = (0, pg_core_1.pgTable)('reports', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    reporterId: (0, pg_core_1.integer)('reporter_id').references(() => exports.users.id, { onDelete: 'cascade' }).notNull(),
+    targetType: (0, pg_core_1.varchar)('target_type', { length: 50 }).notNull(), // 'user', 'spot', 'comment'
+    targetId: (0, pg_core_1.integer)('target_id').notNull(),
+    reason: (0, pg_core_1.text)('reason').notNull(),
+    status: (0, pg_core_1.varchar)('status', { length: 50 }).default('pending'), // 'pending', 'resolved', 'dismissed'
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
+});
 // Relations
 exports.usersRelations = (0, drizzle_orm_1.relations)(exports.users, ({ one, many }) => ({
     spots: many(exports.spots),
@@ -126,15 +204,92 @@ exports.usersRelations = (0, drizzle_orm_1.relations)(exports.users, ({ one, man
     userQuests: many(exports.userQuests),
     messages: many(exports.spotMessages),
     likes: many(exports.spotLikes),
+    userBadges: many(exports.userBadges),
+    sentMessages: many(exports.messages, { relationName: 'sentMessages' }),
+    receivedMessages: many(exports.messages, { relationName: 'receivedMessages' }),
+    redemptions: many(exports.redemptions),
+    blockedUsers: many(exports.userBlocks, { relationName: 'blockedUsers' }),
+    reports: many(exports.reports),
+}));
+exports.redemptionsRelations = (0, drizzle_orm_1.relations)(exports.redemptions, ({ one }) => ({
+    user: one(exports.users, {
+        fields: [exports.redemptions.userId],
+        references: [exports.users.id],
+    }),
+    coupon: one(exports.coupons, {
+        fields: [exports.redemptions.couponId],
+        references: [exports.coupons.id],
+    }),
+}));
+exports.couponsRelations = (0, drizzle_orm_1.relations)(exports.coupons, ({ many }) => ({
+    redemptions: many(exports.redemptions),
+}));
+exports.userBlocksRelations = (0, drizzle_orm_1.relations)(exports.userBlocks, ({ one }) => ({
+    blocker: one(exports.users, {
+        fields: [exports.userBlocks.blockerId],
+        references: [exports.users.id],
+        relationName: 'blockedUsers',
+    }),
+    blocked: one(exports.users, {
+        fields: [exports.userBlocks.blockedId],
+        references: [exports.users.id],
+    }),
+}));
+exports.reportsRelations = (0, drizzle_orm_1.relations)(exports.reports, ({ one }) => ({
+    reporter: one(exports.users, {
+        fields: [exports.reports.reporterId],
+        references: [exports.users.id],
+    }),
+}));
+exports.messagesRelations = (0, drizzle_orm_1.relations)(exports.messages, ({ one }) => ({
+    sender: one(exports.users, {
+        fields: [exports.messages.senderId],
+        references: [exports.users.id],
+        relationName: 'sentMessages',
+    }),
+    receiver: one(exports.users, {
+        fields: [exports.messages.receiverId],
+        references: [exports.users.id],
+        relationName: 'receivedMessages',
+    }),
+}));
+exports.badgesRelations = (0, drizzle_orm_1.relations)(exports.badges, ({ many }) => ({
+    users: many(exports.userBadges),
+}));
+exports.userBadgesRelations = (0, drizzle_orm_1.relations)(exports.userBadges, ({ one }) => ({
+    user: one(exports.users, {
+        fields: [exports.userBadges.userId],
+        references: [exports.users.id],
+    }),
+    badge: one(exports.badges, {
+        fields: [exports.userBadges.badgeId],
+        references: [exports.badges.id],
+    }),
 }));
 exports.spotsRelations = (0, drizzle_orm_1.relations)(exports.spots, ({ one, many }) => ({
     spotter: one(exports.users, {
         fields: [exports.spots.spotterId],
         references: [exports.users.id],
     }),
+    owner: one(exports.users, {
+        fields: [exports.spots.ownerId],
+        references: [exports.users.id],
+        relationName: 'ownedSpots',
+    }),
     visits: many(exports.visits),
     messages: many(exports.spotMessages),
     likes: many(exports.spotLikes),
+    weeklyPoints: many(exports.weeklySpotPoints),
+}));
+exports.weeklySpotPointsRelations = (0, drizzle_orm_1.relations)(exports.weeklySpotPoints, ({ one }) => ({
+    spot: one(exports.spots, {
+        fields: [exports.weeklySpotPoints.spotId],
+        references: [exports.spots.id],
+    }),
+    user: one(exports.users, {
+        fields: [exports.weeklySpotPoints.userId],
+        references: [exports.users.id],
+    }),
 }));
 exports.spotLikesRelations = (0, drizzle_orm_1.relations)(exports.spotLikes, ({ one }) => ({
     spot: one(exports.spots, {

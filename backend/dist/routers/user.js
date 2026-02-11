@@ -126,24 +126,23 @@ exports.userRouter = (0, trpc_1.router)({
                 wallet: true,
                 visits: true,
                 messages: true,
+                userBadges: {
+                    with: {
+                        badge: true
+                    }
+                }
             }
         });
         if (!user)
             return null;
-        // Badge Logic
-        const badges = [];
-        if (user.id <= 10)
-            badges.push({ id: 'pioneer', name: 'Pioneer', icon: '🥇', color: '#FEF9C3' });
-        if (user.isPremium)
-            badges.push({ id: 'premium', name: 'Premium', icon: '💎', color: '#E0F2FE' }); // Blue-ish
-        if ((user.wallet?.currentBalance || 0) >= 5000)
-            badges.push({ id: 'wealthy', name: 'High Roller', icon: '💰', color: '#FCE7F3' });
-        if (user.followers.length >= 5)
-            badges.push({ id: 'socialite', name: 'Socialite', icon: '🔥', color: '#FFEDD5' });
-        if (user.visits.length >= 10)
-            badges.push({ id: 'explorer', name: 'Explorer', icon: '🌍', color: '#DBEAFE' });
-        if (user.messages.length >= 10)
-            badges.push({ id: 'chatterbox', name: 'Chatterbox', icon: '💬', color: '#F1F5F9' });
+        // Map DB badges to response format
+        const badges = user.userBadges.map(ub => ({
+            id: ub.badge.id,
+            name: ub.badge.name,
+            icon: ub.badge.icon,
+            color: '#E0F2FE', // Default color, or add color to schema if needed. Using light blue for now.
+            earnedAt: ub.earnedAt,
+        }));
         return {
             ...user,
             followerCount: user.followers.length,
@@ -187,6 +186,64 @@ exports.userRouter = (0, trpc_1.router)({
         await db_1.db.update(schema_1.wallets)
             .set({ currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + 500` })
             .where((0, drizzle_orm_1.eq)(schema_1.wallets.userId, ctx.user.id));
+        return { success: true };
+    }),
+    block: trpc_1.protectedProcedure
+        .input(zod_1.z.object({ targetUserId: zod_1.z.number() }))
+        .mutation(async ({ ctx, input }) => {
+        if (ctx.user.id === input.targetUserId)
+            throw new Error("Cannot block yourself");
+        // 1. Create Block Record
+        await db_1.db.insert(schema_1.userBlocks).values({
+            blockerId: ctx.user.id,
+            blockedId: input.targetUserId,
+        }).onConflictDoNothing();
+        // 2. Remove Follows (Both ways)
+        const { and, eq, or } = require('drizzle-orm');
+        await db_1.db.delete(schema_1.follows).where(or(and(eq(schema_1.follows.followerId, ctx.user.id), eq(schema_1.follows.followingId, input.targetUserId)), and(eq(schema_1.follows.followerId, input.targetUserId), eq(schema_1.follows.followingId, ctx.user.id))));
+        return { success: true };
+    }),
+    unblock: trpc_1.protectedProcedure
+        .input(zod_1.z.object({ targetUserId: zod_1.z.number() }))
+        .mutation(async ({ ctx, input }) => {
+        const { and, eq } = require('drizzle-orm');
+        await db_1.db.delete(schema_1.userBlocks).where(and(eq(schema_1.userBlocks.blockerId, ctx.user.id), eq(schema_1.userBlocks.blockedId, input.targetUserId)));
+        return { success: true };
+    }),
+    report: trpc_1.protectedProcedure
+        .input(zod_1.z.object({
+        targetType: zod_1.z.enum(['user', 'spot', 'comment']),
+        targetId: zod_1.z.number(),
+        reason: zod_1.z.string(),
+    }))
+        .mutation(async ({ ctx, input }) => {
+        await db_1.db.insert(schema_1.reports).values({
+            reporterId: ctx.user.id,
+            targetType: input.targetType,
+            targetId: input.targetId,
+            reason: input.reason,
+        });
+        return { success: true };
+    }),
+    deleteAccount: trpc_1.protectedProcedure
+        .mutation(async ({ ctx }) => {
+        // "Soft Delete" / Anonymize to preserve game integrity (Spots created by user must remain)
+        // But remove PII (Name, Email, OpenID link, Avatar)
+        const anonymizedName = `Deleted User ${ctx.user.id}`;
+        const anonymizedEmail = `deleted_${ctx.user.id}@spotch.app`;
+        const anonymizedOpenId = `deleted_${ctx.user.id}_${Date.now()}`;
+        await db_1.db.update(schema_1.users)
+            .set({
+            name: anonymizedName,
+            email: anonymizedEmail,
+            openId: anonymizedOpenId, // Break link to Auth Provider
+            avatar: 'default_seed',
+            bio: null,
+            pushToken: null,
+            deviceId: null,
+            isBanned: true, // Prevent login even if somehow auth flows
+        })
+            .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
         return { success: true };
     }),
 });

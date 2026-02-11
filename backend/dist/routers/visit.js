@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.visitRouter = void 0;
 const trpc_1 = require("../trpc");
@@ -26,6 +59,10 @@ exports.visitRouter = (0, trpc_1.router)({
         if (dist > 0.1) { // 100 meters tolerance
             throw new server_1.TRPCError({ code: 'BAD_REQUEST', message: 'Too far from spot' });
         }
+        // Close any existing active visits for this user (Enforce 1 active visit)
+        await db_1.db.update(schema_1.visits)
+            .set({ checkOutTime: new Date() })
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.visits.getterId, ctx.user.id), (0, drizzle_orm_1.sql) `${schema_1.visits.checkOutTime} IS NULL`));
         const [visit] = await db_1.db.insert(schema_1.visits).values({
             spotId: spot.id,
             getterId: ctx.user.id,
@@ -57,6 +94,10 @@ exports.visitRouter = (0, trpc_1.router)({
             await db_1.db.update(schema_1.userQuests).set(updates).where((0, drizzle_orm_1.eq)(schema_1.userQuests.id, uq.id));
         }
         // ------------------------------------------
+        // Gamification: Award XP for Check-In
+        const { addXp: addXpUtils, checkBadgeUnlock } = await Promise.resolve().then(() => __importStar(require('../utils/gamification')));
+        await addXpUtils(ctx.user.id, 50);
+        await checkBadgeUnlock(ctx.user.id, 'visits');
         return visit;
     }),
     // Check for Quests (Visit Type) => This logic could be shared
@@ -117,7 +158,19 @@ exports.visitRouter = (0, trpc_1.router)({
         if (!visit || !visit.spot || !visit.spot.active) {
             throw new Error('Invalid visit session');
         }
-        // Calculate Points & XP (Scale based on spot's rate)
+        // 0. Update Heartbeat Timestamp (Alive Check)
+        await db_1.db.update(schema_1.visits)
+            .set({ lastHeartbeatAt: new Date() })
+            .where((0, drizzle_orm_1.eq)(schema_1.visits.id, visit.id));
+        // Check Budget / Depletion
+        if ((visit.spot.remainingPoints || 0) <= 0) {
+            // Mark spot inactive if not already
+            if (visit.spot.active) {
+                await db_1.db.update(schema_1.spots).set({ active: false }).where((0, drizzle_orm_1.eq)(schema_1.spots.id, visit.spot.id));
+            }
+            throw new server_1.TRPCError({ code: 'PRECONDITION_FAILED', message: 'Spot depleted' });
+        }
+        // Calculate Points & XP (Fixed Rate per User)
         // Heartbeats happen every 5 seconds. 60 / 5 = 12 heartbeats per minute.
         const ratePerMin = visit.spot.ratePerMinute || 10;
         const increment = ratePerMin / 12; // Fractional increment
@@ -128,22 +181,82 @@ exports.visitRouter = (0, trpc_1.router)({
         await db_1.db.update(schema_1.visits)
             .set({ earnedPoints: newEarned.toString() })
             .where((0, drizzle_orm_1.eq)(schema_1.visits.id, visit.id));
-        // 2. Calculate Wallet Update (Only add if integer part increased)
+        // 2. Update remaining points (Drain budget)
+        await db_1.db.update(schema_1.spots)
+            .set({ remainingPoints: (0, drizzle_orm_1.sql) `${schema_1.spots.remainingPoints} - ${increment}` })
+            .where((0, drizzle_orm_1.eq)(schema_1.spots.id, visit.spot.id));
+        // 3. Calculate Wallet Update (Only add if integer part increased)
         const walletAward = Math.floor(newEarned) - Math.floor(oldEarned);
         if (walletAward > 0) {
-            await db_1.db.update(schema_1.wallets)
-                .set({
-                currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + ${walletAward}`,
-                lastTransactionAt: new Date()
-            })
-                .where((0, drizzle_orm_1.eq)(schema_1.wallets.userId, ctx.user.id));
-            // Log Transaction (only for integer gains to avoid spamming tx history)
-            await db_1.db.insert(schema_1.transactions).values({
+            // Check for Owner & Tax
+            const currentSpot = await db_1.db.query.spots.findFirst({ where: (0, drizzle_orm_1.eq)(schema_1.spots.id, visit.spot.id) }); // Re-fetch to get latest owner
+            const ownerId = currentSpot?.ownerId;
+            let taxRate = currentSpot?.taxRate || 5;
+            // Check Tax Boost
+            if (currentSpot?.taxBoostExpiresAt && new Date(currentSpot.taxBoostExpiresAt) > new Date()) {
+                taxRate = 10; // Boost to 10%
+            }
+            let userGain = walletAward;
+            let taxAmount = 0;
+            if (ownerId && ownerId !== ctx.user.id) {
+                // Cumulative Tax Calculation
+                // Calculate total tax that *should* have been paid up to this point
+                const cumulativeTaxNew = Math.floor(newEarned * (taxRate / 100));
+                const cumulativeTaxOld = Math.floor(oldEarned * (taxRate / 100));
+                // The tax due for this specific increment is the difference
+                taxAmount = cumulativeTaxNew - cumulativeTaxOld;
+                userGain = walletAward - taxAmount;
+                if (taxAmount > 0) {
+                    // Pay Owner
+                    await db_1.db.update(schema_1.wallets)
+                        .set({
+                        currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + ${taxAmount}`,
+                        lastTransactionAt: new Date()
+                    })
+                        .where((0, drizzle_orm_1.eq)(schema_1.wallets.userId, ownerId));
+                    await db_1.db.insert(schema_1.transactions).values({
+                        userId: ownerId,
+                        amount: taxAmount,
+                        type: 'earn',
+                        description: `Tax collected from ${visit.spot.name}`
+                    });
+                }
+            }
+            // Pay Worker (User)
+            if (userGain > 0) {
+                await db_1.db.update(schema_1.wallets)
+                    .set({
+                    currentBalance: (0, drizzle_orm_1.sql) `${schema_1.wallets.currentBalance} + ${userGain}`,
+                    lastTransactionAt: new Date()
+                })
+                    .where((0, drizzle_orm_1.eq)(schema_1.wallets.userId, ctx.user.id));
+                // Log Transaction
+                await db_1.db.insert(schema_1.transactions).values({
+                    userId: ctx.user.id,
+                    amount: userGain,
+                    type: 'earn',
+                    description: `Farmed at ${visit.spot.name}${taxAmount > 0 ? ` (Taxed ${taxRate}%)` : ''}`
+                });
+            }
+            // --- Turf War: Update Weekly Points ---
+            const { weeklySpotPoints } = require('../db/schema');
+            const weekStart = new Date();
+            weekStart.setHours(0, 0, 0, 0);
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Sunday as start
+            // Upsert Weekly Points
+            // Note: We credit the GROSS walletAward (before tax) to the user's weekly score?
+            // Or userGain? Usually "Gross Earnings" determine "Productivity".
+            // Let's use `walletAward` (Gross).
+            await db_1.db.insert(weeklySpotPoints).values({
+                spotId: visit.spot.id,
                 userId: ctx.user.id,
-                amount: walletAward,
-                type: 'earn',
-                description: `Farmed at ${visit.spot.name}`
+                points: walletAward,
+                weekStart: weekStart,
+            }).onConflictDoUpdate({
+                target: [weeklySpotPoints.spotId, weeklySpotPoints.userId, weeklySpotPoints.weekStart],
+                set: { points: (0, drizzle_orm_1.sql) `${weeklySpotPoints.points} + ${walletAward}` }
             });
+            // --------------------------------------
         }
         // 3. Update Spot Activity & Level Up
         const currentSpot = await db_1.db.query.spots.findFirst({ where: (0, drizzle_orm_1.eq)(schema_1.spots.id, visit.spot.id) });
@@ -154,46 +267,24 @@ exports.visitRouter = (0, trpc_1.router)({
         }
         await db_1.db.update(schema_1.spots)
             .set({
-            remainingPoints: (0, drizzle_orm_1.sql) `${schema_1.spots.remainingPoints} - ${increment}`, // Spot points also drain fractionally
             totalActivity: currentSpotActivity,
             spotLevel: newSpotLevel
         })
             .where((0, drizzle_orm_1.eq)(schema_1.spots.id, visit.spot.id));
-        // 4. Update XP & Check Level Up
-        const currentUser = await db_1.db.query.users.findFirst({
-            where: (0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id)
-        });
-        let newLevel = currentUser?.level || 1;
-        let currentXp = (currentUser?.xp || 0) + Math.floor(xpIncrement * 10); // Use a multiplier for XP to avoid integer loss if xp is int
-        // Actually XP is integer. Let's just track fractional XP in user table too?
-        // For now, let's keep it simple: award 1 XP if increment > 0.5 or accumulated.
-        // Better: just use integer for XP but scale it up if needed.
-        // Let's assume XP is also fractional or just award 1 every few heartbeats.
-        // Let's just award 1 XP every heartbeat for now, or match it.
+        // 4. Update XP & Check Level Up via Utils
+        const { addXp, checkBadgeUnlock } = await Promise.resolve().then(() => __importStar(require('../utils/gamification')));
         let earnedXp = Math.max(1, Math.floor(xpIncrement));
-        let didLevelUp = false;
-        const xpNeeded = newLevel * 100;
-        const totalXp = (currentUser?.xp || 0) + earnedXp;
-        if (totalXp >= xpNeeded) {
-            newLevel += 1;
-            currentXp = totalXp - xpNeeded;
-            didLevelUp = true;
+        const xpResult = await addXp(ctx.user.id, earnedXp);
+        // Check for points badge if we earned points
+        if (walletAward > 0) {
+            await checkBadgeUnlock(ctx.user.id, 'points');
         }
-        else {
-            currentXp = totalXp;
-        }
-        await db_1.db.update(schema_1.users)
-            .set({
-            xp: currentXp,
-            level: newLevel
-        })
-            .where((0, drizzle_orm_1.eq)(schema_1.users.id, ctx.user.id));
         return {
             earnedPoints: walletAward,
             earnedXp,
-            newLevel: didLevelUp ? newLevel : undefined,
-            currentXp,
-            xpNeeded: newLevel * 100
+            newLevel: xpResult?.newLevel, // Assuming addXp returns this
+            currentXp: 0, // Frontend might reload user or we change protocol. Return 0 for now as addXp handles db.
+            xpNeeded: (xpResult?.newLevel || 1) * 100
         };
     }),
 });

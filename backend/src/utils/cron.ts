@@ -86,8 +86,6 @@ export async function processWeeklyTurfWars() {
         }
     }
 }
-    }
-}
 
 export async function cleanupStaleVisits() {
     console.log('🧹 Cleaning up stale visits...');

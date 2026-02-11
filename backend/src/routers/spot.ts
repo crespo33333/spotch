@@ -2,7 +2,7 @@ import { router, protectedProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '../db';
 import { spots, wallets, transactions, users, visits, userBlocks, reports } from '../db/schema';
-import { eq, and, sql, desc } from 'drizzle-orm';
+import { eq, and, sql, desc, or } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 export const spotRouter = router({
@@ -219,15 +219,24 @@ export const spotRouter = router({
     getMessages: publicProcedure
         .input(z.object({ spotId: z.number() }))
         .query(async ({ ctx, input }) => {
-            const { spotMessages } = require('../db/schema');
+            const { spotMessages, userBlocks } = require('../db/schema');
 
             // Get list of users who blocked the current user OR whom the current user blocked
             let blockedUserIds: number[] = [];
             if (ctx.user) {
-                const blocks = await db.select().from(userBlocks).where(
-                    sql`${userBlocks.blockerId} = ${ctx.user.id} OR ${userBlocks.blockedId} = ${ctx.user.id}`
-                );
-                blockedUserIds = blocks.map(b => b.blockerId === ctx.user.id ? b.blockedId : b.blockerId);
+                // Filter out comments from blocked users or who blocked me
+                const blocks = await db.query.userBlocks.findMany({
+                    where: or(
+                        eq(userBlocks.blockerId, ctx.user!.id),
+                        eq(userBlocks.blockedId, ctx.user!.id)
+                    )
+                });
+
+                blockedUserIds = blocks.map(b => {
+                    // ctx.user is taken from closure and could technically be null if we didn't await, 
+                    // but we are inside if(ctx.user).
+                    return b.blockerId === ctx.user!.id ? b.blockedId : b.blockerId;
+                });
             }
 
             const messages = await db.query.spotMessages.findMany({
@@ -449,97 +458,6 @@ export const spotRouter = router({
             });
         }),
 
-    takeover: protectedProcedure
-        .input(z.object({ spotId: z.number() }))
-        .mutation(async ({ ctx, input }) => {
-            return await db.transaction(async (tx) => {
-                const { wallets, spots, notifications } = require('../db/schema');
-                // 1. Get Spot & Check Shield
-                const spot = await tx.query.spots.findFirst({
-                    where: eq(spots.id, input.spotId),
-                    with: { owner: true }
-                });
-
-                if (!spot) throw new TRPCError({ code: 'NOT_FOUND', message: 'Spot not found' });
-
-                // Shield Check
-                if (spot.shieldExpiresAt && new Date(spot.shieldExpiresAt) > new Date()) {
-                    throw new TRPCError({ code: 'FORBIDDEN', message: 'Shield active! Cannot capture.' });
-                }
-
-                // Owner Check
-                if (spot.spotterId === ctx.user.id) { // Usually spotter is creator, but we use ownerId now? 
-                    // Schema has spotterId (creator) and we need ownerId. 
-                    // Let's check if schema has ownerId. 
-                    // The view 'getById' uses spot.owner. 
-                    // Let's assume schema has ownerId. If not, we might need to add it or use spotterId as owner.
-                    // Implementation plan said "Add ownerId". 
-                    // But schema.ts viewed earlier DOES show `owner` relation in `getById`.
-                    // Let's verify schema.ts for `ownerId` column. 
-                    // If not present, I'll need to add it.
-                    // For now, let's assume `spotterId` IS the owner for MVP if `ownerId` is missing, 
-                    // OR `ownerId` exists. 
-                    // Wait, `getById` (line 158) -> `owner: true`. 
-                    // So `ownerId` MUST exist in relations.
-                }
-
-                // Cost Calculation
-                const PREMIUM = 10000;
-                const cost = (spot.remainingPoints || 0) + PREMIUM;
-
-                // 2. Check & Deduct Balance (Atomic)
-                const [walletUpdate] = await tx.update(wallets)
-                    .set({
-                        currentBalance: sql`${wallets.currentBalance} - ${cost}`,
-                        lastTransactionAt: new Date()
-                    })
-                    .where(and(
-                        eq(wallets.userId, ctx.user.id),
-                        sql`${wallets.currentBalance} >= ${cost}`
-                    ))
-                    .returning({ id: wallets.id });
-
-                if (!walletUpdate) {
-                    throw new TRPCError({ code: 'BAD_REQUEST', message: `Need ${cost} points to capture!` });
-                }
-
-                // 3. Pay Previous Owner (70% of Premium)
-                if (spot.ownerId && spot.ownerId !== ctx.user.id) {
-                    const payout = Math.floor(PREMIUM * 0.7);
-                    await tx.update(wallets)
-                        .set({
-                            currentBalance: sql`${wallets.currentBalance} + ${payout}`,
-                            lastTransactionAt: new Date()
-                        })
-                        .where(eq(wallets.userId, spot.ownerId));
-
-                    // Notify Previous Owner
-                    const { sendPushNotification } = require('../utils/push');
-                    // We need previous owner push token. 
-                    // We fetched `with: { owner: true }`.
-                    if (spot.owner?.pushToken) {
-                        await sendPushNotification(
-                            spot.owner.pushToken,
-                            "🚨 Territory Lost!",
-                            `${ctx.user.name} captured ${spot.name}! You received ${payout} pts compensation.`,
-                            { type: 'takeover', spotId: spot.id }
-                        );
-                    }
-                }
-
-                // 4. Transfer Ownership
-                await tx.update(spots)
-                    .set({
-                        ownerId: ctx.user.id,
-                        shieldExpiresAt: null, // Remove shield
-                        taxBoostExpiresAt: null,
-                        updatedAt: new Date()
-                    })
-                    .where(eq(spots.id, spot.id));
-
-                return { success: true, cost, oldOwnerId: spot.ownerId };
-            });
-        }),
 });
 
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {

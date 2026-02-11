@@ -46,6 +46,16 @@ exports.activityRouter = (0, trpc_1.router)({
             orderBy: [(0, drizzle_orm_1.desc)(schema_1.visits.createdAt)],
             limit: 10,
         });
+        // 5. Fetch recent comments by following users
+        const recentComments = await db_1.db.query.spotMessages.findMany({
+            where: (0, drizzle_orm_1.inArray)(schema_1.spotMessages.userId, followingIds),
+            with: {
+                user: true,
+                spot: true,
+            },
+            orderBy: [(0, drizzle_orm_1.desc)(schema_1.spotMessages.createdAt)],
+            limit: 10,
+        });
         // Combine and format
         const activities = [
             ...recentLikes.map(l => ({
@@ -75,6 +85,15 @@ exports.activityRouter = (0, trpc_1.router)({
                 avatar: v.getter?.avatar,
                 createdAt: v.createdAt,
             })),
+            ...recentComments.map(c => ({
+                id: `comment-${c.id}`,
+                type: 'comment',
+                userId: c.user.id,
+                user: c.user.name,
+                action: `が「${c.spot.name}」にコメントしました: ${c.content}`,
+                avatar: c.user.avatar,
+                createdAt: c.createdAt,
+            })),
         ];
         return activities.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
     }),
@@ -87,6 +106,7 @@ exports.activityRouter = (0, trpc_1.router)({
         });
         const mySpotIds = mySpots.map(s => s.id);
         let likes = [];
+        let comments = [];
         if (mySpotIds.length > 0) {
             likes = await db_1.db.query.spotLikes.findMany({
                 where: (0, drizzle_orm_1.inArray)(schema_1.spotLikes.spotId, mySpotIds),
@@ -95,6 +115,15 @@ exports.activityRouter = (0, trpc_1.router)({
                     spot: true,
                 },
                 orderBy: [(0, drizzle_orm_1.desc)(schema_1.spotLikes.createdAt)],
+                limit: 20
+            });
+            comments = await db_1.db.query.spotMessages.findMany({
+                where: (0, drizzle_orm_1.and)((0, drizzle_orm_1.inArray)(schema_1.spotMessages.spotId, mySpotIds), (0, drizzle_orm_1.ne)(schema_1.spotMessages.userId, userId)), // Exclude my own comments
+                with: {
+                    user: true,
+                    spot: true,
+                },
+                orderBy: [(0, drizzle_orm_1.desc)(schema_1.spotMessages.createdAt)],
                 limit: 20
             });
         }
@@ -126,6 +155,13 @@ exports.activityRouter = (0, trpc_1.router)({
                 user: l.user,
                 message: `liked your spot "${l.spot.name}"`,
                 createdAt: l.createdAt
+            })),
+            ...comments.map(c => ({
+                id: `comment-${c.id}`,
+                type: 'comment',
+                user: c.user,
+                message: `commented on "${c.spot.name}": ${c.content}`,
+                createdAt: c.createdAt
             })),
             ...myFollowers.map(f => ({
                 id: `follow-${f.id}`,

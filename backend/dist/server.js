@@ -224,4 +224,15 @@ const start = async () => {
         process.exit(1);
     }
 };
+// --- Cron Scheduler ---
+const cron_1 = require("./utils/cron");
+// Run every 10 minutes
+setInterval(() => {
+    (0, cron_1.processWeeklyTurfWars)().catch(e => console.error('Cron Error:', e));
+    (0, cron_1.cleanupStaleVisits)().catch(e => console.error('Cleanup Error:', e));
+}, 10 * 60 * 1000);
+// Run once on startup after DB init (delayed)
+setTimeout(() => {
+    (0, cron_1.processWeeklyTurfWars)().catch(e => console.error('Startup Cron Error:', e));
+}, 10000);
 start();
