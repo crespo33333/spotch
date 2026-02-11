@@ -9,6 +9,7 @@ import {
     TrendingUp,
     Bell,
     Gift,
+    ShieldAlert,
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -43,6 +44,9 @@ export function Sidebar() {
                 </Link>
                 <Link href="/redemptions" className={linkClass('/redemptions')}>
                     <Gift size={18} /> Redemptions
+                </Link>
+                <Link href="/reports" className={linkClass('/reports')}>
+                    <ShieldAlert size={18} className="text-rose-500" /> Reports
                 </Link>
 
                 <div className="h-px bg-slate-800 my-2" />

@@ -5,10 +5,13 @@ import { trpc } from '../../utils/trpc';
 import { Send, Gem, Ban, Search } from 'lucide-react';
 
 export default function UsersPage() {
-    const usersList = trpc.admin.getAllUsers.useQuery();
     const [targetUser, setTargetUser] = useState<{ id: number, name: string } | null>(null);
     const [pushTitle, setPushTitle] = useState('');
     const [pushBody, setPushBody] = useState('');
+    const [search, setSearch] = useState('');
+
+    // Debounce or just pass search (it will re-fetch on every keystroke, ok for admin MVP)
+    const usersList = trpc.admin.getAllUsers.useQuery({ search: search || undefined });
 
     const toggleBan = trpc.admin.toggleUserBan.useMutation({
         onSuccess: () => usersList.refetch()
@@ -44,9 +47,10 @@ export default function UsersPage() {
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                     <input
-                        placeholder="Search currently disabled"
-                        disabled
-                        className="bg-slate-900 border border-slate-800 rounded-full pl-10 pr-6 py-2 w-64 text-sm focus:outline-none opacity-50 cursor-not-allowed"
+                        placeholder="Search by ID or Name..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="bg-slate-900 border border-slate-800 rounded-full pl-10 pr-6 py-2 w-64 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
                     />
                 </div>
             </header>

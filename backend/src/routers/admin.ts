@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../trpc";
 import { db } from "../db";
-import { users, spots, transactions, broadcasts, coupons, quests, spotMessages } from "../db/schema";
+import { users, spots, transactions, broadcasts, coupons, quests, spotMessages, visits } from "../db/schema";
 import { TRPCError } from "@trpc/server";
-import { eq, desc, sql, isNotNull } from "drizzle-orm";
+import { eq, desc, sql, isNotNull, or, and } from "drizzle-orm";
 import { Expo } from 'expo-server-sdk';
 
 const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN });
@@ -25,13 +25,58 @@ export const adminRouter = router({
         };
     }),
 
-    getAllUsers: protectedProcedure.query(async ({ ctx }) => {
+    getAnalytics: protectedProcedure.query(async ({ ctx }) => {
         if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
-        return await db.query.users.findMany({
-            orderBy: [desc(users.createdAt)],
-            limit: 50,
-        });
+
+        const days = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            return d.toISOString().split('T')[0];
+        }).reverse();
+
+        const dailyStats = await Promise.all(days.map(async (date) => {
+            const startOfDay = new Date(date);
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const newUsers = await db.select({ count: sql<number>`count(*)` })
+                .from(users)
+                .where(and(
+                    sql`${users.createdAt} >= ${startOfDay.toISOString()}`,
+                    sql`${users.createdAt} <= ${endOfDay.toISOString()}`
+                ));
+
+            const activeVisits = await db.select({ count: sql<number>`count(*)` })
+                .from(visits)
+                .where(and(
+                    sql`${visits.checkInTime} >= ${startOfDay.toISOString()}`,
+                    sql`${visits.checkInTime} <= ${endOfDay.toISOString()}`
+                ));
+
+            return {
+                date: date.slice(5),
+                newUsers: Number(newUsers[0].count),
+                activeVisits: Number(activeVisits[0].count)
+            };
+        }));
+
+        return dailyStats;
     }),
+
+    getAllUsers: protectedProcedure
+        .input(z.object({ search: z.string().optional() }).optional())
+        .query(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            return await db.query.users.findMany({
+                where: input?.search ?
+                    or(
+                        sql`${users.name} LIKE ${`%${input.search}%`}`,
+                        sql`${users.id} = ${Number(input.search) || -1}`
+                    ) : undefined,
+                orderBy: [desc(users.createdAt)],
+                limit: 50,
+            });
+        }),
 
     toggleUserBan: protectedProcedure
         .input(z.object({ userId: z.number(), isBanned: z.boolean() }))
@@ -184,9 +229,15 @@ export const adminRouter = router({
         }),
 
     getAllSpots: protectedProcedure
-        .query(async ({ ctx }) => {
+        .input(z.object({ search: z.string().optional() }).optional())
+        .query(async ({ ctx, input }) => {
             if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
             return await db.query.spots.findMany({
+                where: input?.search ?
+                    or(
+                        sql`${spots.name} LIKE ${`%${input.search}%`}`,
+                        sql`${spots.category} LIKE ${`%${input.search}%`}`
+                    ) : undefined,
                 with: {
                     spotter: true,
                 },
@@ -309,6 +360,94 @@ export const adminRouter = router({
             if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
             const { spotMessages } = require('../db/schema');
             await db.delete(spotMessages).where(eq(spotMessages.id, input.id));
+            return { success: true };
+        }),
+    // --- Moderation (Reports) ---
+    getReports: protectedProcedure
+        .input(z.object({ status: z.string().optional() }))
+        .query(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { reports } = require('../db/schema');
+
+            const whereClause = input.status ? eq(reports.status, input.status) : undefined;
+
+            const allReports = await db.query.reports.findMany({
+                where: whereClause,
+                with: {
+                    reporter: true,
+                },
+                orderBy: [desc(reports.createdAt)],
+                limit: 50,
+            });
+
+            // Enfich reports with target details
+            const enrichedReports = await Promise.all(allReports.map(async (r) => {
+                let targetDetails = null;
+                if (r.targetType === 'user') {
+                    targetDetails = await db.query.users.findFirst({ where: eq(users.id, r.targetId) });
+                } else if (r.targetType === 'spot') {
+                    targetDetails = await db.query.spots.findFirst({ where: eq(spots.id, r.targetId) });
+                } else if (r.targetType === 'comment') {
+                    targetDetails = await db.query.spotMessages.findFirst({
+                        where: eq(spotMessages.id, r.targetId),
+                        with: { user: true } // Author of the comment
+                    });
+                }
+                return { ...r, targetDetails };
+            }));
+
+            return enrichedReports;
+        }),
+
+    resolveReport: protectedProcedure
+        .input(z.object({
+            id: z.number(),
+            status: z.enum(['pending', 'resolved', 'dismissed']),
+            action: z.enum(['none', 'ban_user', 'delete_content', 'delete_spot']).optional()
+        }))
+        .mutation(async ({ ctx, input }) => {
+            if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+            const { reports } = require('../db/schema');
+
+            // 1. Update Report Status
+            await db.update(reports)
+                .set({ status: input.status })
+                .where(eq(reports.id, input.id));
+
+            // 2. Perform Action (if any)
+            if (input.action && input.action !== 'none') {
+                const report = await db.query.reports.findFirst({ where: eq(reports.id, input.id) });
+                if (!report) return { success: true, actionTaken: false };
+
+                if (input.action === 'ban_user') {
+                    // Target could be the user reported, or the author of the content
+                    let userIdToBan = null;
+                    if (report.targetType === 'user') userIdToBan = report.targetId;
+                    else if (report.targetType === 'comment') {
+                        const comment = await db.query.spotMessages.findFirst({ where: eq(spotMessages.id, report.targetId) });
+                        if (comment) userIdToBan = comment.userId;
+                    }
+                    else if (report.targetType === 'spot') {
+                        const spot = await db.query.spots.findFirst({ where: eq(spots.id, report.targetId) });
+                        if (spot) userIdToBan = spot.ownerId || spot.spotterId;
+                    }
+
+                    if (userIdToBan) {
+                        await db.update(users).set({ isBanned: true }).where(eq(users.id, userIdToBan));
+                    }
+                }
+                else if (input.action === 'delete_content') {
+                    if (report.targetType === 'comment') {
+                        await db.delete(spotMessages).where(eq(spotMessages.id, report.targetId));
+                    }
+                }
+                else if (input.action === 'delete_spot') {
+                    if (report.targetType === 'spot') {
+                        await db.delete(spots).where(eq(spots.id, report.targetId));
+                    }
+                }
+            }
+
             return { success: true };
         }),
 });

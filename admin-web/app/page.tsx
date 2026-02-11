@@ -12,6 +12,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
   const [pushTitle, setPushTitle] = useState('');
@@ -19,6 +20,7 @@ export default function AdminDashboard() {
   const [editingBroadcast, setEditingBroadcast] = useState<{ id: number; title: string; body: string; link?: string | null } | null>(null);
 
   const stats = trpc.admin.getStats.useQuery();
+  const analytics = trpc.admin.getAnalytics.useQuery();
   const broadcasts = trpc.admin.listBroadcasts.useQuery();
 
   const broadcast = trpc.admin.broadcastPush.useMutation({
@@ -108,6 +110,52 @@ export default function AdminDashboard() {
           </div>
           <h3 className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-1">Point Volume</h3>
           <div className="text-4xl font-black">{stats.data?.volume.toLocaleString() ?? '--'} <span className="text-sm text-slate-500">P</span></div>
+        </div>
+      </div>
+
+      {/* Analytics Chart */}
+      <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-2xl mb-12">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="text-xl font-bold tracking-tight">Activity Trends</h3>
+            <p className="text-slate-500 text-sm">Last 7 Days Performance</p>
+          </div>
+        </div>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={analytics.data || []}>
+              <defs>
+                <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#d946ef" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#d946ef" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+              <XAxis
+                dataKey="date"
+                stroke="#64748b"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="#64748b"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }}
+                itemStyle={{ color: '#e2e8f0' }}
+              />
+              <Area type="monotone" dataKey="newUsers" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" name="New Users" />
+              <Area type="monotone" dataKey="activeVisits" stroke="#d946ef" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" name="Check-ins" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 

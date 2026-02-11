@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { trpc } from '../../utils/trpc';
-import { MapPin, Trash2, ExternalLink } from 'lucide-react';
+import { MapPin, Trash2, ExternalLink, Search } from 'lucide-react';
 
 export default function SpotsPage() {
-    const spotsList = trpc.admin.getAllSpots.useQuery();
+    const [search, setSearch] = useState('');
+    const spotsList = trpc.admin.getAllSpots.useQuery({ search: search || undefined });
     const deleteSpot = trpc.admin.deleteSpot.useMutation({
         onSuccess: () => spotsList.refetch(),
         onError: (err) => alert("Failed to delete: " + err.message)
@@ -13,9 +14,21 @@ export default function SpotsPage() {
 
     return (
         <>
-            <header className="mb-12">
-                <h2 className="text-3xl font-black tracking-tight">Spot Management</h2>
-                <p className="text-slate-500">Monitor and moderate user-created spots.</p>
+            <header className="mb-12 flex justify-between items-center">
+                <div>
+                    <h2 className="text-3xl font-black tracking-tight">Spot Management</h2>
+                    <p className="text-slate-500">Monitor and moderate user-created spots.</p>
+                </div>
+
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                    <input
+                        placeholder="Search Spots..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="bg-slate-900 border border-slate-800 rounded-full pl-10 pr-6 py-2 w-64 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
+                    />
+                </div>
             </header>
 
             <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden">

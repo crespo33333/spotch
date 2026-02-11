@@ -23,10 +23,40 @@ exports.adminRouter = (0, trpc_1.router)({
             volume: transactionVolume[0].sum || 0,
         };
     }),
-    getAllUsers: trpc_1.protectedProcedure.query(async ({ ctx }) => {
+    getAnalytics: trpc_1.protectedProcedure.query(async ({ ctx }) => {
+        if (ctx.user.role !== "admin")
+            throw new server_1.TRPCError({ code: "FORBIDDEN" });
+        const days = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            return d.toISOString().split('T')[0];
+        }).reverse();
+        const dailyStats = await Promise.all(days.map(async (date) => {
+            const startOfDay = new Date(date);
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+            const newUsers = await db_1.db.select({ count: (0, drizzle_orm_1.sql) `count(*)` })
+                .from(schema_1.users)
+                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.sql) `${schema_1.users.createdAt} >= ${startOfDay.toISOString()}`, (0, drizzle_orm_1.sql) `${schema_1.users.createdAt} <= ${endOfDay.toISOString()}`));
+            const activeVisits = await db_1.db.select({ count: (0, drizzle_orm_1.sql) `count(*)` })
+                .from(schema_1.visits)
+                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.sql) `${schema_1.visits.checkInTime} >= ${startOfDay.toISOString()}`, (0, drizzle_orm_1.sql) `${schema_1.visits.checkInTime} <= ${endOfDay.toISOString()}`));
+            return {
+                date: date.slice(5),
+                newUsers: Number(newUsers[0].count),
+                activeVisits: Number(activeVisits[0].count)
+            };
+        }));
+        return dailyStats;
+    }),
+    getAllUsers: trpc_1.protectedProcedure
+        .input(zod_1.z.object({ search: zod_1.z.string().optional() }).optional())
+        .query(async ({ ctx, input }) => {
         if (ctx.user.role !== "admin")
             throw new server_1.TRPCError({ code: "FORBIDDEN" });
         return await db_1.db.query.users.findMany({
+            where: input?.search ?
+                (0, drizzle_orm_1.or)((0, drizzle_orm_1.sql) `${schema_1.users.name} LIKE ${`%${input.search}%`}`, (0, drizzle_orm_1.sql) `${schema_1.users.id} = ${Number(input.search) || -1}`) : undefined,
             orderBy: [(0, drizzle_orm_1.desc)(schema_1.users.createdAt)],
             limit: 50,
         });
@@ -168,10 +198,13 @@ exports.adminRouter = (0, trpc_1.router)({
         return { success: true };
     }),
     getAllSpots: trpc_1.protectedProcedure
-        .query(async ({ ctx }) => {
+        .input(zod_1.z.object({ search: zod_1.z.string().optional() }).optional())
+        .query(async ({ ctx, input }) => {
         if (ctx.user.role !== "admin")
             throw new server_1.TRPCError({ code: "FORBIDDEN" });
         return await db_1.db.query.spots.findMany({
+            where: input?.search ?
+                (0, drizzle_orm_1.or)((0, drizzle_orm_1.sql) `${schema_1.spots.name} LIKE ${`%${input.search}%`}`, (0, drizzle_orm_1.sql) `${schema_1.spots.category} LIKE ${`%${input.search}%`}`) : undefined,
             with: {
                 spotter: true,
             },
@@ -294,6 +327,92 @@ exports.adminRouter = (0, trpc_1.router)({
             throw new server_1.TRPCError({ code: "FORBIDDEN" });
         const { spotMessages } = require('../db/schema');
         await db_1.db.delete(spotMessages).where((0, drizzle_orm_1.eq)(spotMessages.id, input.id));
+        return { success: true };
+    }),
+    // --- Moderation (Reports) ---
+    getReports: trpc_1.protectedProcedure
+        .input(zod_1.z.object({ status: zod_1.z.string().optional() }))
+        .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin")
+            throw new server_1.TRPCError({ code: "FORBIDDEN" });
+        const { reports } = require('../db/schema');
+        const whereClause = input.status ? (0, drizzle_orm_1.eq)(reports.status, input.status) : undefined;
+        const allReports = await db_1.db.query.reports.findMany({
+            where: whereClause,
+            with: {
+                reporter: true,
+            },
+            orderBy: [(0, drizzle_orm_1.desc)(reports.createdAt)],
+            limit: 50,
+        });
+        // Enfich reports with target details
+        const enrichedReports = await Promise.all(allReports.map(async (r) => {
+            let targetDetails = null;
+            if (r.targetType === 'user') {
+                targetDetails = await db_1.db.query.users.findFirst({ where: (0, drizzle_orm_1.eq)(schema_1.users.id, r.targetId) });
+            }
+            else if (r.targetType === 'spot') {
+                targetDetails = await db_1.db.query.spots.findFirst({ where: (0, drizzle_orm_1.eq)(schema_1.spots.id, r.targetId) });
+            }
+            else if (r.targetType === 'comment') {
+                targetDetails = await db_1.db.query.spotMessages.findFirst({
+                    where: (0, drizzle_orm_1.eq)(schema_1.spotMessages.id, r.targetId),
+                    with: { user: true } // Author of the comment
+                });
+            }
+            return { ...r, targetDetails };
+        }));
+        return enrichedReports;
+    }),
+    resolveReport: trpc_1.protectedProcedure
+        .input(zod_1.z.object({
+        id: zod_1.z.number(),
+        status: zod_1.z.enum(['pending', 'resolved', 'dismissed']),
+        action: zod_1.z.enum(['none', 'ban_user', 'delete_content', 'delete_spot']).optional()
+    }))
+        .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin")
+            throw new server_1.TRPCError({ code: "FORBIDDEN" });
+        const { reports } = require('../db/schema');
+        // 1. Update Report Status
+        await db_1.db.update(reports)
+            .set({ status: input.status })
+            .where((0, drizzle_orm_1.eq)(reports.id, input.id));
+        // 2. Perform Action (if any)
+        if (input.action && input.action !== 'none') {
+            const report = await db_1.db.query.reports.findFirst({ where: (0, drizzle_orm_1.eq)(reports.id, input.id) });
+            if (!report)
+                return { success: true, actionTaken: false };
+            if (input.action === 'ban_user') {
+                // Target could be the user reported, or the author of the content
+                let userIdToBan = null;
+                if (report.targetType === 'user')
+                    userIdToBan = report.targetId;
+                else if (report.targetType === 'comment') {
+                    const comment = await db_1.db.query.spotMessages.findFirst({ where: (0, drizzle_orm_1.eq)(schema_1.spotMessages.id, report.targetId) });
+                    if (comment)
+                        userIdToBan = comment.userId;
+                }
+                else if (report.targetType === 'spot') {
+                    const spot = await db_1.db.query.spots.findFirst({ where: (0, drizzle_orm_1.eq)(schema_1.spots.id, report.targetId) });
+                    if (spot)
+                        userIdToBan = spot.ownerId || spot.spotterId;
+                }
+                if (userIdToBan) {
+                    await db_1.db.update(schema_1.users).set({ isBanned: true }).where((0, drizzle_orm_1.eq)(schema_1.users.id, userIdToBan));
+                }
+            }
+            else if (input.action === 'delete_content') {
+                if (report.targetType === 'comment') {
+                    await db_1.db.delete(schema_1.spotMessages).where((0, drizzle_orm_1.eq)(schema_1.spotMessages.id, report.targetId));
+                }
+            }
+            else if (input.action === 'delete_spot') {
+                if (report.targetType === 'spot') {
+                    await db_1.db.delete(schema_1.spots).where((0, drizzle_orm_1.eq)(schema_1.spots.id, report.targetId));
+                }
+            }
+        }
         return { success: true };
     }),
 });
