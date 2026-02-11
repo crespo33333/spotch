@@ -213,6 +213,7 @@ app.get('/privacy-policy', (req: Request, res: Response) => res.send(PRIVACY_POL
 app.get('/privacy', (req: Request, res: Response) => res.send(PRIVACY_POLICY)); // Alias for convenience
 app.get('/terms', (req: Request, res: Response) => res.send(TERMS_OF_SERVICE));
 app.get('/support', (req: Request, res: Response) => res.send(SUPPORT_PAGE));
+app.get('/help', (req: Request, res: Response) => res.send(SUPPORT_PAGE)); // Alias for convenience
 
 
 app.get('/db-test', async (req: Request, res: Response) => {
