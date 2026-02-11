@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html lang="ja" class="scroll-smooth">
+<html lang="en" class="scroll-smooth">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotch - 街を制圧する、位置情報ゲーム</title>
-    <meta name="description" content="現実世界のスポットを巡り、領土を広げよう。チェックインしてポイントを稼ぎ、ランキング上位を目指せ。">
+    <title>Spotch - Real World Territory Game</title>
+    <meta name="description"
+        content="Turn your city into a playground. Visit spots, claim territory, and compete globally.">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Spotch - 街を制圧せよ">
-    <meta property="og:description" content="チェックインで領土を広げる。新感覚の位置情報ゲーム。">
+    <meta property="og:title" content="Spotch - Conquer Your City">
+    <meta property="og:description" content="Real world territory control game. Check-in, claim, dominate.">
     <meta property="og:image" content="https://spotch-backend.onrender.com/images/screenshot_05_fixed.png">
     <meta property="og:url" content="https://spotch-backend.onrender.com">
     <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +30,7 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['"Noto Sans JP"', '"Inter"', 'sans-serif'],
+                        sans: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
                     },
                     colors: {
                         brand: {
@@ -70,16 +71,11 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        /* 3D tilt effect container */
-        .tilt-card {
-            transition: transform 0.1s;
-            transform-style: preserve-3d;
-        }
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-900 overflow-x-hidden">
+<body class="bg-slate-50 text-slate-900 overflow-x-hidden transition-opacity duration-300 opacity-0"
+    onload="document.body.classList.remove('opacity-0')">
 
     <!-- Navbar -->
     <nav class="fixed w-full z-50 glass transition-all duration-300" id="navbar">
@@ -91,12 +87,23 @@
                     </div>
                     <span class="font-black text-2xl tracking-tighter italic">SPOTCH</span>
                 </a>
-                <div class="hidden md:flex items-center gap-8 font-bold text-sm text-slate-600">
-                    <a href="#features" class="hover:text-brand-blue transition">機能</a>
-                    <a href="#gallery" class="hover:text-brand-blue transition">ギャラリー</a>
-                    <a href="#faq" class="hover:text-brand-blue transition">FAQ</a>
+                <div class="flex items-center gap-6">
+                    <div class="hidden md:flex items-center gap-8 font-bold text-sm text-slate-600">
+                        <a href="#features" class="hover:text-brand-blue transition"
+                            data-i18n="nav.features">Features</a>
+                        <a href="#gallery" class="hover:text-brand-blue transition" data-i18n="nav.gallery">Gallery</a>
+                        <a href="#faq" class="hover:text-brand-blue transition" data-i18n="nav.faq">FAQ</a>
+                    </div>
+
+                    <!-- Language Switcher -->
+                    <button id="lang-toggle" onclick="toggleLanguage()"
+                        class="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 transition text-sm font-bold">
+                        <span id="current-lang">🇺🇸 EN</span>
+                    </button>
+
                     <a href="#download"
-                        class="bg-slate-900 text-white px-6 py-3 rounded-full hover:bg-brand-blue hover:shadow-lg hover:shadow-brand-blue/30 transition transform hover:-translate-y-1">ダウンロード</a>
+                        class="hidden md:block bg-slate-900 text-white px-6 py-3 rounded-full hover:bg-brand-blue hover:shadow-lg hover:shadow-brand-blue/30 transition transform hover:-translate-y-1 font-bold text-sm"
+                        data-i18n="nav.download">Download</a>
                 </div>
             </div>
         </div>
@@ -121,19 +128,19 @@
                     <div
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-blue-100 shadow-sm mb-8 animate-float">
                         <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        <span class="text-xs font-bold text-slate-600 tracking-wider">VERSION 1.0.8 RELEASED</span>
+                        <span class="text-xs font-bold text-slate-600 tracking-wider" data-i18n="hero.version">VERSION
+                            1.0.8 RELEASED</span>
                     </div>
 
-                    <h1 class="text-5xl lg:text-8xl font-black tracking-tight text-slate-900 mb-6 leading-[1.1]">
-                        街を<br>
-                        <span class="text-gradient">制圧せよ。</span>
+                    <h1 class="text-5xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.1]">
+                        <span data-i18n="hero.title1">Turn your city into a</span><br>
+                        <span class="text-gradient" data-i18n="hero.title2">Playground.</span>
                     </h1>
 
-                    <p
-                        class="text-xl lg:text-2xl text-slate-600 mb-10 font-bold leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                        現実世界がゲームボードになる。<br>
-                        スポットを巡り、領土を広げ、<br>
-                        最強の座を勝ち取れ。
+                    <p class="text-xl lg:text-2xl text-slate-600 mb-10 font-bold leading-relaxed max-w-2xl mx-auto lg:mx-0"
+                        data-i18n="hero.subtitle">
+                        Visit real-world spots, check-in to claim territory, and compete on the global leaderboard. The
+                        world is your game board.
                     </p>
 
                     <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -152,7 +159,7 @@
                             </div>
                         </button>
 
-                        <button onclick="alert('Android版は準備中です')"
+                        <button onclick="alert('Android coming soon!')"
                             class="group bg-white text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl flex items-center justify-center gap-4 hover:border-green-500 hover:text-green-600 transition-all shadow-lg shadow-slate-200/50 active:scale-95">
                             <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24">
                                 <path
@@ -179,12 +186,12 @@
                         <div class="absolute top-20 -right-12 z-20 bg-white p-4 rounded-2xl shadow-xl animate-float"
                             style="animation-delay: 1s;">
                             <span class="text-2xl">🏆</span>
-                            <span class="text-xs font-bold block mt-1">Sランク獲得</span>
+                            <span class="text-xs font-bold block mt-1" data-i18n="float.badge1">Rank S</span>
                         </div>
                         <div class="absolute bottom-32 -left-12 z-20 bg-white p-4 rounded-2xl shadow-xl animate-float"
                             style="animation-delay: 2s;">
                             <span class="text-2xl">🛡️</span>
-                            <span class="text-xs font-bold block mt-1">領土防衛中</span>
+                            <span class="text-xs font-bold block mt-1" data-i18n="float.badge2">Defending</span>
                         </div>
                     </div>
                 </div>
@@ -197,8 +204,10 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-20">
                 <span class="text-brand-blue font-black tracking-widest uppercase text-xs">FEATURES</span>
-                <h2 class="text-4xl lg:text-5xl font-black mt-2 mb-6">選ばれる理由</h2>
-                <p class="text-slate-500 max-w-xl mx-auto">ただのゲームじゃない。あなたの日常を冒険に変える、<br>最強のツール。</p>
+                <h2 class="text-4xl lg:text-5xl font-black mt-2 mb-6" data-i18n="features.title">Why Spotch?</h2>
+                <p class="text-slate-500 max-w-xl mx-auto" data-i18n="features.subtitle">
+                    We combine the fun of gaming with the joy of exploration. Get healthy while you dominate.
+                </p>
             </div>
 
             <div class="grid md:grid-cols-3 gap-8">
@@ -207,8 +216,9 @@
                     <div
                         class="w-16 h-16 bg-blue-100 text-blue-500 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition">
                         📍</div>
-                    <h3 class="text-xl font-bold mb-4">チェックインで制圧</h3>
-                    <p class="text-slate-500 leading-relaxed">街中に隠された「スポット」を見つけ出そう。近づいてボタンを押すだけで、その場所はあなたのものになる。</p>
+                    <h3 class="text-xl font-bold mb-4" data-i18n="features.card1.title">Check-in Everywhere</h3>
+                    <p class="text-slate-500 leading-relaxed" data-i18n="features.card1.text">Discover hidden spots in
+                        your city. Each check-in grants you points and claims the territory.</p>
                 </div>
 
                 <div
@@ -216,8 +226,9 @@
                     <div
                         class="w-16 h-16 bg-pink-100 text-pink-500 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition">
                         ⚔️</div>
-                    <h3 class="text-xl font-bold mb-4">ライバルと競争</h3>
-                    <p class="text-slate-500 leading-relaxed">ただ集めるだけじゃない。他のプレイヤーの領土を奪い、守り抜け。ランキング上位者には特別な称号も。</p>
+                    <h3 class="text-xl font-bold mb-4" data-i18n="features.card2.title">Climb & Compete</h3>
+                    <p class="text-slate-500 leading-relaxed" data-i18n="features.card2.text">Compete locally or
+                        globally. Earn badges and show off your explorer status to the world.</p>
                 </div>
 
                 <div
@@ -225,8 +236,9 @@
                     <div
                         class="w-16 h-16 bg-purple-100 text-purple-500 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition">
                         💎</div>
-                    <h3 class="text-xl font-bold mb-4">ポイントで交換</h3>
-                    <p class="text-slate-500 leading-relaxed">稼いだポイントは、実際のクーポンやゲーム内アイテムと交換可能。遊びが価値に変わる。</p>
+                    <h3 class="text-xl font-bold mb-4" data-i18n="features.card3.title">Real Rewards</h3>
+                    <p class="text-slate-500 leading-relaxed" data-i18n="features.card3.text">Exchange points for
+                        coupons or game items. Turn your movement into value.</p>
                 </div>
             </div>
         </div>
@@ -238,13 +250,12 @@
             <h2 class="text-4xl font-black mb-4"><span
                     class="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-brand-pink">Visual
                     Experience</span></h2>
-            <p class="text-slate-400">直感的で、美しい。洗練されたUI。</p>
+            <p class="text-slate-400" data-i18n="gallery.subtitle">Intuitive, beautiful, and satisfying to use.</p>
         </div>
 
         <!-- Carousel -->
         <div class="flex gap-8 overflow-x-auto pb-12 px-8 snap-x snap-mandatory no-scrollbar"
             style="scrollbar-width: none; -ms-overflow-style: none;">
-            <!-- Loop Images -->
             <div class="snap-center shrink-0 first:pl-8 last:pr-8">
                 <img src="/images/screenshot_02_fixed.png"
                     class="w-72 rounded-[2rem] border-8 border-slate-800 shadow-2xl">
@@ -272,35 +283,39 @@
     <section id="faq" class="py-24 bg-slate-50">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-3xl font-black mb-4">よくある質問</h2>
+                <h2 class="text-3xl font-black mb-4" data-i18n="faq.title">Frequently Asked Questions</h2>
             </div>
 
             <div class="space-y-4">
                 <details class="group bg-white p-6 rounded-2xl shadow-sm cursor-pointer">
-                    <summary class="flex justify-between items-center font-bold text-lg list-none">
-                        無料で遊べますか？
+                    <summary class="flex justify-between items-center font-bold text-lg list-none"
+                        data-i18n="faq.q1.title">
+                        Is it free to play?
                         <span class="transition group-open:rotate-180">▼</span>
                     </summary>
-                    <p class="text-slate-500 mt-4 leading-relaxed">
-                        はい、基本プレイは永久に無料です。一部の着せ替えアイテムなどは有料ですが、ゲームの勝敗に影響する要素はすべて無料で楽しめます。</p>
+                    <p class="text-slate-500 mt-4 leading-relaxed" data-i18n="faq.q1.text">Yes! Spotch is completely
+                        free to download and play. We offer optional cosmetic items, but gameplay is fair for everyone.
+                    </p>
                 </details>
 
                 <details class="group bg-white p-6 rounded-2xl shadow-sm cursor-pointer">
-                    <summary class="flex justify-between items-center font-bold text-lg list-none">
-                        バッテリー消費は激しいですか？
+                    <summary class="flex justify-between items-center font-bold text-lg list-none"
+                        data-i18n="faq.q2.title">
+                        Does it drain my battery?
                         <span class="transition group-open:rotate-180">▼</span>
                     </summary>
-                    <p class="text-slate-500 mt-4 leading-relaxed">
-                        省電力設計を徹底しており、アプリ起動時のみ高精度の位置情報を取得します。バックグラウンドでの消費は最小限です。</p>
+                    <p class="text-slate-500 mt-4 leading-relaxed" data-i18n="faq.q2.text">We optimized the location
+                        engine to only use high-accuracy GPS when the app is open. Background impact is minimal.</p>
                 </details>
 
                 <details class="group bg-white p-6 rounded-2xl shadow-sm cursor-pointer">
-                    <summary class="flex justify-between items-center font-bold text-lg list-none">
-                        どの地域で遊べますか？
+                    <summary class="flex justify-between items-center font-bold text-lg list-none"
+                        data-i18n="faq.q3.title">
+                        Can I play in my country?
                         <span class="transition group-open:rotate-180">▼</span>
                     </summary>
-                    <p class="text-slate-500 mt-4 leading-relaxed">
-                        日本全国、そして世界中で遊べます。スポットがない場所でも、自分で新しいスポットを作成してオーナーになることができます。</p>
+                    <p class="text-slate-500 mt-4 leading-relaxed" data-i18n="faq.q3.text">Yes, "Spots" are generated
+                        globally! Whether you are in Tokyo, New York, or London, you will find territories to claim.</p>
                 </details>
             </div>
         </div>
@@ -311,19 +326,20 @@
         <div class="absolute inset-0 bg-gradient-to-tr from-brand-blue/20 to-brand-pink/20"></div>
 
         <div class="max-w-4xl mx-auto px-4 relative z-10">
-            <h2 class="text-5xl md:text-7xl font-black mb-8 leading-tight">冒険を、始めよう。</h2>
-            <p class="text-xl text-slate-300 mb-12">あなたの街が、次の戦場だ。</p>
+            <h2 class="text-5xl md:text-7xl font-black mb-8 leading-tight" data-i18n="cta.title">Start Your Adventure.
+            </h2>
+            <p class="text-xl text-slate-300 mb-12" data-i18n="cta.subtitle">Your city is the next battlefield.</p>
 
             <a href="https://apps.apple.com/jp/app/spotch/id123456789"
                 class="inline-flex items-center gap-3 bg-white text-slate-900 px-10 py-5 rounded-full font-black text-xl hover:scale-105 transition shadow-[0_0_40px_rgba(255,255,255,0.3)]">
-                今すぐダウンロード
+                <span data-i18n="cta.button">Download Now</span>
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
             </a>
 
-            <p class="mt-8 text-sm text-slate-500">iOS 15.0以降対応 / Android要件確認中</p>
+            <p class="mt-8 text-sm text-slate-500" data-i18n="cta.note">Requires iOS 15.0+ / Android coming soon</p>
         </div>
     </section>
 
@@ -335,13 +351,123 @@
                 <p class="text-sm mt-2">© 2026 Spotch Team.</p>
             </div>
             <div class="flex gap-8 text-sm font-bold">
-                <a href="/privacy-policy" class="hover:text-white transition">プライバシーポリシー</a>
-                <a href="/terms" class="hover:text-white transition">利用規約</a>
-                <a href="mailto:support@spotch.app" class="hover:text-white transition">お問い合わせ</a>
+                <a href="/privacy-policy" class="hover:text-white transition" data-i18n="footer.privacy">Privacy
+                    Policy</a>
+                <a href="/terms" class="hover:text-white transition" data-i18n="footer.terms">Terms</a>
+                <a href="mailto:support@spotch.app" class="hover:text-white transition"
+                    data-i18n="footer.contact">Contact</a>
             </div>
         </div>
     </footer>
 
+    <!-- i18n Script -->
+    <script>
+        const translations = {
+            en: {
+                nav: { features: 'Features', gallery: 'Gallery', faq: 'FAQ', download: 'Download' },
+                hero: {
+                    version: 'VERSION 1.0.8 RELEASED',
+                    title1: 'Turn your city into a',
+                    title2: 'Playground.',
+                    subtitle: 'Visit real-world spots, check-in to claim territory, and compete on the global leaderboard. The world is your game board.',
+                },
+                float: { badge1: 'Rank S', badge2: 'Defending' },
+                features: {
+                    title: 'Why Spotch?',
+                    subtitle: 'We combine the fun of gaming with the joy of exploration. Get healthy while you dominate.',
+                    card1: { title: 'Check-in Everywhere', text: 'Discover hidden spots in your city. Each check-in grants you points and claims the territory.' },
+                    card2: { title: 'Climb & Compete', text: 'Compete locally or globally. Earn badges and show off your explorer status to the world.' },
+                    card3: { title: 'Real Rewards', text: 'Exchange points for coupons or game items. Turn your movement into value.' }
+                },
+                gallery: { subtitle: 'Intuitive, beautiful, and satisfying to use.' },
+                faq: {
+                    title: 'Frequently Asked Questions',
+                    q1: { title: 'Is it free to play?', text: 'Yes! Spotch is completely free to download and play. We offer optional cosmetic items, but gameplay is fair for everyone.' },
+                    q2: { title: 'Does it drain my battery?', text: 'We optimized the location engine to only use high-accuracy GPS when the app is open. Background impact is minimal.' },
+                    q3: { title: 'Can I play in my country?', text: 'Yes, "Spots" are generated globally! Whether you are in Tokyo, New York, or London, you will find territories to claim.' }
+                },
+                cta: {
+                    title: 'Start Your Adventure.',
+                    subtitle: 'Your city is the next battlefield.',
+                    button: 'Download Now',
+                    note: 'Requires iOS 15.0+ / Android coming soon'
+                },
+                footer: { privacy: 'Privacy Policy', terms: 'Terms', contact: 'Contact' }
+            },
+            ja: {
+                nav: { features: '機能', gallery: 'ギャラリー', faq: 'FAQ', download: 'ダウンロード' },
+                hero: {
+                    version: 'バージョン 1.0.8 リリース',
+                    title1: '街を',
+                    title2: '制圧せよ。',
+                    subtitle: '現実世界がゲームボードになる。スポットを巡り、領土を広げ、最強の座を勝ち取れ。',
+                },
+                float: { badge1: 'Sランク獲得', badge2: '領土防衛中' },
+                features: {
+                    title: '選ばれる理由',
+                    subtitle: 'ただのゲームじゃない。あなたの日常を冒険に変える、最強のツール。',
+                    card1: { title: 'チェックインで制圧', text: '街中に隠された「スポット」を見つけ出そう。近づいてボタンを押すだけで、その場所はあなたのものになる。' },
+                    card2: { title: 'ライバルと競争', text: 'ただ集めるだけじゃない。他のプレイヤーの領土を奪い、守り抜け。ランキング上位者には特別な称号も。' },
+                    card3: { title: 'ポイントで交換', text: '稼いだポイントは、実際のクーポンやゲーム内アイテムと交換可能。遊びが価値に変わる。' }
+                },
+                gallery: { subtitle: '直感的で、美しい。洗練されたUI。' },
+                faq: {
+                    title: 'よくある質問',
+                    q1: { title: '無料で遊べますか？', text: 'はい、基本プレイは永久に無料です。一部の着せ替えアイテムなどは有料ですが、ゲームの勝敗に影響する要素はすべて無料で楽しめます。' },
+                    q2: { title: 'バッテリー消費は激しいですか？', text: '省電力設計を徹底しており、アプリ起動時のみ高精度の位置情報を取得します。バックグラウンドでの消費は最小限です。' },
+                    q3: { title: 'どの地域で遊べますか？', text: '日本全国、そして世界中で遊べます。スポットがない場所でも、自分で新しいスポットを作成してオーナーになることができます。' }
+                },
+                cta: {
+                    title: '冒険を、始めよう。',
+                    subtitle: 'あなたの街が、次の戦場だ。',
+                    button: '今すぐダウンロード',
+                    note: 'iOS 15.0以降対応 / Android要件確認中'
+                },
+                footer: { privacy: 'プライバシーポリシー', terms: '利用規約', contact: 'お問い合わせ' }
+            }
+        };
+
+        let currentLang = 'en';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+
+            // Update Toggle Button
+            const label = lang === 'en' ? '🇺🇸 EN' : '🇯🇵 JA';
+            document.getElementById('current-lang').textContent = label;
+
+            // Update Text
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const keys = key.split('.');
+                let val = translations[lang];
+                keys.forEach(k => val = val ? val[k] : null);
+
+                if (val) {
+                    // If it's the hero title parts, handle span visibility if needed, but here simple text replacement works 
+                    // EXCEPT for HTML content like <br> which innerText escapes.
+                    // For safety, let's use innerText usually, but for hero titles we might need HTML?
+                    // Actually, the keys map to plain text in my JSON.
+
+                    if (key.includes('summary')) { // Detail summary needs text node update to keep triangle
+                        el.childNodes[0].nodeValue = val + ' ';
+                    } else {
+                        el.textContent = val;
+                    }
+                }
+            });
+        }
+
+        function toggleLanguage() {
+            setLanguage(currentLang === 'en' ? 'ja' : 'en');
+        }
+
+        // Initialize based on browser
+        const browserLang = navigator.language.startsWith('ja') ? 'ja' : 'en';
+        setLanguage(browserLang);
+
+    </script>
 </body>
 
 </html>
