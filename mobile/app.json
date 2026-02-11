@@ -37,7 +37,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.spotch.app",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "config": {},
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,

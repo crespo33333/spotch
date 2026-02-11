@@ -42,11 +42,44 @@ export default function SpotDetailScreen() {
         enabled: tab === 'rank',
     });
 
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        getStoredUserId().then(id => setCurrentUserId(id));
+    }, []);
+
     const postMutation = trpc.spot.postMessage.useMutation();
     const likeMutation = trpc.spot.toggleLike.useMutation();
     const reportCommentMutation = trpc.spot.reportComment.useMutation();
     const blockUserMutation = trpc.user.block.useMutation();
     const buyGameItemMutation = trpc.exchange.buyGameItem.useMutation();
+    const takeoverMutation = trpc.spot.takeover.useMutation();
+
+    const handleTakeover = () => {
+        const cost = (spot?.remainingPoints || 0) + 10000;
+        Alert.alert(
+            "⚔️ Hostile Takeover",
+            `Capture this spot for ${cost} Points?\n(Includes 10,000pt Premium)`,
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "CAPTURE",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const result = await takeoverMutation.mutateAsync({ spotId });
+                            Alert.alert("🎉 VICTORY!", `You captured ${spot?.name}!\nYou are now the owner.`);
+                            // Invalidate to refresh UI
+                            // trpc.useUtils().spot.getById.invalidate({ id: spotId });
+                            router.replace('/(tabs)'); // Go back to map to see change
+                        } catch (e: any) {
+                            Alert.alert("Attack Failed", e.message);
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     // Fetch Items
     const { data: coupons } = trpc.exchange.listCoupons.useQuery();
@@ -274,12 +307,12 @@ export default function SpotDetailScreen() {
                         {/* Active Effects & Actions */}
                         <View className="flex-row justify-between items-center pt-2 border-t border-yellow-200/50">
                             <View className="flex-row gap-2">
-                                {spot.shieldExpiresAt && new Date(spot.shieldExpiresAt) > new Date() && (
+                                {spot.shieldExpiresAt && new Date(spot.shieldExpiresAt) > new Date() ? (
                                     <View className="bg-blue-100 px-2 py-1 rounded-md flex-row items-center gap-1">
                                         <Text>🛡️</Text>
                                         <Text className="text-[10px] font-bold text-blue-700">Shielded</Text>
                                     </View>
-                                )}
+                                ) : null}
                                 {spot.taxBoostExpiresAt && new Date(spot.taxBoostExpiresAt) > new Date() && (
                                     <View className="bg-green-100 px-2 py-1 rounded-md flex-row items-center gap-1">
                                         <Text>💰</Text>
@@ -288,11 +321,22 @@ export default function SpotDetailScreen() {
                                 )}
                             </View>
 
-                            {/* Only Owner can buy */}
-                            {isOwner && (
+                            {/* Actions */}
+                            {isOwner ? (
                                 <TouchableOpacity onPress={showPowerUpShop} className="bg-[#FFD700] px-3 py-1.5 rounded-full flex-row items-center gap-1">
                                     <Ionicons name="flash" size={12} color="#854d0e" />
                                     <Text className="text-xs font-black text-yellow-900">POWER-UP</Text>
+                                </TouchableOpacity>
+                            ) : (
+                                <TouchableOpacity
+                                    onPress={handleTakeover}
+                                    className={`px-3 py-1.5 rounded-full flex-row items-center gap-1 ${spot.shieldExpiresAt && new Date(spot.shieldExpiresAt) > new Date() ? 'bg-slate-200' : 'bg-red-500'}`}
+                                    disabled={!!(spot.shieldExpiresAt && new Date(spot.shieldExpiresAt) > new Date())}
+                                >
+                                    <Ionicons name="flag" size={12} color="white" />
+                                    <Text className="text-xs font-black text-white">
+                                        {spot.shieldExpiresAt && new Date(spot.shieldExpiresAt) > new Date() ? 'LOCKED' : 'CAPTURE'}
+                                    </Text>
                                 </TouchableOpacity>
                             )}
                         </View>
