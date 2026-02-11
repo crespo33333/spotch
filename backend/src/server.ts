@@ -175,9 +175,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Robust Static Path Resolution
 import fs from 'fs';
 const searchPaths = [
+    path.join(__dirname, 'public'),    // dist/public (Prioritize built artifact)
     path.join(__dirname, '../public'), // ../public relative to dist/server.js -> backend/public
-    path.join(__dirname, 'public'),    // dist/public (if copied)
-    path.join(process.cwd(), 'public'), // backend/public (if running from backend root)
+    path.join(process.cwd(), 'public'), // backend/public
     path.join(process.cwd(), 'backend/public'), // fallback
 ];
 console.log('DEBUG: defined searchPaths:', searchPaths);
