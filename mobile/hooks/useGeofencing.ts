@@ -5,6 +5,7 @@ import { Spot } from '../components/MapView';
 
 export interface GeofencingResult {
     nearestSpot: Spot | null;
+    availableSpots: Spot[];
     distanceToNearest: number; // in km
     isInside: boolean;
     ignoreSpot?: (id: string) => void;
@@ -16,6 +17,7 @@ export function useGeofencing(
 ): GeofencingResult {
     const [result, setResult] = useState<GeofencingResult>({
         nearestSpot: null,
+        availableSpots: [],
         distanceToNearest: Infinity,
         isInside: false,
     });
@@ -23,12 +25,13 @@ export function useGeofencing(
 
     useEffect(() => {
         if (!userLocation || !spots || spots.length === 0) {
-            setResult({ nearestSpot: null, distanceToNearest: Infinity, isInside: false });
+            setResult({ nearestSpot: null, availableSpots: [], distanceToNearest: Infinity, isInside: false });
             return;
         }
 
         let minDist = Infinity;
         let closest: Spot | null = null;
+        let insideSpots: Spot[] = [];
 
         spots.forEach(spot => {
             const dist = getDistanceFromLatLonInKm(
@@ -37,6 +40,11 @@ export function useGeofencing(
                 spot.latitude,
                 spot.longitude
             );
+
+            // Check if inside
+            if (dist <= (spot.radius / 1000)) {
+                insideSpots.push(spot);
+            }
 
             if (dist < minDist) {
                 minDist = dist;
@@ -64,8 +72,11 @@ export function useGeofencing(
 
             setResult({
                 nearestSpot: closest,
+                availableSpots: insideSpots,
                 distanceToNearest: minDist,
-                isInside: isInside && !isIgnored // If ignored, we treat as "not inside" for overlay purposes? Or just prevent notification? User wants to "Leave".
+                isInside: insideSpots.length > 0 && !isIgnored // If current closest is ignored, technically we aren't "inside" for the primary flow? 
+                // But if insideSpots has valid spots we should show them.
+                // Let's rely on availableSpots length for UI logic.
             });
         }
     }, [userLocation, spots, ignoredSpotIds]);

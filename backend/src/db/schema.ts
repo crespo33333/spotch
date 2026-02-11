@@ -39,8 +39,24 @@ export const spots = pgTable('spots', {
     description: text('description'),
     spotLevel: integer('spot_level').default(1),
     totalActivity: integer('total_activity').default(0),
+    ownerId: integer('owner_id').references(() => users.id),
+    taxRate: integer('tax_rate').default(5),
+    lastOwnerChangeAt: timestamp('last_owner_change_at'),
+    shieldExpiresAt: timestamp('shield_expires_at'),
+    taxBoostExpiresAt: timestamp('tax_boost_expires_at'),
     createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const weeklySpotPoints = pgTable('weekly_spot_points', {
+    id: serial('id').primaryKey(),
+    spotId: integer('spot_id').references(() => spots.id, { onDelete: 'cascade' }).notNull(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    points: integer('points').default(0).notNull(),
+    weekStart: timestamp('week_start').notNull(), // Identifying the week
+    createdAt: timestamp('created_at').defaultNow(),
+}, (t) => ({
+    unq: uniqueIndex('weekly_spot_points_unq').on(t.spotId, t.userId, t.weekStart),
+}));
 
 export const visits = pgTable('visits', {
     id: serial('id').primaryKey(),
@@ -49,6 +65,7 @@ export const visits = pgTable('visits', {
     checkInTime: timestamp('check_in_time'),
     checkOutTime: timestamp('check_out_time'),
     earnedPoints: decimal('earned_points', { precision: 12, scale: 4 }).default('0'),
+    lastHeartbeatAt: timestamp('last_heartbeat_at').defaultNow(),
     createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -280,9 +297,26 @@ export const spotsRelations = relations(spots, ({ one, many }) => ({
         fields: [spots.spotterId],
         references: [users.id],
     }),
+    owner: one(users, {
+        fields: [spots.ownerId],
+        references: [users.id],
+        relationName: 'ownedSpots',
+    }),
     visits: many(visits),
     messages: many(spotMessages),
     likes: many(spotLikes),
+    weeklyPoints: many(weeklySpotPoints),
+}));
+
+export const weeklySpotPointsRelations = relations(weeklySpotPoints, ({ one }) => ({
+    spot: one(spots, {
+        fields: [weeklySpotPoints.spotId],
+        references: [spots.id],
+    }),
+    user: one(users, {
+        fields: [weeklySpotPoints.userId],
+        references: [users.id],
+    }),
 }));
 
 export const spotLikesRelations = relations(spotLikes, ({ one }) => ({

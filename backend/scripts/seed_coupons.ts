@@ -32,12 +32,38 @@ async function main() {
             cost: 1000,
             type: "donation",
             stock: null,
+        },
+        {
+            name: "Safety Shield (24h)",
+            description: "Protect your spot from takeover for 24 hours.",
+            cost: 500,
+            type: "game_item",
+            data: "shield_24h",
+            stock: null,
+        },
+        {
+            name: "Tax Boost (24h)",
+            description: "Double your tax revenue for 24 hours.",
+            cost: 1000,
+            type: "game_item",
+            data: "tax_boost_24h",
+            stock: null,
         }
     ];
 
     for (const item of initialCoupons) {
-        await db.insert(coupons).values(item).onConflictDoNothing();
-        console.log(`Prepared coupon: ${item.name}`);
+        // Check identifying field to prevent duplicates
+        const { eq } = require('drizzle-orm');
+        const existing = await db.query.coupons.findFirst({
+            where: eq(coupons.name, item.name)
+        });
+
+        if (!existing) {
+            await db.insert(coupons).values(item);
+            console.log(`✅ Created coupon: ${item.name}`);
+        } else {
+            console.log(`⏭️ Skipped (Exists): ${item.name}`);
+        }
     }
 
     console.log("✅ Coupons seeded successfully!");

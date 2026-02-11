@@ -9,6 +9,7 @@ import { useGeofencing } from '../hooks/useGeofencing';
 import VisitOverlay from './VisitOverlay';
 import * as Haptics from 'expo-haptics';
 import AnimatedReanimated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 
 export interface User {
     id: string;
@@ -27,6 +28,9 @@ export interface Spot {
     color?: string;
     activeUsers?: User[];
     spotter?: User;
+    owner?: User;
+    shieldExpiresAt?: string | Date;
+    taxBoostExpiresAt?: string | Date;
 }
 
 const getCategoryColor = (category: string) => {
@@ -80,41 +84,77 @@ const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, 
                     )}
 
                     {(() => {
-                        const seed = spot.spotter?.avatarUrl || `spot_${spot.id}`;
+                        const owner = spot.owner;
+                        const seed = owner?.avatarUrl || spot.spotter?.avatarUrl || `spot_${spot.id}`;
                         const avatarSource = getCreatureAvatar(seed);
+                        const isShielded = spot.shieldExpiresAt && new Date(spot.shieldExpiresAt) > new Date();
+                        const isBoosted = spot.taxBoostExpiresAt && new Date(spot.taxBoostExpiresAt) > new Date();
 
+                        // Base Avatar Component
+                        let AvatarComponent;
                         if (avatarSource.startsWith('emoji:')) {
                             const parts = avatarSource.split(':');
                             const emoji = parts[1];
                             const color = parts[2] || 'cccccc';
-                            return (
+                            AvatarComponent = (
                                 <View style={{
                                     width: 36,
                                     height: 36,
                                     borderRadius: 18,
-                                    borderWidth: 2,
-                                    borderColor: 'white',
+                                    borderWidth: spot.owner ? 3 : 2,
+                                    borderColor: spot.owner ? '#FFD700' : 'white',
                                     backgroundColor: `#${color}`,
                                     alignItems: 'center',
                                     justifyContent: 'center'
                                 }}>
                                     <Text style={{ fontSize: 20 }}>{emoji}</Text>
+                                    {spot.owner && (
+                                        <View style={{ position: 'absolute', top: -10, left: -8 }}>
+                                            <Text style={{ fontSize: 16 }}>👑</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            );
+                        } else {
+                            AvatarComponent = (
+                                <View>
+                                    <Image
+                                        source={{ uri: avatarSource }}
+                                        style={{
+                                            width: 36,
+                                            height: 36,
+                                            borderRadius: 18,
+                                            borderWidth: spot.owner ? 3 : 2,
+                                            borderColor: spot.owner ? '#FFD700' : 'white',
+                                            backgroundColor: '#eee'
+                                        }}
+                                    />
+                                    {spot.owner && (
+                                        <View style={{ position: 'absolute', top: -10, left: -8 }}>
+                                            <Text style={{ fontSize: 16 }}>👑</Text>
+                                        </View>
+                                    )}
                                 </View>
                             );
                         }
 
                         return (
-                            <Image
-                                source={{ uri: avatarSource }}
-                                style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: 18,
-                                    borderWidth: 2,
-                                    borderColor: 'white',
-                                    backgroundColor: '#eee'
-                                }}
-                            />
+                            <View>
+                                {AvatarComponent}
+                                {/* Status Effects */}
+                                <View className="absolute -bottom-2 -right-2 flex-row">
+                                    {isShielded && (
+                                        <View className="bg-blue-100 rounded-full w-5 h-5 items-center justify-center border border-blue-200">
+                                            <Text style={{ fontSize: 10 }}>🛡️</Text>
+                                        </View>
+                                    )}
+                                    {isBoosted && (
+                                        <View className="bg-green-100 rounded-full w-5 h-5 items-center justify-center border border-green-200 -ml-1">
+                                            <Text style={{ fontSize: 10 }}>💰</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
                         );
                     })()}
 
@@ -203,8 +243,10 @@ export default function AppMapView({
     const mapRef = useRef<MapView>(null);
     const router = useRouter();
     const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
-    const { nearestSpot, isInside } = useGeofencing(userLocation, spots);
+    const { nearestSpot, availableSpots, isInside } = useGeofencing(userLocation, spots); // Use availableSpots
     const [isOverlayVisible, setOverlayVisible] = useState(false);
+    const [isSelectorVisible, setSelectorVisible] = useState(false); // Selector state
+    const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null); // To store user choice
 
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -320,24 +362,66 @@ export default function AppMapView({
                 ))}
             </MapView>
 
-            {isInside && nearestSpot && !isOverlayVisible && (
+            {/* Check In Button Logic */}
+            {availableSpots && availableSpots.length > 0 && !isOverlayVisible && !isSelectorVisible && (
                 <View className="absolute bottom-24 self-center w-full px-4 items-center">
-                    <CheckInButton onCheckIn={() => setOverlayVisible(true)} spot={nearestSpot} />
+                    <CheckInButton
+                        spotCount={availableSpots.length}
+                        onCheckIn={() => {
+                            if (availableSpots.length > 1) {
+                                setSelectorVisible(true);
+                            } else {
+                                setSelectedSpot(availableSpots[0]);
+                                setOverlayVisible(true);
+                            }
+                        }}
+                        spot={availableSpots[0]} // Pass first for category color etc if single
+                    />
                 </View>
             )}
 
-            {isOverlayVisible && nearestSpot && userLocation && (
+            {/* Selector Modal for Multiple Spots */}
+            {isSelectorVisible && (
+                <View className="absolute bottom-0 w-full bg-white rounded-t-3xl shadow-2xl p-6 pb-12 z-50">
+                    <Text className="text-xl font-black text-center mb-4 text-slate-800">Choose a Spot</Text>
+                    {availableSpots.map(spot => (
+                        <TouchableOpacity
+                            key={spot.id}
+                            onPress={() => {
+                                setSelectedSpot(spot);
+                                setSelectorVisible(false);
+                                setTimeout(() => setOverlayVisible(true), 200); // Small delay for transition
+                            }}
+                            className="bg-slate-50 p-4 rounded-xl mb-3 border border-slate-200 flex-row items-center justify-between"
+                        >
+                            <View>
+                                <Text className="text-lg font-bold text-slate-800">{spot.name}</Text>
+                                <Text className="text-xs font-bold text-slate-400">{spot.category} • {spot.pointsPerMinute} P/m</Text>
+                            </View>
+                            <Ionicons name="location" size={24} color={getCategoryColor(spot.category)} />
+                        </TouchableOpacity>
+                    ))}
+                    <TouchableOpacity onPress={() => setSelectorVisible(false)} className="mt-2 items-center">
+                        <Text className="font-bold text-slate-400">Cancel</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {isOverlayVisible && selectedSpot && userLocation && (
                 <VisitOverlay
-                    spot={nearestSpot}
+                    spot={selectedSpot}
                     userLocation={userLocation}
-                    onClose={() => setOverlayVisible(false)}
+                    onClose={() => {
+                        setOverlayVisible(false);
+                        setSelectedSpot(null);
+                    }}
                 />
             )}
         </View>
     );
 }
 
-const CheckInButton = ({ onCheckIn, spot }: { onCheckIn: () => void, spot: Spot }) => {
+const CheckInButton = ({ onCheckIn, spot, spotCount = 1 }: { onCheckIn: () => void, spot: Spot, spotCount?: number }) => {
     const scale = useSharedValue(1);
     const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -359,16 +443,22 @@ const CheckInButton = ({ onCheckIn, spot }: { onCheckIn: () => void, spot: Spot 
                 onPressOut={handlePressOut}
                 onPress={handlePress}
                 activeOpacity={0.9}
-                className="bg-[#FF4785] w-full py-4 rounded-full border-4 border-white shadow-xl items-center"
+                className={`w-full py-4 rounded-full border-4 border-white shadow-xl items-center ${spotCount > 1 ? 'bg-indigo-600' : 'bg-[#FF4785]'}`}
                 style={{ elevation: 5 }}
             >
                 <View className="flex-row items-center">
-                    <Text className="text-white font-black text-xl mr-2">📍 VISITING</Text>
-                    <View className="bg-white px-2 py-0.5 rounded text-xs font-bold text-[#FF4785]">
-                        <Text className="font-bold text-[#FF4785]">{spot.category}</Text>
-                    </View>
+                    <Text className="text-white font-black text-xl mr-2">
+                        {spotCount > 1 ? `Found ${spotCount} Spots` : '📍 VISITING'}
+                    </Text>
+                    {spotCount === 1 && (
+                        <View className="bg-white px-2 py-0.5 rounded text-xs font-bold text-[#FF4785]">
+                            <Text className="font-bold text-[#FF4785]">{spot.category}</Text>
+                        </View>
+                    )}
                 </View>
-                <Text className="text-white text-xs font-bold mt-1">Staking {spot.pointsPerMinute} pts/min</Text>
+                <Text className="text-white text-xs font-bold mt-1">
+                    {spotCount > 1 ? 'Tap to Select Location' : `Staking ${spot.pointsPerMinute} pts/min`}
+                </Text>
             </TouchableOpacity>
         </AnimatedReanimated.View>
     );

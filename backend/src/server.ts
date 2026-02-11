@@ -200,4 +200,18 @@ const start = async () => {
     }
 };
 
+// --- Cron Scheduler ---
+import { processWeeklyTurfWars, cleanupStaleVisits } from './utils/cron';
+
+// Run every 10 minutes
+setInterval(() => {
+    processWeeklyTurfWars().catch(e => console.error('Cron Error:', e));
+    cleanupStaleVisits().catch(e => console.error('Cleanup Error:', e));
+}, 10 * 60 * 1000);
+
+// Run once on startup after DB init (delayed)
+setTimeout(() => {
+    processWeeklyTurfWars().catch(e => console.error('Startup Cron Error:', e));
+}, 10000);
+
 start();

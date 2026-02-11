@@ -46,6 +46,53 @@ export default function SpotDetailScreen() {
     const likeMutation = trpc.spot.toggleLike.useMutation();
     const reportCommentMutation = trpc.spot.reportComment.useMutation();
     const blockUserMutation = trpc.user.block.useMutation();
+    const buyGameItemMutation = trpc.exchange.buyGameItem.useMutation();
+
+    // Fetch Items
+    const { data: coupons } = trpc.exchange.listCoupons.useQuery();
+    const gameItems = coupons?.filter(c => c.type === 'game_item') || [];
+
+    const isOwner = spot?.owner && currentUserId && spot.owner.id.toString() === currentUserId;
+
+    const handleBuyItem = (item: any) => {
+        Alert.alert(
+            "Confirm Purchase",
+            `Buy ${item.name} for ${item.cost} Points?`,
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Buy",
+                    onPress: async () => {
+                        try {
+                            await buyGameItemMutation.mutateAsync({ couponId: item.id, targetSpotId: spotId });
+                            Alert.alert("Success", item.name + " activated!");
+                            // Refetch spot to see status
+                            // But spot query key needs invalidation or refetch.
+                            // trpc.useUtils().spot.getById.invalidate({ id: spotId });
+                        } catch (e: any) {
+                            Alert.alert("Error", e.message);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const showPowerUpShop = () => {
+        if (gameItems.length === 0) return Alert.alert("Shop", "No items available.");
+
+        Alert.alert(
+            "Spot Power-ups",
+            "Enhance your territory!",
+            [
+                ...gameItems.map(item => ({
+                    text: `${item.name} (${item.cost}P)`,
+                    onPress: () => handleBuyItem(item)
+                })),
+                { text: "Cancel", style: "cancel" }
+            ]
+        );
+    };
 
     const handleCommentAction = (commentId: number, userId: number) => {
         Alert.alert(
@@ -151,7 +198,11 @@ export default function SpotDetailScreen() {
         }
     };
 
-    const currentUserId = getStoredUserId();
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        getStoredUserId().then(id => setCurrentUserId(id));
+    }, []);
 
     const getRelativeTime = (dateString: string) => {
         if (!dateString) return '';
@@ -200,6 +251,53 @@ export default function SpotDetailScreen() {
                     </TouchableOpacity>
                 </View>
 
+                {/* Owner Banner */}
+                {spot.owner && (
+                    <View className="mx-6 mb-6 p-4 bg-yellow-50 rounded-2xl border-2 border-[#FFD700] shadow-sm">
+                        <View className="flex-row justify-between items-center mb-2">
+                            <View className="flex-row items-center gap-3">
+                                <View className="relative">
+                                    <Avatar seed={spot.owner.avatar || 'default_seed'} size={40} />
+                                    <Text className="absolute -top-2 -right-2 text-lg">👑</Text>
+                                </View>
+                                <View>
+                                    <Text className="text-[10px] font-black text-yellow-600 uppercase tracking-widest">{t('spotDetail.controlledBy') || "CONTROLLED BY"}</Text>
+                                    <Text className="text-lg font-black text-slate-800">{spot.owner.name}</Text>
+                                </View>
+                            </View>
+                            <View className="items-end">
+                                <Text className="text-2xl font-black text-slate-800">{spot.taxRate || 5}%</Text>
+                                <Text className="text-[10px] font-bold text-slate-400 uppercase">Tax Rate</Text>
+                            </View>
+                        </View>
+
+                        {/* Active Effects & Actions */}
+                        <View className="flex-row justify-between items-center pt-2 border-t border-yellow-200/50">
+                            <View className="flex-row gap-2">
+                                {spot.shieldExpiresAt && new Date(spot.shieldExpiresAt) > new Date() && (
+                                    <View className="bg-blue-100 px-2 py-1 rounded-md flex-row items-center gap-1">
+                                        <Text>🛡️</Text>
+                                        <Text className="text-[10px] font-bold text-blue-700">Shielded</Text>
+                                    </View>
+                                )}
+                                {spot.taxBoostExpiresAt && new Date(spot.taxBoostExpiresAt) > new Date() && (
+                                    <View className="bg-green-100 px-2 py-1 rounded-md flex-row items-center gap-1">
+                                        <Text>💰</Text>
+                                        <Text className="text-[10px] font-bold text-green-700">Boost Active</Text>
+                                    </View>
+                                )}
+                            </View>
+
+                            {/* Only Owner can buy */}
+                            {isOwner && (
+                                <TouchableOpacity onPress={showPowerUpShop} className="bg-[#FFD700] px-3 py-1.5 rounded-full flex-row items-center gap-1">
+                                    <Ionicons name="flash" size={12} color="#854d0e" />
+                                    <Text className="text-xs font-black text-yellow-900">POWER-UP</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </View>
+                )}
                 {/* Tabs */}
                 <View className="flex-row gap-8 mt-2">
                     <TouchableOpacity onPress={() => setTab('info')} className={`pb-2 ${tab === 'info' ? 'border-b-2 border-[#00C2FF]' : ''}`}>
@@ -246,6 +344,7 @@ export default function SpotDetailScreen() {
                         <View className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                             <Text className="text-[10px] font-black text-slate-400 uppercase mb-1">{t('map.stakingRate')}</Text>
                             <Text className="text-xl font-black text-slate-800">{spot.pointsPerMinute} P/m</Text>
+                            {spot.owner && <Text className="text-[10px] font-bold text-red-400 mt-1">-{spot.taxRate}% Tax to Owner</Text>}
                         </View>
                         <View className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                             <Text className="text-[10px] font-black text-slate-400 uppercase mb-1">Spot Level</Text>

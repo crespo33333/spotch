@@ -33,6 +33,14 @@ export const visitRouter = router({
                 throw new TRPCError({ code: 'BAD_REQUEST', message: 'Too far from spot' });
             }
 
+            // Close any existing active visits for this user (Enforce 1 active visit)
+            await db.update(visits)
+                .set({ checkOutTime: new Date() })
+                .where(and(
+                    eq(visits.getterId, ctx.user.id),
+                    sql`${visits.checkOutTime} IS NULL`
+                ));
+
             const [visit] = await db.insert(visits).values({
                 spotId: spot.id,
                 getterId: ctx.user.id,
@@ -153,7 +161,21 @@ export const visitRouter = router({
                 throw new Error('Invalid visit session');
             }
 
-            // Calculate Points & XP (Scale based on spot's rate)
+            // 0. Update Heartbeat Timestamp (Alive Check)
+            await db.update(visits)
+                .set({ lastHeartbeatAt: new Date() })
+                .where(eq(visits.id, visit.id));
+
+            // Check Budget / Depletion
+            if ((visit.spot.remainingPoints || 0) <= 0) {
+                // Mark spot inactive if not already
+                if (visit.spot.active) {
+                    await db.update(spots).set({ active: false }).where(eq(spots.id, visit.spot.id));
+                }
+                throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Spot depleted' });
+            }
+
+            // Calculate Points & XP (Fixed Rate per User)
             // Heartbeats happen every 5 seconds. 60 / 5 = 12 heartbeats per minute.
             const ratePerMin = (visit.spot as any).ratePerMinute || 10;
             const increment = ratePerMin / 12; // Fractional increment
@@ -167,24 +189,96 @@ export const visitRouter = router({
                 .set({ earnedPoints: newEarned.toString() })
                 .where(eq(visits.id, visit.id));
 
-            // 2. Calculate Wallet Update (Only add if integer part increased)
+            // 2. Update remaining points (Drain budget)
+            await db.update(spots)
+                .set({ remainingPoints: sql`${spots.remainingPoints} - ${increment}` })
+                .where(eq(spots.id, visit.spot.id));
+
+            // 3. Calculate Wallet Update (Only add if integer part increased)
             const walletAward = Math.floor(newEarned) - Math.floor(oldEarned);
 
             if (walletAward > 0) {
-                await db.update(wallets)
-                    .set({
-                        currentBalance: sql`${wallets.currentBalance} + ${walletAward}`,
-                        lastTransactionAt: new Date()
-                    })
-                    .where(eq(wallets.userId, ctx.user.id));
+                // Check for Owner & Tax
+                const currentSpot = await db.query.spots.findFirst({ where: eq(spots.id, visit.spot.id) }); // Re-fetch to get latest owner
+                const ownerId = currentSpot?.ownerId;
+                let taxRate = currentSpot?.taxRate || 5;
 
-                // Log Transaction (only for integer gains to avoid spamming tx history)
-                await db.insert(transactions).values({
+                // Check Tax Boost
+                if (currentSpot?.taxBoostExpiresAt && new Date(currentSpot.taxBoostExpiresAt) > new Date()) {
+                    taxRate = 10; // Boost to 10%
+                }
+
+                let userGain = walletAward;
+                let taxAmount = 0;
+
+                if (ownerId && ownerId !== ctx.user.id) {
+                    // Cumulative Tax Calculation
+                    // Calculate total tax that *should* have been paid up to this point
+                    const cumulativeTaxNew = Math.floor(newEarned * (taxRate / 100));
+                    const cumulativeTaxOld = Math.floor(oldEarned * (taxRate / 100));
+
+                    // The tax due for this specific increment is the difference
+                    taxAmount = cumulativeTaxNew - cumulativeTaxOld;
+
+                    userGain = walletAward - taxAmount;
+
+                    if (taxAmount > 0) {
+                        // Pay Owner
+                        await db.update(wallets)
+                            .set({
+                                currentBalance: sql`${wallets.currentBalance} + ${taxAmount}`,
+                                lastTransactionAt: new Date()
+                            })
+                            .where(eq(wallets.userId, ownerId));
+
+                        await db.insert(transactions).values({
+                            userId: ownerId,
+                            amount: taxAmount,
+                            type: 'earn',
+                            description: `Tax collected from ${visit.spot.name}`
+                        });
+                    }
+                }
+
+                // Pay Worker (User)
+                if (userGain > 0) {
+                    await db.update(wallets)
+                        .set({
+                            currentBalance: sql`${wallets.currentBalance} + ${userGain}`,
+                            lastTransactionAt: new Date()
+                        })
+                        .where(eq(wallets.userId, ctx.user.id));
+
+                    // Log Transaction
+                    await db.insert(transactions).values({
+                        userId: ctx.user.id,
+                        amount: userGain,
+                        type: 'earn',
+                        description: `Farmed at ${visit.spot.name}${taxAmount > 0 ? ` (Taxed ${taxRate}%)` : ''}`
+                    });
+                }
+
+                // --- Turf War: Update Weekly Points ---
+                const { weeklySpotPoints } = require('../db/schema');
+                const weekStart = new Date();
+                weekStart.setHours(0, 0, 0, 0);
+                weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Sunday as start
+
+                // Upsert Weekly Points
+                // Note: We credit the GROSS walletAward (before tax) to the user's weekly score?
+                // Or userGain? Usually "Gross Earnings" determine "Productivity".
+                // Let's use `walletAward` (Gross).
+
+                await db.insert(weeklySpotPoints).values({
+                    spotId: visit.spot.id,
                     userId: ctx.user.id,
-                    amount: walletAward,
-                    type: 'earn',
-                    description: `Farmed at ${visit.spot.name}`
+                    points: walletAward,
+                    weekStart: weekStart,
+                }).onConflictDoUpdate({
+                    target: [weeklySpotPoints.spotId, weeklySpotPoints.userId, weeklySpotPoints.weekStart],
+                    set: { points: sql`${weeklySpotPoints.points} + ${walletAward}` }
                 });
+                // --------------------------------------
             }
 
             // 3. Update Spot Activity & Level Up
@@ -198,7 +292,6 @@ export const visitRouter = router({
 
             await db.update(spots)
                 .set({
-                    remainingPoints: sql`${spots.remainingPoints} - ${increment}`, // Spot points also drain fractionally
                     totalActivity: currentSpotActivity,
                     spotLevel: newSpotLevel
                 })
