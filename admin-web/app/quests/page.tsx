@@ -135,7 +135,7 @@ export default function QuestsPage() {
                                     <div className="text-xs text-slate-500 font-normal mt-1">{quest.description}</div>
                                 </td>
                                 <td className="px-8 py-4 text-sm text-slate-400">
-                                    {quest.conditionType} >= {quest.conditionValue}
+                                    {quest.conditionType} {'>='} {quest.conditionValue}
                                 </td>
                                 <td className="px-8 py-4 font-mono font-bold text-slate-200">{quest.rewardPoints.toLocaleString()} <span className="text-amber-500">XP</span></td>
                                 <td className="px-8 py-4 text-right">
