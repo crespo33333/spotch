@@ -232,8 +232,10 @@ app.get('/', (req, res) => {
 });
 app.get('/health', (req, res) => res.send('OK'));
 app.get('/privacy-policy', (req, res) => res.send(PRIVACY_POLICY));
+app.get('/privacy', (req, res) => res.send(PRIVACY_POLICY)); // Alias for convenience
 app.get('/terms', (req, res) => res.send(TERMS_OF_SERVICE));
 app.get('/support', (req, res) => res.send(SUPPORT_PAGE));
+app.get('/help', (req, res) => res.send(SUPPORT_PAGE)); // Alias for convenience
 app.get('/db-test', async (req, res) => {
     try {
         const result = await db_1.db.query.users.findMany({ limit: 1 });
