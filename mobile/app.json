@@ -28,6 +28,9 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
+        "FOREGROUND_SERVICE",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
         "FOREGROUND_SERVICE"
       ]
     },
@@ -79,6 +82,12 @@
       "eas": {
         "projectId": "407aeb71-808c-4a83-ab5e-d0507191f1b7"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/407aeb71-808c-4a83-ab5e-d0507191f1b7"
     }
   }
 }
