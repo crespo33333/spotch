@@ -245,6 +245,15 @@ app.get('/debug-fs', (req: Request, res: Response) => {
     }
 });
 
+app.get('/debug-index', (req: Request, res: Response) => {
+    const indexPath = path.join(PUBLIC_PATH, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.send(fs.readFileSync(indexPath, 'utf-8'));
+    } else {
+        res.status(404).send('Not found at ' + indexPath);
+    }
+});
+
 // Catch-all for debugging (MUST BE LAST)
 app.use('*', (req: Request, res: Response) => {
     console.log(`Fallback hit for: ${req.url} - Current Public Path: ${PUBLIC_PATH} `);
