@@ -1,303 +1,346 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja" class="scroll-smooth">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotch - Territory Game</title>
+    <title>Spotch - 街を制圧する、位置情報ゲーム</title>
+    <meta name="description" content="現実世界のスポットを巡り、領土を広げよう。チェックインしてポイントを稼ぎ、ランキング上位を目指せ。">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Spotch - 街を制圧せよ">
+    <meta property="og:description" content="チェックインで領土を広げる。新感覚の位置情報ゲーム。">
+    <meta property="og:image" content="https://spotch-backend.onrender.com/images/screenshot_05_fixed.png">
+    <meta property="og:url" content="https://spotch-backend.onrender.com">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', '"Inter"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#00C2FF',
+                            pink: '#FF4785',
+                            dark: '#0f172a',
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .hero-pattern {
-            background-color: #ffffff;
-            background-image: radial-gradient(#00C2FF 0.5px, transparent 0.5px), radial-gradient(#00C2FF 0.5px, #ffffff 0.5px);
-            background-size: 20px 20px;
-            background-position: 0 0, 10px 10px;
-            opacity: 0.3;
+        .hero-bg {
+            background: radial-gradient(circle at 50% 50%, rgba(0, 194, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%);
         }
 
-        .phone-frame {
-            border: 8px solid black;
-            border-radius: 40px;
-            overflow: hidden;
-            box-shadow: 20px 20px 0px 0px rgba(0, 0, 0, 0.1);
+        .text-gradient {
+            background: linear-gradient(135deg, #00C2FF 0%, #FF4785 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 3D tilt effect container */
+        .tilt-card {
+            transition: transform 0.1s;
+            transform-style: preserve-3d;
         }
     </style>
 </head>
 
-<body class="bg-white text-slate-900">
+<body class="bg-slate-50 text-slate-900 overflow-x-hidden">
 
     <!-- Navbar -->
-    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+    <nav class="fixed w-full z-50 glass transition-all duration-300" id="navbar">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-gradient-to-tr from-[#00C2FF] to-[#FF4785] rounded-lg"></div>
-                    <span class="font-black text-xl italic tracking-tighter">SPOTCH</span>
-                </div>
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="#features" class="font-bold text-slate-600 hover:text-black">Features</a>
+            <div class="flex justify-between items-center h-20">
+                <a href="#" class="flex items-center gap-3 group">
+                    <div
+                        class="w-10 h-10 bg-gradient-to-tr from-brand-blue to-brand-pink rounded-xl group-hover:rotate-12 transition transform">
+                    </div>
+                    <span class="font-black text-2xl tracking-tighter italic">SPOTCH</span>
+                </a>
+                <div class="hidden md:flex items-center gap-8 font-bold text-sm text-slate-600">
+                    <a href="#features" class="hover:text-brand-blue transition">機能</a>
+                    <a href="#gallery" class="hover:text-brand-blue transition">ギャラリー</a>
+                    <a href="#faq" class="hover:text-brand-blue transition">FAQ</a>
                     <a href="#download"
-                        class="bg-black text-white px-6 py-2 rounded-full font-bold hover:bg-slate-800 transition">Download</a>
+                        class="bg-slate-900 text-white px-6 py-3 rounded-full hover:bg-brand-blue hover:shadow-lg hover:shadow-brand-blue/30 transition transform hover:-translate-y-1">ダウンロード</a>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <div class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div class="absolute inset-0 z-0 hero-pattern"></div>
+    <header class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="absolute inset-0 hero-bg"></div>
+
+        <!-- Decorative blobs -->
+        <div
+            class="absolute top-20 left-[-10%] w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-[100px] animate-pulse-slow">
+        </div>
+        <div class="absolute bottom-0 right-[-10%] w-[600px] h-[600px] bg-pink-400/20 rounded-full blur-[100px] animate-pulse-slow"
+            style="animation-delay: 2s;"></div>
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="lg:grid lg:grid-cols-12 lg:gap-16 items-center">
 
-                <!-- Text Content -->
-                <div class="lg:col-span-6 text-center lg:text-left mb-12 lg:mb-0">
+                <!-- Text -->
+                <div class="lg:col-span-7 text-center lg:text-left mb-16 lg:mb-0">
                     <div
-                        class="inline-block px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[#00C2FF] font-black text-xs uppercase tracking-widest mb-6">
-                        Release v1.0.8 Available Now
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-blue-100 shadow-sm mb-8 animate-float">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span class="text-xs font-bold text-slate-600 tracking-wider">VERSION 1.0.8 RELEASED</span>
                     </div>
-                    <h1 class="text-5xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-tight">
-                        Turn your city into a <span
-                            class="text-transparent bg-clip-text bg-gradient-to-r from-[#00C2FF] to-[#FF4785]">Playground</span>.
+
+                    <h1 class="text-5xl lg:text-8xl font-black tracking-tight text-slate-900 mb-6 leading-[1.1]">
+                        街を<br>
+                        <span class="text-gradient">制圧せよ。</span>
                     </h1>
-                    <p class="text-xl text-slate-600 mb-8 font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                        Visit real-world spots, check-in to claim territory, and compete on the global leaderboard. The
-                        world is your game board.
+
+                    <p
+                        class="text-xl lg:text-2xl text-slate-600 mb-10 font-bold leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                        現実世界がゲームボードになる。<br>
+                        スポットを巡り、領土を広げ、<br>
+                        最強の座を勝ち取れ。
                     </p>
 
                     <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                        <button
-                            class="bg-black text-white px-8 py-4 rounded-xl flex items-center justify-center gap-3 hover:scale-105 transition transform shadow-xl">
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                        <button onclick="document.getElementById('download').scrollIntoView()"
+                            class="group bg-slate-900 text-white px-8 py-4 rounded-2xl flex items-center justify-center gap-4 hover:bg-slate-800 hover:scale-[1.02] transition-all shadow-xl shadow-slate-900/20 active:scale-95">
+                            <svg class="w-8 h-8 fill-current group-hover:text-brand-blue transition"
+                                viewBox="0 0 24 24">
                                 <path
                                     d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.93-.91 1.32.13 2.51.68 3.29 1.83-2.88 1.74-2.4 6.77 1.07 8.25M13 3.5c.73-.83 1.21-1.96 1.07-3.07-1.08.06-2.38.69-3.14 1.58-.69.8-1.28 2.05-1.13 3.12 1.25.1 2.52-.7 3.2-1.63z" />
                             </svg>
                             <div class="text-left">
-                                <div class="text-[10px] uppercase font-bold text-gray-400">Download on the</div>
-                                <div class="text-xl font-bold leading-none">App Store</div>
+                                <span
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Download
+                                    on the</span>
+                                <span class="block text-xl font-bold leading-none">App Store</span>
+                            </div>
+                        </button>
+
+                        <button onclick="alert('Android版は準備中です')"
+                            class="group bg-white text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl flex items-center justify-center gap-4 hover:border-green-500 hover:text-green-600 transition-all shadow-lg shadow-slate-200/50 active:scale-95">
+                            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24">
+                                <path
+                                    d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.3,13.08L17.58,15.84L15.3,13.62L20.3,10.93C20.67,10.73 21,11 21,11.39C21,11.53 20.95,11.66 20.87,11.75C20.73,11.9 20.57,12 20.3,12.2V13.08M16.81,8.89L14.54,11.16L6.05,2.67L16.81,8.89Z" />
+                            </svg>
+                            <div class="text-left">
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Get it
+                                    on</span>
+                                <span class="block text-xl font-bold leading-none">Google Play</span>
                             </div>
                         </button>
                     </div>
                 </div>
 
-                <!-- Phone Image -->
-                <div class="lg:col-span-6 flex justify-center lg:justify-end relative">
-                    <div
-                        class="relative w-72 h-[580px] bg-black rounded-[45px] shadow-2xl border-4 border-slate-900 phone-frame rotate-[-3deg] hover:rotate-0 transition duration-500">
-                        <img src="/images/screenshot_05_fixed.png" class="w-full h-full object-cover" alt="Gameplay">
-                        <!-- Dynamic Island -->
-                        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-7 bg-black rounded-b-xl">
+                <!-- Visual -->
+                <div class="lg:col-span-5 relative">
+                    <div class="relative w-[300px] h-[600px] mx-auto perspective-1000">
+                        <div class="absolute inset-0 bg-brand-blue/20 blur-3xl transform rotate-12"></div>
+                        <img src="/images/screenshot_05_fixed.png" alt="App Screen"
+                            class="relative z-10 w-full h-full object-cover rounded-[3rem] border-8 border-slate-900 shadow-2xl animate-float"
+                            style="box-shadow: 20px 20px 60px rgba(0,0,0,0.3);">
+
+                        <!-- Floating Badges -->
+                        <div class="absolute top-20 -right-12 z-20 bg-white p-4 rounded-2xl shadow-xl animate-float"
+                            style="animation-delay: 1s;">
+                            <span class="text-2xl">🏆</span>
+                            <span class="text-xs font-bold block mt-1">Sランク獲得</span>
+                        </div>
+                        <div class="absolute bottom-32 -left-12 z-20 bg-white p-4 rounded-2xl shadow-xl animate-float"
+                            style="animation-delay: 2s;">
+                            <span class="text-2xl">🛡️</span>
+                            <span class="text-xs font-bold block mt-1">領土防衛中</span>
                         </div>
                     </div>
-                    <!-- Second Phone Behind -->
-                    <div
-                        class="absolute -z-10 top-12 -right-12 lg:right-12 w-72 h-[580px] bg-slate-100 rounded-[45px] shadow-xl border-4 border-slate-200 phone-frame rotate-[6deg] opacity-60 scale-90">
-                        <img src="/images/screenshot_01_fixed.png" class="w-full h-full object-cover opacity-80"
-                            alt="Map">
-                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- Features Grid -->
-    <section id="features" class="py-24 bg-slate-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl font-black text-slate-900 mb-4">Why Spotch?</h2>
-                <p class="text-slate-500 max-w-2xl mx-auto">We combine the fun of gaming with the joy of exploration.
-                    Get healthy while you dominate.</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-12">
-                <!-- Feature 1 -->
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-lg transition">
-                    <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-2xl mb-6">📍
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Check-in Everywhere</h3>
-                    <p class="text-slate-500">Discover hidden spots in your city. Each check-in grants you points and
-                        claims the territory.</p>
-                </div>
-                <!-- Feature 2 -->
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-lg transition">
-                    <div class="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🏆
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Climb the Ranks</h3>
-                    <p class="text-slate-500">Compete locally or globally. Earn badges and show off your explorer status
-                        to the world.</p>
-                </div>
-                <!-- Feature 3 -->
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-lg transition">
-                    <div class="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🤝
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Social Connection</h3>
-                    <p class="text-slate-500">Find friends, follow their journeys, and discover new places through their
-                        eyes.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="py-24 bg-white border-b border-slate-200">
+    <!-- Why Spotch -->
+    <section id="features" class="py-24 bg-white relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-20">
-                <span class="text-[#00C2FF] font-black tracking-widest uppercase text-sm">Game Guide</span>
-                <h2 class="text-4xl font-black text-slate-900 mt-2">How to Conquer</h2>
+                <span class="text-brand-blue font-black tracking-widest uppercase text-xs">FEATURES</span>
+                <h2 class="text-4xl lg:text-5xl font-black mt-2 mb-6">選ばれる理由</h2>
+                <p class="text-slate-500 max-w-xl mx-auto">ただのゲームじゃない。あなたの日常を冒険に変える、<br>最強のツール。</p>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8 relative">
-                <!-- Line connector for desktop -->
-                <div class="hidden md:block absolute top-12 left-0 w-full h-1 bg-slate-100 -z-10"></div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div
+                    class="group p-8 rounded-[2rem] bg-slate-50 border border-slate-100 hover:border-brand-blue/30 hover:shadow-2xl hover:shadow-brand-blue/10 transition-all duration-300">
+                    <div
+                        class="w-16 h-16 bg-blue-100 text-blue-500 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition">
+                        📍</div>
+                    <h3 class="text-xl font-bold mb-4">チェックインで制圧</h3>
+                    <p class="text-slate-500 leading-relaxed">街中に隠された「スポット」を見つけ出そう。近づいてボタンを押すだけで、その場所はあなたのものになる。</p>
+                </div>
 
-                <!-- Step 1 -->
-                <div class="text-center bg-white pt-4">
+                <div
+                    class="group p-8 rounded-[2rem] bg-slate-50 border border-slate-100 hover:border-pink-500/30 hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-300">
                     <div
-                        class="w-24 h-24 mx-auto bg-slate-900 text-white rounded-full flex items-center justify-center text-3xl font-black mb-6 border-8 border-white shadow-xl">
-                        1</div>
-                    <h3 class="text-xl font-bold mb-2">Walk & Find</h3>
-                    <p class="text-slate-500 px-4">Open the map and walk towards the "Spots" scattered around your city.
-                    </p>
+                        class="w-16 h-16 bg-pink-100 text-pink-500 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition">
+                        ⚔️</div>
+                    <h3 class="text-xl font-bold mb-4">ライバルと競争</h3>
+                    <p class="text-slate-500 leading-relaxed">ただ集めるだけじゃない。他のプレイヤーの領土を奪い、守り抜け。ランキング上位者には特別な称号も。</p>
                 </div>
-                <!-- Step 2 -->
-                <div class="text-center bg-white pt-4">
+
+                <div
+                    class="group p-8 rounded-[2rem] bg-slate-50 border border-slate-100 hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300">
                     <div
-                        class="w-24 h-24 mx-auto bg-[#00C2FF] text-white rounded-full flex items-center justify-center text-3xl font-black mb-6 border-8 border-white shadow-xl">
-                        2</div>
-                    <h3 class="text-xl font-bold mb-2">Check-in</h3>
-                    <p class="text-slate-500 px-4">Once you are within 50 meters, tap the Check-in button to claim it.
-                    </p>
-                </div>
-                <!-- Step 3 -->
-                <div class="text-center bg-white pt-4">
-                    <div
-                        class="w-24 h-24 mx-auto bg-[#FF4785] text-white rounded-full flex items-center justify-center text-3xl font-black mb-6 border-8 border-white shadow-xl">
-                        3</div>
-                    <h3 class="text-xl font-bold mb-2">Dominance</h3>
-                    <p class="text-slate-500 px-4">Earn points, level up your rank, and become the owner of the
-                        territory.</p>
+                        class="w-16 h-16 bg-purple-100 text-purple-500 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition">
+                        💎</div>
+                    <h3 class="text-xl font-bold mb-4">ポイントで交換</h3>
+                    <p class="text-slate-500 leading-relaxed">稼いだポイントは、実際のクーポンやゲーム内アイテムと交換可能。遊びが価値に変わる。</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- App Showcase Gallery -->
-    <section class="py-24 bg-slate-900 text-white overflow-hidden relative">
-        <!-- Background Glow -->
-        <div
-            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px] pointer-events-none">
+    <!-- Gallery -->
+    <section id="gallery" class="py-24 bg-slate-900 text-white overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+            <h2 class="text-4xl font-black mb-4"><span
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-brand-pink">Visual
+                    Experience</span></h2>
+            <p class="text-slate-400">直感的で、美しい。洗練されたUI。</p>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="text-center mb-16">
-                <span class="text-[#00C2FF] font-black tracking-widest uppercase text-sm">Interface</span>
-                <h2 class="text-4xl font-black mb-4">Visual Experience</h2>
-                <p class="text-slate-400 max-w-2xl mx-auto">Designed with a focus on tactile checks and smooth map
-                    interactions. It feels good just to use.</p>
+        <!-- Carousel -->
+        <div class="flex gap-8 overflow-x-auto pb-12 px-8 snap-x snap-mandatory no-scrollbar"
+            style="scrollbar-width: none; -ms-overflow-style: none;">
+            <!-- Loop Images -->
+            <div class="snap-center shrink-0 first:pl-8 last:pr-8">
+                <img src="/images/screenshot_02_fixed.png"
+                    class="w-72 rounded-[2rem] border-8 border-slate-800 shadow-2xl">
+                <p class="text-center mt-4 font-bold text-slate-500">QUESTS</p>
             </div>
-
-            <!-- Scroll Container with Hide Scrollbar -->
-            <style>
-                .no-scrollbar::-webkit-scrollbar {
-                    display: none;
-                }
-
-                .no-scrollbar {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
-                }
-            </style>
-
-            <div
-                class="flex gap-8 overflow-x-auto pb-12 snap-x snap-mandatory no-scrollbar justify-start md:justify-center px-4">
-
-                <!-- Image 1 -->
-                <div class="flex-shrink-0 snap-center transform hover:-translate-y-2 transition duration-300">
-                    <img src="/images/screenshot_02_fixed.png"
-                        class="w-72 rounded-[32px] border-8 border-slate-800 shadow-2xl bg-black">
-                    <p class="text-center mt-4 text-sm font-bold text-slate-500 uppercase tracking-widest">Quests</p>
-                </div>
-
-                <!-- Image 2 -->
-                <div class="flex-shrink-0 snap-center transform hover:-translate-y-2 transition duration-300">
-                    <img src="/images/screenshot_03_fixed.png"
-                        class="w-72 rounded-[32px] border-8 border-slate-800 shadow-2xl bg-black">
-                    <p class="text-center mt-4 text-sm font-bold text-slate-500 uppercase tracking-widest">Profile</p>
-                </div>
-
-                <!-- Image 3 -->
-                <div class="flex-shrink-0 snap-center transform hover:-translate-y-2 transition duration-300">
-                    <img src="/images/screenshot_04_fixed.png"
-                        class="w-72 rounded-[32px] border-8 border-slate-800 shadow-2xl bg-black">
-                    <p class="text-center mt-4 text-sm font-bold text-slate-500 uppercase tracking-widest">Rankings</p>
-                </div>
-
-                <!-- Image 4 -->
-                <div class="flex-shrink-0 snap-center transform hover:-translate-y-2 transition duration-300">
-                    <img src="/images/screenshot_05_fixed.png"
-                        class="w-72 rounded-[32px] border-8 border-slate-800 shadow-2xl bg-black">
-                    <p class="text-center mt-4 text-sm font-bold text-slate-500 uppercase tracking-widest">Map</p>
-                </div>
-
+            <div class="snap-center shrink-0">
+                <img src="/images/screenshot_03_fixed.png"
+                    class="w-72 rounded-[2rem] border-8 border-slate-800 shadow-2xl">
+                <p class="text-center mt-4 font-bold text-slate-500">PROFILE</p>
+            </div>
+            <div class="snap-center shrink-0">
+                <img src="/images/screenshot_04_fixed.png"
+                    class="w-72 rounded-[2rem] border-8 border-slate-800 shadow-2xl">
+                <p class="text-center mt-4 font-bold text-slate-500">RANKING</p>
+            </div>
+            <div class="snap-center shrink-0">
+                <img src="/images/screenshot_05_fixed.png"
+                    class="w-72 rounded-[2rem] border-8 border-slate-800 shadow-2xl">
+                <p class="text-center mt-4 font-bold text-slate-500">MAP</p>
             </div>
         </div>
     </section>
 
     <!-- FAQ -->
-    <section class="py-24 bg-white">
+    <section id="faq" class="py-24 bg-slate-50">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-black text-center mb-16">Frequently Asked</h2>
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-black mb-4">よくある質問</h2>
+            </div>
 
-            <div class="space-y-6">
-                <div class="border-b border-slate-100 pb-6">
-                    <h3 class="font-bold text-lg mb-2">Is it free to play?</h3>
-                    <p class="text-slate-500">Yes! Spotch is completely free to download and play. We offer optional
-                        cosmetic items, but gameplay is fair for everyone.</p>
-                </div>
-                <div class="border-b border-slate-100 pb-6">
-                    <h3 class="font-bold text-lg mb-2">Does it drain my battery?</h3>
-                    <p class="text-slate-500">We optimized the location engine to only use high-accuracy GPS when the
-                        app is open. Background impact is minimal.</p>
-                </div>
-                <div class="border-b border-slate-100 pb-6">
-                    <h3 class="font-bold text-lg mb-2">Can I play in my country?</h3>
-                    <p class="text-slate-500">Yes, "Spots" are generated globally! Whether you are in Tokyo, New York,
-                        or London, you will find territories to claim.</p>
-                </div>
+            <div class="space-y-4">
+                <details class="group bg-white p-6 rounded-2xl shadow-sm cursor-pointer">
+                    <summary class="flex justify-between items-center font-bold text-lg list-none">
+                        無料で遊べますか？
+                        <span class="transition group-open:rotate-180">▼</span>
+                    </summary>
+                    <p class="text-slate-500 mt-4 leading-relaxed">
+                        はい、基本プレイは永久に無料です。一部の着せ替えアイテムなどは有料ですが、ゲームの勝敗に影響する要素はすべて無料で楽しめます。</p>
+                </details>
+
+                <details class="group bg-white p-6 rounded-2xl shadow-sm cursor-pointer">
+                    <summary class="flex justify-between items-center font-bold text-lg list-none">
+                        バッテリー消費は激しいですか？
+                        <span class="transition group-open:rotate-180">▼</span>
+                    </summary>
+                    <p class="text-slate-500 mt-4 leading-relaxed">
+                        省電力設計を徹底しており、アプリ起動時のみ高精度の位置情報を取得します。バックグラウンドでの消費は最小限です。</p>
+                </details>
+
+                <details class="group bg-white p-6 rounded-2xl shadow-sm cursor-pointer">
+                    <summary class="flex justify-between items-center font-bold text-lg list-none">
+                        どの地域で遊べますか？
+                        <span class="transition group-open:rotate-180">▼</span>
+                    </summary>
+                    <p class="text-slate-500 mt-4 leading-relaxed">
+                        日本全国、そして世界中で遊べます。スポットがない場所でも、自分で新しいスポットを作成してオーナーになることができます。</p>
+                </details>
             </div>
         </div>
     </section>
 
-    <!-- Bottom CTA -->
-    <section id="download" class="py-24 bg-[#00C2FF] text-white text-center">
-        <div class="max-w-4xl mx-auto px-4">
-            <h2 class="text-4xl md:text-6xl font-black mb-8">Ready to Explore?</h2>
-            <p class="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">Join thousands of players claiming their cities
-                today. Don't let your neighborhood be taken by someone else.</p>
-            <button
-                class="bg-white text-[#00C2FF] px-10 py-4 rounded-full font-black text-xl hover:scale-105 transition shadow-xl inline-flex items-center gap-2">
-                Download Now
+    <!-- Footer CTA -->
+    <section id="download" class="py-32 bg-slate-900 text-white text-center relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-tr from-brand-blue/20 to-brand-pink/20"></div>
+
+        <div class="max-w-4xl mx-auto px-4 relative z-10">
+            <h2 class="text-5xl md:text-7xl font-black mb-8 leading-tight">冒険を、始めよう。</h2>
+            <p class="text-xl text-slate-300 mb-12">あなたの街が、次の戦場だ。</p>
+
+            <a href="https://apps.apple.com/jp/app/spotch/id123456789"
+                class="inline-flex items-center gap-3 bg-white text-slate-900 px-10 py-5 rounded-full font-black text-xl hover:scale-105 transition shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                今すぐダウンロード
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
-            </button>
-        </div>
+            </a>
 
-        <footer class="bg-white py-12 border-t border-slate-200">
-            <div
-                class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-                <p class="text-slate-500 text-sm font-medium">© 2026 Spotch Team. All rights reserved.</p>
-                <div class="flex gap-6">
-                    <a href="/privacy" class="text-slate-500 hover:text-black text-sm font-bold">Privacy Policy</a>
-                    <a href="/support" class="text-slate-500 hover:text-black text-sm font-bold">Support</a>
-                </div>
+            <p class="mt-8 text-sm text-slate-500">iOS 15.0以降対応 / Android要件確認中</p>
+        </div>
+    </section>
+
+    <footer class="bg-slate-950 text-slate-600 py-12 border-t border-slate-900">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <span class="font-black text-white text-lg italic tracking-tighter">SPOTCH</span>
+                <p class="text-sm mt-2">© 2026 Spotch Team.</p>
             </div>
-        </footer>
+            <div class="flex gap-8 text-sm font-bold">
+                <a href="/privacy-policy" class="hover:text-white transition">プライバシーポリシー</a>
+                <a href="/terms" class="hover:text-white transition">利用規約</a>
+                <a href="mailto:support@spotch.app" class="hover:text-white transition">お問い合わせ</a>
+            </div>
+        </div>
+    </footer>
 
 </body>
 
