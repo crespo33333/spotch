@@ -73,7 +73,48 @@ const PRIVACY_POLICY = `
         <p>If you have any questions about this Privacy Policy, please contact us at:</p>
         <p><strong>Email:</strong> <a href="mailto:support@spotch.app" style="color:#00C2FF">support@spotch.app</a></p>
 
-        <a href="/" class="back-link">← Back to Home</a>
+        <hr style="margin: 60px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+        <div lang="ja">
+            <h1>プライバシーポリシー</h1>
+            <span class="date">最終更新日: 2026年1月25日</span>
+
+            <p>本プライバシーポリシーは、Spotchチームが運営するモバイルアプリケーション「Spotch」（以下「本サービス」）に適用されます。</p>
+
+            <h2>1. 収集する情報</h2>
+            <p>本サービスを提供・改善するために、以下の情報を収集します：</p>
+            <ul>
+                <li><strong>位置情報:</strong> ゲームプレイの中核機能である「チェックイン」を有効にするため、アプリ使用中のみ正確な位置情報（GPS）を収集します。アプリが閉じている間にバックグラウンドで位置情報を追跡することはありません。</li>
+                <li><strong>ユーザー提供情報:</strong> アカウント確認のためにメールアドレスを使用し、選択されたニックネームとアバター画像を保存します。</li>
+                <li><strong>ゲームプレイデータ:</strong> グローバルランキングを維持するため、チェックイン履歴、ポイント、領土所有状況を保存します。</li>
+            </ul>
+
+            <h2>2. 情報の利用目的</h2>
+            <p>収集した情報は以下の目的で利用します：</p>
+            <ul>
+                <li>本サービスの提供およびゲーム状態の維持。</li>
+                <li>公開ランキングへの表示。</li>
+                <li>不正行為（GPS偽装など）の検知および防止。</li>
+            </ul>
+
+            <h2>3. 情報の共有と開示</h2>
+            <p>私たちは、お客様の個人を特定できる情報を外部の第三者に販売、取引、または譲渡することはありません。ただし、本サービスの運営を支援する信頼できる第三者（クラウドホスティングプロバイダーなど）が、情報の機密性を保持することに同意している場合はこの限りではありません。</p>
+
+            <h2>4. データの保持と削除</h2>
+            <p>アカウントが有効である限り、データを保持します。アカウントおよび関連データの削除を希望される場合は、support@spotch.app までご連絡ください。リクエストを受領後、30日以内にサーバーからすべてのデータを完全に削除します。</p>
+
+            <h2>5. セキュリティ</h2>
+            <p>個人情報の安全性を維持するために、様々なセキュリティ対策を講じています。すべての機密データはSSL（Secure Socket Layer）技術を介して送信されます。</p>
+
+            <h2>6. 子供のプライバシー</h2>
+            <p>私たちは、13歳未満の子供から意図的に個人情報を収集することはありません。親権者または保護者の方で、お子様が私たちに個人データを提供したことに気づいた場合は、ご連絡ください。</p>
+
+            <h2>7. お問い合わせ</h2>
+            <p>本プライバシーポリシーに関するご質問は、以下までお問い合わせください：</p>
+            <p><strong>Email:</strong> <a href="mailto:support@spotch.app" style="color:#00C2FF">support@spotch.app</a></p>
+        </div>
+
+        <a href="/" class="back-link">← Back to Home / ホームに戻る</a>
     </div>
 </body>
 </html>
@@ -113,7 +154,34 @@ const TERMS_OF_SERVICE = `
         <h2>4. Disclaimer</h2>
         <p>The Service is provided "as is". We make no warranties, expressed or implied, regarding the reliability or availability of the Service.</p>
 
-        <a href="/" class="back-link">← Back to Home</a>
+        <hr style="margin: 60px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+        <div lang="ja">
+            <h1>利用規約</h1>
+            <span class="date">最終更新日: 2026年1月25日</span>
+
+            <p>Spotchを利用することにより、本規約に同意したものとみなされます。よくお読みください。</p>
+
+            <h2>1. 規約への同意</h2>
+            <p>Spotchモバイルアプリケーションにアクセスまたは使用することにより、利用者は本利用規約および適用されるすべての法律・規制に拘束されることに同意するものとします。</p>
+
+            <h2>2. ユーザーの行動規範</h2>
+            <p>本サービスを不正に利用しないことに同意するものとします。禁止事項には以下が含まれます：</p>
+            <ul>
+                <li>GPS偽装または位置情報の改ざん。</li>
+                <li>他のプレイヤーへの嫌がらせ、いじめ、または威嚇。</li>
+                <li>不快または違法なコンテンツの投稿。</li>
+                <li>アプリケーションのリバースエンジニアリングの試み。</li>
+            </ul>
+
+            <h2>3. アカウントの停止</h2>
+            <p>私たちは、本規約に違反している、または他のユーザーに害を及ぼすと判断した場合、独自の裁量により、予告なくアカウントを停止または削除する権利を留保します。</p>
+
+            <h2>4. 免責事項</h2>
+            <p>本サービスは「現状有姿」で提供されます。私たちは、本サービスの信頼性や可用性に関して、明示または黙示を問わず、いかなる保証も行いません。</p>
+        </div>
+
+        <a href="/" class="back-link">← Back to Home / ホームに戻る</a>
     </div>
 </body>
 </html>
@@ -139,7 +207,21 @@ const SUPPORT_PAGE = `
         <h2>FAQ</h2>
         <p>Check out our <a href="/#faq" style="color: #00C2FF;">Frequently Asked Questions</a> on the home page.</p>
 
-        <a href="/" class="back-link">← Back to Home</a>
+        <hr style="margin: 60px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+        <div lang="ja">
+            <h1>サポート</h1>
+            <p>お困りですか？私たちがお手伝いします。</p>
+            
+            <h2>お問い合わせ</h2>
+            <p>不具合の報告、アカウントに関するお問い合わせは、以下のメールアドレスまで直接ご連絡ください：</p>
+            <p><a href="mailto:support@spotch.app" style="font-size: 1.2rem; color: #00C2FF; font-weight: bold;">support@spotch.app</a></p>
+            
+            <h2>よくある質問 (FAQ)</h2>
+            <p>トップページの <a href="/#faq" style="color: #00C2FF;">よくある質問</a> も併せてご確認ください。</p>
+        </div>
+
+        <a href="/" class="back-link">← Back to Home / ホームに戻る</a>
     </div>
 </body>
 </html>
