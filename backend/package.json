@@ -4,7 +4,7 @@
     "description": "Backend for Spotch app",
     "main": "src/server.ts",
     "scripts": {
-        "build": "tsc && tsx src/scripts/build-assets.ts",
+        "build": "tsc && node src/scripts/build-assets.js",
         "start": "node dist/server.js",
         "dev": "tsx watch src/server.ts",
         "db:push": "drizzle-kit push:pg",

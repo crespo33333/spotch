@@ -1,6 +1,6 @@
 
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 const srcDir = path.join(process.cwd(), 'public');
 const destDir = path.join(process.cwd(), 'dist', 'public');
@@ -17,5 +17,9 @@ if (!fs.existsSync(destDir)) {
 }
 
 fs.cpSync(srcDir, destDir, { recursive: true });
+
+// Create version.txt
+const versionFile = path.join(destDir, 'version.txt');
+fs.writeFileSync(versionFile, `Deployed: ${new Date().toISOString()}`);
 
 console.log('Assets copied successfully.');
