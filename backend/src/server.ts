@@ -209,6 +209,11 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.get('/health', (req: Request, res: Response) => res.send('OK'));
+app.get('/health-check', (req: Request, res: Response) => res.json({
+    status: 'OK',
+    time: new Date().toISOString(),
+    version: process.version
+}));
 
 app.get('/privacy-policy', (req: Request, res: Response) => res.send(PRIVACY_POLICY));
 app.get('/privacy', (req: Request, res: Response) => res.send(PRIVACY_POLICY)); // Alias for convenience
