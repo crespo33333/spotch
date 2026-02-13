@@ -47,7 +47,7 @@
     "react-i18next": "^16.5.3",
     "react-native": "0.76.9",
     "react-native-gifted-charts": "^1.4.70",
-    "react-native-iap": "13.0.4",
+    "react-native-iap": "12.16.1",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-maps": "1.18.0",
     "react-native-markdown-display": "^7.0.2",
