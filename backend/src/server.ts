@@ -254,21 +254,48 @@ app.get('/debug-index', (req: Request, res: Response) => {
     }
 });
 
+app.get('/debug-read', (req: Request, res: Response) => {
+    try {
+        const rootPublic = path.join(process.cwd(), 'public');
+        const indexPath = path.join(rootPublic, 'index.html');
+
+        const info = {
+            cwd: process.cwd(),
+            rootPublic,
+            indexPath,
+            exists: fs.existsSync(indexPath),
+            stat: fs.existsSync(indexPath) ? fs.statSync(indexPath) : 'N/A',
+            readdir: fs.existsSync(rootPublic) ? fs.readdirSync(rootPublic) : 'N/A',
+            contentSnippet: '',
+            error: null as any
+        };
+
+        if (info.exists) {
+            info.contentSnippet = fs.readFileSync(indexPath, 'utf-8').slice(0, 100);
+        }
+
+        res.json(info);
+    } catch (e) {
+        res.json({ error: String(e), stack: (e as Error).stack });
+    }
+});
+
 // Catch-all for debugging (MUST BE LAST)
 app.use('*', (req: Request, res: Response) => {
     console.log(`Fallback hit for: ${req.url} - Current Public Path: ${PUBLIC_PATH} `);
     res.status(200).send(`
-    < html >
-    <body style="font-family:sans-serif; text-align:center; padding:50px;" >
-        <h1>Spotch is Alive </h1>
-            < p > You requested: ${req.url} </p>
-                < p > But we couldn't find the specific resource.</p>
-                    < p > Landing page path: ${PUBLIC_PATH} </p>
-                        < hr />
-                        <a href="/images/screenshot_05_fixed.png" > Check Image </a>
-                            </body>
-                            </html>
-                                `);
+    <!DOCTYPE html>
+    <html>
+        <body style="font-family:sans-serif; text-align:center; padding:50px;">
+            <h1>Spotch is Alive</h1>
+            <p>You requested: ${req.url}</p>
+            <p>But we couldn't find the specific resource.</p>
+            <p>Landing page path: ${PUBLIC_PATH}</p>
+            <hr/>
+            <a href="/images/screenshot_05_fixed.png">Check Image</a>
+        </body>
+    </html>
+    `);
 });
 
 // Bind to default host and start
