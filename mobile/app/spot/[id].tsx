@@ -231,11 +231,7 @@ export default function SpotDetailScreen() {
         }
     };
 
-    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-    useEffect(() => {
-        getStoredUserId().then(id => setCurrentUserId(id));
-    }, []);
 
     const getRelativeTime = (dateString: string) => {
         if (!dateString) return '';
