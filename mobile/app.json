@@ -18,8 +18,7 @@
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyCGaeG60-Fe-g9grrH7GJ290Nqq6UFrDMo"
-        },
-        "usesNonExemptEncryption": false
+        }
       },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
