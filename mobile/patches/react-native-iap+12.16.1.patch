@@ -12,14 +12,12 @@ index 2eb221d..c08ce99 100644
  }
  
 diff --git a/node_modules/react-native-iap/ios/RNIapIos.swift b/node_modules/react-native-iap/ios/RNIapIos.swift
-index 7abd65c..59aa42d 100644
+index 7abd65c..0257c92 100644
 --- a/node_modules/react-native-iap/ios/RNIapIos.swift
 +++ b/node_modules/react-native-iap/ios/RNIapIos.swift
-@@ -465,8 +465,9 @@ class RNIapIos: RCTEventEmitter, SKRequestDelegate, SKPaymentTransactionObserver
-                         forKey: transaction.payment.productIdentifier,
-                         code: standardErrorCode(nsError?.code),
+@@ -467,6 +467,8 @@ class RNIapIos: RCTEventEmitter, SKRequestDelegate, SKPaymentTransactionObserver
                          message: nsError?.localizedDescription,
--                        error: nsError)
+                         error: nsError)
                  })
 +            @unknown default:
 +                debugMessage("Unknown Transaction State")
