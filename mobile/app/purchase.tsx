@@ -40,8 +40,8 @@ export default function PurchaseScreen() {
         const setupIAP = async () => {
             if (Platform.OS === 'ios') {
                 try {
-                    await (RNIap as any).initConnection();
-                    const products = await (RNIap as any).getProducts({ skus: itemSkus });
+                    await RNIap.initConnection();
+                    const products = await RNIap.getProducts({ skus: itemSkus });
                     setIapProducts(products);
                 } catch (err) {
                     console.error('[IAP] Setup error:', err);
@@ -53,7 +53,7 @@ export default function PurchaseScreen() {
 
         // Listeners
         if (Platform.OS === 'ios') {
-            purchaseUpdateSubscription = (RNIap as any).purchaseUpdatedListener(async (purchase: any) => {
+            purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase: any) => {
                 const receipt = purchase.transactionReceipt;
                 if (receipt) {
                     try {
@@ -66,7 +66,7 @@ export default function PurchaseScreen() {
 
                         if (result.success) {
                             // Tell Apple we finished
-                            await (RNIap as any).finishTransaction({ purchase, isConsumable: true });
+                            await RNIap.finishTransaction({ purchase, isConsumable: true });
                             Alert.alert('Success', `You purchased ${result.pointsAwarded} Points!`);
                             utils.wallet.getBalance.invalidate();
                             router.back();
@@ -78,7 +78,7 @@ export default function PurchaseScreen() {
                 }
             });
 
-            purchaseErrorSubscription = (RNIap as any).purchaseErrorListener((error: any) => {
+            purchaseErrorSubscription = RNIap.purchaseErrorListener((error: any) => {
                 console.warn('purchaseErrorListener', error);
                 if (error.responseCode !== '2') { // '2' is usually user_cancelled
                     Alert.alert('Purchase Error', error.message);
@@ -98,7 +98,7 @@ export default function PurchaseScreen() {
                 purchaseErrorSubscription = null;
             }
             if (Platform.OS === 'ios') {
-                (RNIap as any).endConnection();
+                RNIap.endConnection();
             }
         };
     }, []);
@@ -117,7 +117,6 @@ export default function PurchaseScreen() {
             const { error } = await initPaymentSheet({
                 paymentIntentClientSecret: clientSecret,
                 merchantDisplayName: 'Spotch',
-                merchantIdentifier: 'merchant.com.spotch.app',
                 returnURL: 'spotch://stripe-redirect',
             });
 
@@ -164,7 +163,7 @@ export default function PurchaseScreen() {
         if (Platform.OS === 'ios') {
             try {
                 if (!SKU_POINTS_500) return;
-                await (RNIap as any).requestPurchase({ sku: SKU_POINTS_500 });
+                await RNIap.requestPurchase({ sku: SKU_POINTS_500 });
             } catch (err: any) {
                 console.warn(err.code, err.message);
                 setLoading(false);
