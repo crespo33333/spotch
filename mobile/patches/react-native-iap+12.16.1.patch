@@ -1,0 +1,28 @@
+diff --git a/node_modules/react-native-iap/ios/IapUtils.swift b/node_modules/react-native-iap/ios/IapUtils.swift
+index 2eb221d..c08ce99 100644
+--- a/node_modules/react-native-iap/ios/IapUtils.swift
++++ b/node_modules/react-native-iap/ios/IapUtils.swift
+@@ -27,6 +27,8 @@ func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+     case .verified(let safe):
+         // The result is verified. Return the unwrapped value.
+         return safe
++    @unknown default:
++        throw StoreError.failedVerification
+     }
+ }
+ 
+diff --git a/node_modules/react-native-iap/ios/RNIapIos.swift b/node_modules/react-native-iap/ios/RNIapIos.swift
+index 7abd65c..59aa42d 100644
+--- a/node_modules/react-native-iap/ios/RNIapIos.swift
++++ b/node_modules/react-native-iap/ios/RNIapIos.swift
+@@ -465,8 +465,9 @@ class RNIapIos: RCTEventEmitter, SKRequestDelegate, SKPaymentTransactionObserver
+                         forKey: transaction.payment.productIdentifier,
+                         code: standardErrorCode(nsError?.code),
+                         message: nsError?.localizedDescription,
+-                        error: nsError)
+                 })
++            @unknown default:
++                debugMessage("Unknown Transaction State")
+             }
+         }
+     }
