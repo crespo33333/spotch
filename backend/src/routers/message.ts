@@ -4,6 +4,7 @@ import { db } from '../db';
 import { messages, users } from '../db/schema';
 import { eq, or, and, desc, ne, sql } from 'drizzle-orm';
 import { sendPushNotification } from '../utils/push';
+import { getIo } from '../socket';
 
 export const messageRouter = router({
     // Get chat history with a specific user
@@ -36,6 +37,14 @@ export const messageRouter = router({
                 receiverId: input.receiverId,
                 content: input.content,
             }).returning()) as any[];
+
+            // Emit Socket Event
+            try {
+                const io = getIo();
+                io.to(`user_${input.receiverId}`).emit('receive_message', message);
+            } catch (e) {
+                console.error("Socket emit failed:", e);
+            }
 
             // Get Receiver Push Token
             const receiver = await db.query.users.findFirst({

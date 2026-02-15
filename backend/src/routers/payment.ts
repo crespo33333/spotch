@@ -122,31 +122,80 @@ export const paymentRouter = router({
         .mutation(async ({ ctx, input }) => {
             console.log(`[IAP] Verifying receipt for user ${ctx.user.id} on ${input.platform}`);
 
-            // TODO: Implement actual receipt validation with Apple/Google servers
-            // const isSandbox = process.env.NODE_ENV !== 'production';
-            // await validateReceipt(input.receipt, isSandbox);
-
-            // Mock Validation: Ensure receipt is not empty
-            if (!input.receipt || input.receipt.length < 10) {
-                throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid receipt" });
-            }
-
-            console.log(`[IAP] Receipt validated (Mock). Product: ${input.productId}`);
-
-            // Determine points to award based on Product ID
-            let pointsToAward = 0;
-            if (input.productId.includes('point500') || input.productId.includes('points.500')) {
-                pointsToAward = 500;
-            } else if (input.productId.includes('point1100') || input.productId.includes('points.1100')) {
-                pointsToAward = 1100;
+            // Real Receipt Validation
+            const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET;
+            if (!APPLE_SHARED_SECRET) {
+                console.warn("[IAP] APPLE_SHARED_SECRET is not set. Using Mock Validation.");
+                if (!input.receipt || input.receipt.length < 10) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid receipt" });
             } else {
-                // Default fallback or error
-                console.warn(`[IAP] Unknown product ID: ${input.productId}, defaulting to 0 points`);
+                // Helper to validate against Apple
+                const validate = async (url: string) => {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            'receipt-data': input.receipt,
+                            'password': APPLE_SHARED_SECRET,
+                            'exclude-old-transactions': true
+                        })
+                    });
+                    return await response.json();
+                };
+
+                let data = await validate('https://buy.itunes.apple.com/verifyReceipt'); // Production
+
+                // Retry in Sandbox if error 21007 (Sandbox receipt sent to Production)
+                if (data.status === 21007) {
+                    console.log("[IAP] Sandbox receipt detected. Retrying with Sandbox environment.");
+                    data = await validate('https://sandbox.itunes.apple.com/verifyReceipt');
+                }
+
+                if (data.status !== 0) {
+                    throw new TRPCError({ code: "BAD_REQUEST", message: `Invalid Receipt (Status: ${data.status})` });
+                }
+
+                // For Subscriptions: Verify latest receipt info
+                if (input.productId.includes('premium.monthly')) {
+                    const latest = data.latest_receipt_info?.[0] || data.receipt;
+                    if (latest) {
+                        const expiresDate = latest.expires_date_ms || latest.expires_date;
+                        // Check if expired (allow 5 min buffer for clock drift)
+                        if (expiresDate && Number(expiresDate) < Date.now() - 300000) {
+                            throw new TRPCError({ code: "BAD_REQUEST", message: "Subscription Expired" });
+                        }
+                    }
+                }
             }
 
-            if (pointsToAward > 0) {
-                await db.transaction(async (tx) => {
-                    // Award Points
+            console.log(`[IAP] Receipt validated. Product: ${input.productId}`);
+
+            // Determine benefit to award based on Product ID
+            let pointsToAward = 0;
+            let isSubscription = false;
+
+            if (input.productId.includes('point500')) {
+                pointsToAward = 500;
+            } else if (input.productId.includes('point1100')) {
+                pointsToAward = 1100;
+            } else if (input.productId.includes('premium.monthly')) {
+                isSubscription = true;
+                pointsToAward = 500; // Bonus points for subscribing
+            } else {
+                console.warn(`[IAP] Unknown product ID: ${input.productId}`);
+            }
+
+            await db.transaction(async (tx) => {
+                // 1. Handle Subscription Status
+                if (isSubscription) {
+                    await tx.update(users)
+                        .set({ isPremium: true })
+                        .where(eq(users.id, ctx.user.id));
+                }
+
+                // 2. Award Points (Consumable or Subscription Bonus)
+                // Need to prevent double-awarding for same Transaction ID in real prod
+                // For MVP, we invoke logic. Real impl should check transactions table for unique orderId.
+                if (pointsToAward > 0) {
                     await tx.insert(wallets).values({
                         userId: ctx.user.id,
                         currentBalance: pointsToAward
@@ -160,10 +209,10 @@ export const paymentRouter = router({
                         userId: ctx.user.id,
                         amount: pointsToAward,
                         type: 'earn',
-                        description: `IAP Purchase (${input.productId})`,
+                        description: isSubscription ? 'Premium Subscription Bonus' : `IAP Purchase (${input.productId})`,
                     });
-                });
-            }
+                }
+            });
 
             return { success: true, pointsAwarded: pointsToAward };
         }),

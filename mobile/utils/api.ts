@@ -15,7 +15,7 @@ export const trpc = createTRPCReact<AppRouter>();
  */
 import Constants from 'expo-constants';
 
-const getBaseUrl = () => {
+export const getBaseUrl = () => {
     // Production / Cloud URL
     if (process.env.EXPO_PUBLIC_API_URL) {
         return process.env.EXPO_PUBLIC_API_URL;

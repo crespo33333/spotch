@@ -122,7 +122,7 @@ export default function ExchangeScreen() {
                             <ActivityIndicator color="#00C2FF" />
                         ) : (
                             <View className="gap-4 pb-20">
-                                {coupons?.map((coupon: any) => (
+                                {coupons?.filter((c: any) => c.type !== 'game_item').map((coupon: any) => (
                                     <TouchableOpacity
                                         key={coupon.id}
                                         onPress={() => handleRedeem(coupon)}

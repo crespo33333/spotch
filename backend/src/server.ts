@@ -6,6 +6,8 @@ import { createContext } from './context';
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { db, initDB } from './db';
+import { createServer } from 'http';
+import { initSocket } from './socket';
 
 dotenv.config();
 
@@ -390,7 +392,9 @@ const start = async () => {
     try {
         console.log("🚀 Starting Spotch Backend...");
         await initDB();
-        app.listen(Number(PORT), '0.0.0.0', () => {
+        const httpServer = createServer(app);
+        initSocket(httpServer);
+        httpServer.listen(Number(PORT), '0.0.0.0', () => {
             console.log(`✅ Server is running on port ${PORT} `);
         });
     } catch (e) {

@@ -1,24 +1,113 @@
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { trpc } from '../utils/api';
-
+import * as RNIap from 'react-native-iap';
+import { useEffect, useState } from 'react';
+import { IAP_SKUS, IAP_ITEMS } from '../constants/IAP';
 
 export default function PremiumScreen() {
     const router = useRouter();
     const utils = trpc.useUtils();
+    const [loading, setLoading] = useState(false);
+    const [products, setProducts] = useState<RNIap.Product[]>([]);
+    const [subscriptions, setSubscriptions] = useState<RNIap.Subscription[]>([]);
 
-    const upgradeMutation = trpc.user.upgradeToPremium.useMutation({
-        onSuccess: () => {
-            alert("Welcome to Premium! You received 500 bonus points.");
-            utils.user.getProfile.invalidate();
-            router.back();
-        },
-        onError: (err) => alert(err.message)
-    });
+    // Backend Mutation for Receipt Verification
+    const verifyReceipt = trpc.payment.verifyIAPReceipt.useMutation();
 
+    // Initialize IAP
+    useEffect(() => {
+        let purchaseUpdateSubscription: any;
+        let purchaseErrorSubscription: any;
+
+        const setupIAP = async () => {
+            if (Platform.OS === 'ios') {
+                try {
+                    await RNIap.initConnection();
+                    // Fetch Subscriptions specifically
+                    const subs = await RNIap.getSubscriptions({ skus: [IAP_SKUS.PREMIUM_MONTHLY as string] });
+                    setSubscriptions(subs);
+                } catch (err) {
+                    console.error('[IAP] Setup error:', err);
+                }
+            }
+        };
+
+        setupIAP();
+
+        if (Platform.OS === 'ios') {
+            purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase: any) => {
+                const receipt = purchase.transactionReceipt;
+                if (receipt) {
+                    try {
+                        setLoading(true);
+                        // Verify receipt with backend
+                        const result = await verifyReceipt.mutateAsync({
+                            receipt,
+                            platform: 'ios',
+                            productId: purchase.productId,
+                        });
+
+                        if (result.success) {
+                            // Finish transaction
+                            await RNIap.finishTransaction({ purchase, isConsumable: false });
+
+                            Alert.alert("Welcome to Premium!", "Your subscription is active. You received 500 bonus points.");
+                            utils.user.getProfile.invalidate();
+                            router.back();
+                        }
+                    } catch (error: any) {
+                        console.error('[IAP] Verification Failed:', error);
+                        Alert.alert('Verification Failed', 'Could not verify your subscription with the server.');
+                    } finally {
+                        setLoading(false);
+                    }
+                }
+            });
+
+            purchaseErrorSubscription = RNIap.purchaseErrorListener((error: any) => {
+                console.warn('purchaseErrorListener', error);
+                if (error.responseCode !== '2') { // User cancelled
+                    Alert.alert('Purchase Error', error.message);
+                }
+                setLoading(false);
+            });
+        }
+
+        return () => {
+            if (purchaseUpdateSubscription) {
+                purchaseUpdateSubscription.remove();
+            }
+            if (purchaseErrorSubscription) {
+                purchaseErrorSubscription.remove();
+            }
+            if (Platform.OS === 'ios') {
+                RNIap.endConnection();
+            }
+        };
+    }, []);
+
+    const handleSubscribe = async () => {
+        setLoading(true);
+        try {
+            if (Platform.OS === 'ios') {
+                const sku = IAP_SKUS.PREMIUM_MONTHLY;
+                if (!sku) return;
+                // Request Subscription
+                await RNIap.requestSubscription({ sku });
+            } else {
+                // Android fallback (or unimplemented)
+                Alert.alert("Not Available", "Premium is currently available on iOS only.");
+                setLoading(false);
+            }
+        } catch (err: any) {
+            console.warn(err.code, err.message);
+            setLoading(false);
+        }
+    };
 
     const Feature = ({ icon, title, desc }: { icon: keyof typeof Ionicons.glyphMap, title: string, desc: string }) => (
         <View className="flex-row items-center bg-white/10 p-4 rounded-2xl mb-4 border border-white/20">
@@ -31,6 +120,19 @@ export default function PremiumScreen() {
             </View>
         </View>
     );
+
+    // Find product details for display
+    const subProduct = subscriptions.find(s => s.productId === IAP_SKUS.PREMIUM_MONTHLY);
+
+    let displayPrice = '$10.99';
+    if (subProduct) {
+        if (Platform.OS === 'ios') {
+            displayPrice = (subProduct as RNIap.SubscriptionIOS).localizedPrice || '$10.99';
+        } else if (Platform.OS === 'android') {
+            const offer = (subProduct as RNIap.SubscriptionAndroid).subscriptionOfferDetails?.[0];
+            displayPrice = offer?.pricingPhases.pricingPhaseList[0].formattedPrice || '$10.99';
+        }
+    }
 
     return (
         <View className="flex-1 bg-black">
@@ -84,19 +186,19 @@ export default function PremiumScreen() {
                     <View className="bg-white rounded-3xl p-6 items-center mb-8 border-4 border-yellow-400 shadow-xl shadow-yellow-900/50">
                         <Text className="text-gray-500 font-bold text-xs uppercase mb-1">Monthly Plan</Text>
                         <View className="flex-row items-baseline mb-4">
-                            <Text className="text-5xl font-black text-black">$11</Text>
+                            <Text className="text-5xl font-black text-black">{displayPrice}</Text>
                             <Text className="text-gray-500 font-bold ml-1">/ month</Text>
                         </View>
                         <TouchableOpacity
-                            onPress={() => upgradeMutation.mutate()}
-                            disabled={upgradeMutation.isLoading}
-                            className={`w-full bg-black py-4 rounded-full items-center ${upgradeMutation.isLoading ? 'opacity-50' : ''}`}
+                            onPress={handleSubscribe}
+                            disabled={loading}
+                            className={`w-full bg-black py-4 rounded-full items-center ${loading ? 'opacity-50' : ''}`}
                         >
-                            <Text className="text-white font-black text-lg">{upgradeMutation.isLoading ? 'Processing...' : '登録する (1ヶ月無料)'}</Text>
+                            <Text className="text-white font-black text-lg">{loading ? 'Processing...' : 'Subscribe Now'}</Text>
                         </TouchableOpacity>
 
                         <Text className="text-gray-400 text-[10px] mt-3 text-center">
-                            いつでもキャンセル可能です。
+                            Auto-renews. Cancel anytime in Settings.
                         </Text>
                     </View>
 

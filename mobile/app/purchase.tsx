@@ -7,18 +7,12 @@ import { useStripe } from '@stripe/stripe-react-native';
 import * as RNIap from 'react-native-iap';
 import { trpc } from '../utils/api';
 
-// Product SKUs
-const SKU_POINTS_500 = Platform.select({
-    ios: 'com.spotch.app.point500',
-    android: 'com.spotch.app.point500', // Matches Google Play Product ID
-    default: 'com.spotch.app.point500',
-});
+import { IAP_SKUS, IAP_ITEMS } from '../constants/IAP';
 
-const itemSkus = Platform.select({
-    ios: [SKU_POINTS_500],
-    android: [SKU_POINTS_500],
-    default: [],
-}) as string[];
+// Product SKUs
+const SKU_POINTS_500 = IAP_SKUS.POINTS_500;
+
+const itemSkus = IAP_ITEMS;
 
 export default function PurchaseScreen() {
     const router = useRouter();
