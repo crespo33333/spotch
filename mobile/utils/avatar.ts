@@ -1,39 +1,52 @@
-// Avatar Categories using RoboHash (Cats) and Placehold.co (Emoji Text)
-export type AvatarCategory = 'cats' | 'dogs' | 'tech' | 'space' | 'monsters' | 'flowers';
+// Avatar Categories: Animal, Robot, People, Flower, Fish
+export type AvatarCategory = 'animal' | 'robot' | 'people' | 'flower' | 'fish';
 
 const CATEGORY_SEEDS: Record<AvatarCategory, string[]> = {
-    tech: ['app_avatar_robot', 'avatar_gold_robot', 'avatar_tech_orb_cyan_blue', 'robot_2', 'cyber_1'],
-    dogs: ['avatar_cool_shiba', 'avatar_shiba_samurai', 'shiba_2', 'shiba_3'],
-    space: ['avatar_space_astronaut', 'avatar_alien_dj', 'space_1', 'space_2'],
-    monsters: ['avatar_neon_monster', 'avatar_pixel_dragon', 'avatar_crystal_skull_pink', 'avatar_cute_ghost_glass', 'monster_1'],
-    cats: ['kitten_1', 'kitten_2', 'kitten_3', 'kitten_4', 'kitten_5', 'kitten_6'],
-    flowers: ['cherry_blossom', 'rose', 'sunflower', 'lotus', 'tulip', 'daisy'],
+    animal: [
+        'kitten_1', 'kitten_2', 'kitten_3', 'kitten_4', 'kitten_5', 'kitten_6', // RoboHash Cats (Set 4)
+        'emoji:🐶', 'emoji:🦊', 'emoji:🦁', 'emoji:🐵', 'emoji:🐼', 'emoji:🐨', 'emoji:🐯', 'emoji:🐷' // Emojis
+    ],
+    robot: [
+        'robot_1', 'robot_2', 'robot_3', 'robot_4', 'robot_5', 'robot_6', // RoboHash Robots (Set 1)
+        'emoji:🤖', 'emoji:🦾'
+    ],
+    people: [
+        'human_1', 'human_2', 'human_3', 'human_4', 'human_5', 'human_6', // RoboHash Humans (Set 5)
+        'emoji:🧑', 'emoji:👩', 'emoji:👨', 'emoji:🧒', 'emoji:👵', 'emoji:👴'
+    ],
+    flower: [
+        'emoji:🌸', 'emoji:🌹', 'emoji:🌻', 'emoji:🌺', 'emoji:🌷', 'emoji:🌼', 'emoji:🏵️', 'emoji:🪷',
+        'emoji:💐', 'emoji:🥀'
+    ],
+    fish: [
+        'emoji:🐟', 'emoji:🐠', 'emoji:🐡', 'emoji:🦈', 'emoji:🐋', 'emoji:🐬', 'emoji:🐙', 'emoji:🦑',
+        'emoji:🦀', 'emoji:🦞', 'emoji:🦐'
+    ]
 };
-
-const BACKGROUND_COLORS = ['FF9900', 'FF4785', '00C2FF', '4CAF50', '9C27B0', 'FFEB3B'];
 
 /**
  * Generates an avatar URL based on seed/category.
  * If seed starts with 'http', return it as is.
- * Otherwise, handle RoboHash (kitten) vs Emoji (placehold.co).
+ * Otherwise, handle RoboHash vs Emoji.
  */
 export const getCreatureAvatar = (seed: string) => {
+    if (!seed) return `https://robohash.org/default?set=set1`;
     if (seed.startsWith('http')) return seed;
 
-    // Legacy or Kitten
-    if (seed.startsWith('kitten_')) {
-        return `https://robohash.org/${seed}.png?set=set4&size=200x200`;
-    }
-
-    // Attempt to parse 'emoji:🐶:COLOR' -> URL
+    // Emojis: Return as is (UI handles rendering)
     if (seed.startsWith('emoji:')) {
-        // Return the seed directly to be handled by the UI components
-        // This allows we to render native high-res emojis instead of blurry placeholders
         return seed;
     }
 
-    // Fallback
-    return `https://robohash.org/${seed}.png?set=set4&size=200x200`;
+    // RoboHash Sets Mapping
+    // kittens -> set4
+    // humans -> set5
+    // robots -> set1 (default)
+    let set = 'set1';
+    if (seed.startsWith('kitten')) set = 'set4';
+    if (seed.startsWith('human')) set = 'set5';
+
+    return `https://robohash.org/${seed}.png?set=${set}&size=200x200`;
 };
 
 

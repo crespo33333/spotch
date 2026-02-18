@@ -1,13 +1,15 @@
-import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
-import { TERMS_OF_SERVICE_JA } from '../constants/Terms';
+import { TERMS_OF_SERVICE_JA, TERMS_OF_SERVICE_EN } from '../constants/Terms';
+import { getLocales } from 'expo-localization';
 
 export default function TermsScreen() {
     const router = useRouter();
+    const isJa = getLocales()[0]?.languageCode === 'ja';
+    const content = isJa ? TERMS_OF_SERVICE_JA : TERMS_OF_SERVICE_EN;
 
     return (
         <SafeAreaView className="flex-1 bg-white">
@@ -15,7 +17,7 @@ export default function TermsScreen() {
                 <TouchableOpacity onPress={() => router.back()} className="mr-4">
                     <Ionicons name="arrow-back" size={24} color="black" />
                 </TouchableOpacity>
-                <Text className="text-xl font-bold">利用規約</Text>
+                <Text className="text-xl font-bold">{isJa ? '利用規約' : 'Terms of Service'}</Text>
             </View>
             <ScrollView className="flex-1 px-6 py-4">
                 <Markdown style={{
@@ -24,7 +26,7 @@ export default function TermsScreen() {
                     body: { fontSize: 14, lineHeight: 24, color: '#4b5563', marginBottom: 8 },
                     list_item: { marginBottom: 8 },
                 }}>
-                    {TERMS_OF_SERVICE_JA}
+                    {content}
                 </Markdown>
                 <View className="h-20" />
             </ScrollView>

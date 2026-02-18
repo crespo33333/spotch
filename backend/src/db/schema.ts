@@ -44,6 +44,9 @@ export const spots = pgTable('spots', {
     lastOwnerChangeAt: timestamp('last_owner_change_at'),
     shieldExpiresAt: timestamp('shield_expires_at'),
     taxBoostExpiresAt: timestamp('tax_boost_expires_at'),
+    targetGender: varchar('target_gender', { length: 20 }).default('all'), // all, male, female, couple
+    targetAge: varchar('target_age', { length: 20 }).default('all'), // all, teen, 20s, 30s, 40s, 50s, 60+
+    targetAudience: varchar('target_audience', { length: 20 }).default('all'), // all, local, tourist, business, student, family
     createdAt: timestamp('created_at').defaultNow(),
 });
 

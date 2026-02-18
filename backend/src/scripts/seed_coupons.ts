@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 
 const COUPONS = [
     {
-        name: 'Amazon Gift Card 500 JPY',
+        name: 'Amazonギフト券 500円分',
         cost: 5000,
         type: 'gift_card',
         stock: 10,
@@ -12,7 +12,7 @@ const COUPONS = [
         data: 'amazon_jp_500' // Internal reference
     },
     {
-        name: 'Starbucks Ticket 500 JPY',
+        name: 'スターバックス ドリンクチケット 500円',
         cost: 5000,
         type: 'gift_card',
         stock: 10,
@@ -20,7 +20,7 @@ const COUPONS = [
         data: 'starbucks_jp_500'
     },
     {
-        name: 'UNICEF Donation (¥100)',
+        name: 'UNICEF 募金 (¥100)',
         cost: 1000,
         type: 'donation',
         stock: null, // Unlimited
@@ -29,7 +29,7 @@ const COUPONS = [
     },
     // GAME ITEMS (Hidden from Exchange List, used in Spot Detail)
     {
-        name: 'Territory Shield (24h)',
+        name: '領土シールド (24時間)',
         cost: 500,
         type: 'game_item',
         stock: null,
@@ -37,7 +37,7 @@ const COUPONS = [
         data: 'shield_24h'
     },
     {
-        name: 'Revenue Boost (2x Tax)',
+        name: '収益ブースト (税収2倍)',
         cost: 1000,
         type: 'game_item',
         stock: null,
@@ -50,16 +50,20 @@ async function seedCoupons() {
     console.log('🌱 Seeding Coupons...');
 
     for (const item of COUPONS) {
-        // Check if exists
+        // Check if exists by DATA field (stable ID)
         const existing = await db.query.coupons.findFirst({
-            where: eq(coupons.name, item.name)
+            where: eq(coupons.data, item.data)
         });
 
         if (!existing) {
             await db.insert(coupons).values(item);
             console.log(`✅ Added: ${item.name}`);
         } else {
-            console.log(`ℹ️ Skipped: ${item.name} (Already exists)`);
+            // Update existing (e.g. for localization)
+            await db.update(coupons)
+                .set(item)
+                .where(eq(coupons.id, existing.id));
+            console.log(`🔄 Updated: ${item.name}`);
         }
     }
 

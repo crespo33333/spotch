@@ -53,3 +53,59 @@ Email: support@spotch.app
 
 以上
 `;
+
+export const PRIVACY_POLICY_EN = `
+# Privacy Policy
+
+Spotch (hereinafter referred to as "the Company") establishes this Privacy Policy (hereinafter referred to as "this Policy") regarding the handling of users' personal information in the services provided on this website (hereinafter referred to as "the Services").
+
+## Article 1 (Personal Information)
+"Personal Information" refers to "personal information" as defined in the Personal Information Protection Act, which includes information about a living individual that can identify the specific individual by name, date of birth, address, telephone number, contact information, or other descriptions contained in such information, as well as data related to appearance, fingerprints, or voiceprints, and information that can identify a specific individual from such information alone (personal identification information).
+
+## Article 2 (Method of Collection)
+We may ask for personal information such as name, date of birth, address, telephone number, email address, bank account number, credit card number, and driver's license number when a user registers for use. We may also collect transaction records and information related to payments, including the user's personal information, made between the user and our partners (including information providers, advertisers, ad distribution destinations, etc.; hereinafter referred to as "Partners") from our Partners.
+In addition, due to the nature of using location information, the Service periodically collects location information using GPS, etc., from the user's device.
+
+## Article 3 (Purpose of Collection and Use)
+The purposes for which we collect and use personal information are as follows:
+1. To provide and operate our services
+2. To respond to inquiries from users (including verification of identity)
+3. To send emails regarding new features, updates, campaigns, etc. of the service the user is using and other services provided by the Company
+4. To contact you as necessary for maintenance, important notices, etc.
+5. To identify users who violate the Terms of Service or who intend to use the Service for fraudulently or unjust purposes, and to refuse their use
+6. To allow users to view, change, or delete their own registration information and view their usage status
+7. To bill users for usage fees in paid services
+8. Purposes incidental to the above purposes
+
+## Article 4 (Change of Purpose of Use)
+1. The Company shall change the purpose of use of personal information only when it is reasonably recognized that the purpose of use is relevant to the one before the change.
+2. In the event of a change in the purpose of use, the Company shall notify the user of the changed purpose by the method prescribed by the Company or announce it on this website.
+
+## Article 5 (Provision of Personal Information to Third Parties)
+1. We will not provide personal information to third parties without the prior consent of the user, except in the following cases. However, this excludes cases permitted by the Personal Information Protection Act and other laws and regulations.
+   - When it is necessary for the protection of human life, body, or property and it is difficult to obtain the consent of the person concerned
+   - When it is particularly necessary for the improvement of public health or the promotion of the sound upbringing of children and it is difficult to obtain the consent of the person concerned
+   - When it is necessary to cooperate with a national agency, a local government, or a person entrusted by them in carrying out the affairs prescribed by laws and regulations, and obtaining the consent of the person concerned is likely to impede the execution of such affairs
+   - When the following matters have been notified or announced in advance and the Company has notified the Personal Information Protection Commission
+     - Including provision to third parties in the purpose of use
+     - Items of data provided to third parties
+     - Means or method of provision to third parties
+     - Stopping the provision of personal information to third parties at the request of the person concerned
+     - Method of accepting the request of the person concerned
+2. Notwithstanding the provisions of the preceding paragraph, in the following cases, the recipient of such information shall not fall under the category of a third party.
+   - When the Company entrusts all or part of the handling of personal information within the scope necessary to achieve the purpose of use
+   - When personal information is provided in connection with the succession of business due to merger or other reasons
+   - When personal information is used jointly with a specific person, and the specific person is notified in advance or put in a state where the person can easily know that fact, the items of personal information used jointly, the scope of the joint users, the purpose of use of the users, and the name or name of the person responsible for the management of the personal information
+
+## Article 6 (Change of Privacy Policy)
+1. The contents of this Policy may be changed without notifying the user, except for laws and regulations and other matters properly stipulated in this Policy.
+2. Unless otherwise specified by the Company, the changed Privacy Policy shall take effect from the time it is posted on this website.
+
+## Article 7 (Contact for Inquiries)
+For inquiries regarding this Policy, please contact the following.
+
+Spotch Administration Office
+Email: support@spotch.app
+
+End
+`;

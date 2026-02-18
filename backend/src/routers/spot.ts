@@ -14,6 +14,10 @@ export const spotRouter = router({
             totalPoints: z.number().min(100),
             ratePerMinute: z.number().min(1),
             category: z.string().optional(),
+            targetGender: z.string().optional(),
+            targetAge: z.string().optional(),
+            targetAudience: z.string().optional(),
+            color: z.string().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
             return await db.transaction(async (tx) => {
@@ -50,6 +54,10 @@ export const spotRouter = router({
                     remainingPoints: input.totalPoints,
                     ratePerMinute: input.ratePerMinute,
                     category: input.category || 'General',
+                    targetGender: input.targetGender || 'all',
+                    targetAge: input.targetAge || 'all',
+                    targetAudience: input.targetAudience || 'all',
+                    color: input.color || '#00C2FF', // Default to Spotch Blue
                     active: true,
                 }).returning();
 

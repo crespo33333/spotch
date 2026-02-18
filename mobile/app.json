@@ -2,7 +2,7 @@
   "expo": {
     "name": "Spotch",
     "slug": "spotch",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -42,11 +42,11 @@
       "config": {},
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "Spotch needs your location to find nearby spots and award points.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Spotch needs your location to find nearby spots and award points.",
-        "NSCameraUsageDescription": "Spotch uses the camera to scan QR codes for spot check-ins or user connections.",
-        "NSPhotoLibraryUsageDescription": "Spotch accesses your photo library to let you upload a custom avatar.",
-        "NSMicrophoneUsageDescription": "Spotch uses the microphone for video uploads."
+        "NSLocationWhenInUseUsageDescription": "Spotchは近くのスポットを見つけ、ポイントを付与するために位置情報を使用します。",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Spotchは近くのスポットを見つけ、ポイントを付与するために位置情報を使用します。",
+        "NSCameraUsageDescription": "Spotchはスポットへのチェックインやユーザー接続のためにQRコードをスキャンするカメラを使用します。",
+        "NSPhotoLibraryUsageDescription": "Spotchはカスタムアバターをアップロードするためにフォトライブラリにアクセスします。",
+        "NSMicrophoneUsageDescription": "Spotchは動画アップロードのためにマイクを使用します。"
       }
     },
     "web": {
@@ -54,6 +54,15 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-localization",
+        {
+          "locales": [
+            "ja",
+            "en"
+          ]
+        }
+      ],
       [
         "expo-build-properties",
         {

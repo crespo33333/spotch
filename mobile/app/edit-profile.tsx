@@ -9,12 +9,11 @@ import { useTranslation } from 'react-i18next';
 import { getAvatarOptions, AvatarCategory, getCreatureAvatar } from '../utils/avatar';
 
 const AVATAR_CATEGORIES: { id: AvatarCategory, label: string, icon: string }[] = [
-    { id: 'cats', label: 'Cats', icon: '🐱' },
-    { id: 'dogs', label: 'Dogs', icon: '🐶' },
-    { id: 'monsters', label: 'Monsters', icon: '👾' },
-    { id: 'tech', label: 'Tech', icon: '🤖' },
-    { id: 'space', label: 'Space', icon: '🚀' },
-    { id: 'flowers', label: 'Nature', icon: '🌸' },
+    { id: 'animal', label: 'Animal', icon: '🐱' },
+    { id: 'robot', label: 'Robot', icon: '🤖' },
+    { id: 'people', label: 'People', icon: '🧑' },
+    { id: 'flower', label: 'Flower', icon: '🌸' },
+    { id: 'fish', label: 'Fish', icon: '🐟' },
 ];
 
 export default function EditProfileScreen() {
@@ -39,7 +38,7 @@ export default function EditProfileScreen() {
     const [name, setName] = useState('');
     const [bio, setBio] = useState('');
     const [selectedAvatar, setSelectedAvatar] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<AvatarCategory>('cats');
+    const [selectedCategory, setSelectedCategory] = useState<AvatarCategory>('animal');
 
     // Initialize form when user data loads
     useEffect(() => {

@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,8 +15,10 @@ export default function CreateSpot() {
     const [name, setName] = useState('');
     const [totalPoints, setTotalPoints] = useState('100'); // Default to satisfy min 100
     const [rate, setRate] = useState('1'); // Default to satisfy min 1
-    const [radius, setRadius] = useState('50');
-    // const [loading, setLoading] = useState(false); // Managed by mutation
+    const [targetAudience, setTargetAudience] = useState('all');
+    const [targetAge, setTargetAge] = useState('all');
+    const [targetGender, setTargetGender] = useState('all');
+    const [color, setColor] = useState('#00C2FF');
 
     const utils = trpc.useUtils();
     const createSpot = trpc.spot.create.useMutation({
@@ -56,10 +58,16 @@ export default function CreateSpot() {
         try {
             let latitude, longitude;
 
+            console.log('📍 Create Spot Params:', params);
+
             if (params.lat && params.lng) {
-                latitude = parseFloat(params.lat as string);
-                longitude = parseFloat(params.lng as string);
+                const latStr = Array.isArray(params.lat) ? params.lat[0] : params.lat;
+                const lngStr = Array.isArray(params.lng) ? params.lng[0] : params.lng;
+                latitude = parseFloat(latStr);
+                longitude = parseFloat(lngStr);
+                console.log('📍 Parsed Coords:', { latitude, longitude });
             } else {
+                console.log('📍 Requesting Location...');
                 let { status } = await Location.requestForegroundPermissionsAsync();
                 if (status !== 'granted') {
                     Alert.alert('Permission denied', 'Location is required to create a spot');
@@ -70,12 +78,23 @@ export default function CreateSpot() {
                 longitude = location.coords.longitude;
             }
 
+            if (isNaN(latitude) || isNaN(longitude)) {
+                Alert.alert('Error', 'Invalid location data');
+                return;
+            }
+
+            console.log('🚀 Mutating createSpot:', { name, points, rateVal, latitude, longitude });
+
             createSpot.mutate({
                 name,
                 totalPoints: points,
                 ratePerMinute: rateVal,
                 latitude,
-                longitude
+                longitude,
+                targetAudience,
+                targetAge,
+                targetGender,
+                color
             });
 
         } catch (e) {
@@ -120,37 +139,93 @@ export default function CreateSpot() {
                 />
             </View>
 
-            <View className="mb-8">
-                <Text className="text-gray-600 mb-2">Spot Radius (Meters)</Text>
-                <View className="flex-row gap-2 mb-2">
-                    {[10, 50, 100, 300].map(r => (
+            <View className="mb-6">
+                <Text className="text-gray-600 mb-2">Target Audience (Reach)</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
+                    {['all', 'local', 'tourist', 'student', 'business', 'family'].map(t => (
                         <TouchableOpacity
-                            key={r}
+                            key={t}
                             onPress={() => {
                                 Haptics.selectionAsync();
-                                setRadius(r.toString());
+                                setTargetAudience(t);
                             }}
-                            // @ts-ignore
-                            className={`px-3 py-2 rounded-full border border-gray-300 ${radius === r.toString() ? 'bg-primary border-primary' : 'bg-white'}`}
+                            className={`px-4 py-2 rounded-full border border-gray-300 mr-2 ${targetAudience === t ? 'bg-black border-black' : 'bg-white'}`}
                         >
-                            <Text
-                                // @ts-ignore
-                                className={radius === r.toString() ? 'text-white font-bold' : 'text-gray-600'}
-                            >
-                                {r}m
+                            <Text className={targetAudience === t ? 'text-white font-bold capitalize' : 'text-gray-600 capitalize'}>
+                                {t}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
+
+            <View className="mb-6">
+                <Text className="text-gray-600 mb-2">Target Age</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
+                    {['all', 'teen', '20s', '30s', '40s', '50s', '60+'].map(t => (
+                        <TouchableOpacity
+                            key={t}
+                            onPress={() => {
+                                Haptics.selectionAsync();
+                                setTargetAge(t);
+                            }}
+                            className={`px-4 py-2 rounded-full border border-gray-300 mr-2 ${targetAge === t ? 'bg-black border-black' : 'bg-white'}`}
+                        >
+                            <Text className={targetAge === t ? 'text-white font-bold capitalize' : 'text-gray-600 capitalize'}>
+                                {t}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
+
+            <View className="mb-8">
+                <Text className="text-gray-600 mb-2">Target Gender</Text>
+                <View className="flex-row gap-2">
+                    {['all', 'male', 'female', 'couple'].map(t => (
+                        <TouchableOpacity
+                            key={t}
+                            onPress={() => {
+                                Haptics.selectionAsync();
+                                setTargetGender(t);
+                            }}
+                            className={`px-4 py-2 rounded-full border border-gray-300 ${targetGender === t ? 'bg-black border-black' : 'bg-white'}`}
+                        >
+                            <Text className={targetGender === t ? 'text-white font-bold capitalize' : 'text-gray-600 capitalize'}>
+                                {t}
                             </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
-                // @ts-ignore
-                <TextInput
-                    className="bg-gray-100 p-4 rounded-lg"
-                    placeholder="Radius (10 - 500)"
-                    keyboardType="numeric"
-                    value={radius}
-                    onChangeText={setRadius}
-                />
-            </View >
+            </View>
+
+            <View className="mb-8">
+                <Text className="text-gray-600 mb-2">Spot Color</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-4 px-1">
+                    {[
+                        '#00C2FF', // Blue (Default)
+                        '#FF4785', // Pink
+                        '#FFD700', // Gold/Yellow
+                        '#4CAF50', // Green
+                        '#FF9F40', // Orange
+                        '#9C27B0', // Purple
+                        '#F44336', // Red
+                        '#607D8B', // Blue Grey
+                    ].map(c => (
+                        <TouchableOpacity
+                            key={c}
+                            onPress={() => {
+                                Haptics.selectionAsync();
+                                setColor(c);
+                            }}
+                            className={`w-10 h-10 rounded-full border-2 items-center justify-center ${color === c ? 'border-black scale-110' : 'border-transparent'}`}
+                            style={{ backgroundColor: c }}
+                        >
+                            {color === c && <Text className="text-white font-bold">✓</Text>}
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
 
             <TouchableOpacity
                 // @ts-ignore

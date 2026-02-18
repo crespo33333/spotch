@@ -1,4 +1,4 @@
-import { View, TextInput, TouchableOpacity, ScrollView, Text } from 'react-native';
+import { View, TextInput, TouchableOpacity, ScrollView, Text, Alert } from 'react-native';
 import MapView, { Spot } from '../../components/MapView';
 import CreateSpotSheet from '../../components/CreateSpotSheet';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -68,6 +68,11 @@ export default function MapScreen() {
         onSuccess: () => {
             refetch(); // Refresh map
             setCreatingLocation(null);
+            Alert.alert(t('common.success'), t('createSpot.success'));
+        },
+        onError: (error) => {
+            console.error("Spot Creation Error:", error);
+            Alert.alert(t('common.error'), error.message || t('createSpot.error'));
         }
     });
 

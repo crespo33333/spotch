@@ -61,14 +61,19 @@ const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, 
             <Circle
                 center={{ latitude: spot.latitude, longitude: spot.longitude }}
                 radius={spot.radius}
-                fillColor={getCategoryColor(spot.category).replace('0.9)', '0.4)')}
-                strokeColor={getCategoryColor(spot.category)}
+                fillColor={
+                    (spot.color && spot.color.startsWith('#'))
+                        ? `${spot.color}66` // Hex + 40% opacity
+                        : (spot.color || getCategoryColor(spot.category)).replace('0.9)', '0.4)')
+                }
+                strokeColor={spot.color || getCategoryColor(spot.category)}
                 strokeWidth={1}
             />
 
             <Marker
                 coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
                 onPress={() => router.push(`/spot/${spot.id}`)}
+                title={spot.name}
             >
                 <AnimatedReanimated.View style={[{ alignItems: 'center', justifyContent: 'center' }, animatedStyle]}>
                     {spot.activeUsers && spot.activeUsers.length > 0 && (
@@ -77,7 +82,9 @@ const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, 
                             width: 44,
                             height: 44,
                             borderRadius: 22,
-                            backgroundColor: getCategoryColor(spot.category).replace('0.9)', '0.5)'),
+                            backgroundColor: (spot.color && spot.color.startsWith('#'))
+                                ? `${spot.color}80` // Hex + 50% opacity
+                                : (spot.color || getCategoryColor(spot.category)).replace('0.9)', '0.5)'),
                             transform: [{ scale: pulseAnim }]
                         }} />
 
@@ -317,7 +324,7 @@ export default function AppMapView({
                             width: 50,
                             height: 50,
                             borderRadius: 25,
-                            backgroundColor: 'rgba(0, 194, 255, 0.2)',
+                            backgroundColor: (selectedSpot?.color || '#00C2FF') + '33', // Add transparency
                             alignItems: 'center',
                             justifyContent: 'center'
                         }}>
@@ -327,7 +334,7 @@ export default function AppMapView({
                                 borderRadius: 18,
                                 borderWidth: 3,
                                 borderColor: 'white',
-                                backgroundColor: '#00C2FF',
+                                backgroundColor: selectedSpot?.color || '#00C2FF',
                                 shadowColor: '#000',
                                 shadowOffset: { width: 0, height: 2 },
                                 shadowOpacity: 0.25,

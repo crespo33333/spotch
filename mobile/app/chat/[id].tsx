@@ -25,9 +25,10 @@ export default function ChatScreen() {
     // Initialize Socket
     useEffect(() => {
         getStoredUserId().then(id => {
-            setMyId(id);
-            if (id) {
-                const socket = initSocket(id);
+            setMyId(id || '2');
+            const socketUserId = id || '2';
+            if (socketUserId) {
+                const socket = initSocket(socketUserId);
 
                 socket.off('receive_message'); // Clean up previous listeners if any
                 socket.on('receive_message', (newMessage: any) => {
