@@ -13,8 +13,9 @@ COPY tsconfig.json ./
 # Install dependencies
 RUN npm install
 
-# Copy source code
+# Copy source code and public assets
 COPY src ./src
+COPY public ./public
 COPY .env.example ./.env
 
 # Build TypeScript
