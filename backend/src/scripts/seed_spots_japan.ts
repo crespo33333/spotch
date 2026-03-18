@@ -1,5 +1,4 @@
-
-import { db } from '../db';
+import { db, initDB } from '../db';
 import { spots } from '../db/schema';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -69,55 +68,38 @@ const jitter = () => (Math.random() - 0.5) * 0.04;
 async function seed() {
     console.log('🌱 Seeding spots for Japan...');
 
-    // Optionally get a user to be the owner. If none, maybe null or ID 1?
-    // Let's assume ID 1 exists or use a random ID if we fetched users.
-    // For safety, let's just use spotterId: 1 if user 1 exists, otherwise null?
-    // Actually schema says user references are foreign keys.
-    // Let's try to fetch user 1.
-    // Simplification: We will assign spotterId: 1. If it fails due to FK, user should ensure User 1 exists.
-    // Or we query first user.
-
-    // Let's insert!
-    const spotsToInsert: any[] = [];
-
-    for (const pref of PREFECTURES) {
-        const count = pref.name === 'Tokyo' ? 30 : 5;
-        console.log(`Generating ${count} spots for ${pref.name}...`);
-
-        for (let i = 0; i < count; i++) {
-            const flavorNames = ['Park', 'Cafe', 'Station', 'Plaza', 'View', 'Corner', 'Base', 'Spot', 'Garden', 'Tower'];
-            const name = `${pref.name} ${getRandom(flavorNames)} #${i + 1}`;
-
-            spotsToInsert.push({
-                // spotterId: 1, // Assuming admin/user 1 exists. If not, script might fail.
-                // Actually, spotterId is nullable? Let's check schema.
-                // In schema: spotterId integer references users.id. Not enforced notNull?
-                // Let's try with 1.
-                name: name,
-                latitude: (pref.lat + jitter()).toString(),
-                longitude: (pref.lng + jitter()).toString(),
-                totalPoints: randomInt(100, 1000),
-                remainingPoints: randomInt(10, 500),
-                ratePerMinute: randomInt(1, 10),
-                active: true,
-                category: getRandom(CATEGORIES),
-                color: getRandom(COLORS),
-                radius: 100,
-                targetAudience: getRandom(TARGET_AUDIENCES),
-                targetAge: getRandom(TARGET_AGES),
-                targetGender: getRandom(TARGET_GENDERS),
-                createdAt: new Date(),
-            });
-        }
-    }
-
-    // Batch insert might be too large for one query depending on driver, but 265 rows is fine.
-    // Drizzle insert many:
     try {
-        // We need a valid user ID. 
-        // Start transaction or just insert.
-        // Note: we need 'spotterId'.
-        // Let's fetch the first user ID from DB to be safe.
+        await initDB();
+
+        const spotsToInsert: any[] = [];
+
+        for (const pref of PREFECTURES) {
+            const count = pref.name === 'Tokyo' ? 30 : 5;
+            console.log(`Generating ${count} spots for ${pref.name}...`);
+
+            for (let i = 0; i < count; i++) {
+                const flavorNames = ['Park', 'Sakura', 'Cherry Blossom', 'Plaza', 'View', 'Corner', 'Base', 'Spot', 'Garden', 'Tower'];
+                const name = `${pref.name} ${getRandom(flavorNames)} #${i + 1}`;
+
+                spotsToInsert.push({
+                    name: name,
+                    latitude: (pref.lat + jitter()).toString(),
+                    longitude: (pref.lng + jitter()).toString(),
+                    totalPoints: randomInt(100, 1000),
+                    remainingPoints: randomInt(10, 500),
+                    ratePerMinute: randomInt(1, 10),
+                    active: true,
+                    category: getRandom(CATEGORIES),
+                    color: getRandom(COLORS),
+                    radius: 100,
+                    targetAudience: getRandom(TARGET_AUDIENCES),
+                    targetAge: getRandom(TARGET_AGES),
+                    targetGender: getRandom(TARGET_GENDERS),
+                    createdAt: new Date(),
+                });
+            }
+        }
+
         const userRes = await db.query.users.findFirst();
         const userId = userRes ? userRes.id : null;
 
@@ -128,7 +110,6 @@ async function seed() {
 
         const spotsWithUser = spotsToInsert.map(s => ({ ...s, spotterId: userId, ownerId: userId }));
 
-        // Chunking just in case
         const chunkSize = 50;
         for (let i = 0; i < spotsWithUser.length; i += chunkSize) {
             const chunk = spotsWithUser.slice(i, i + chunkSize);

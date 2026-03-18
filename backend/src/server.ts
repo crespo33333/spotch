@@ -406,6 +406,14 @@ const start = async () => {
 // --- Cron Scheduler ---
 import { processWeeklyTurfWars, cleanupStaleVisits } from './utils/cron';
 
+// Keep-alive Ping to prevent Render sleep (every 14 mins)
+setInterval(() => {
+    const url = process.env.RENDER_EXTERNAL_URL || 'https://spotch-backend.onrender.com/health';
+    fetch(url)
+        .then(res => console.log(`🔄 Keep-alive ping sent to ${url}: ${res.status}`))
+        .catch(e => console.error(`⚠️ Keep-alive ping failed:`, e));
+}, 14 * 60 * 1000);
+
 // Run every 10 minutes
 setInterval(() => {
     processWeeklyTurfWars().catch(e => console.error('Cron Error:', e));
