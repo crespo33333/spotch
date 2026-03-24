@@ -44,6 +44,8 @@ const context_1 = require("./context");
 const dotenv = __importStar(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 const db_1 = require("./db");
+const http_1 = require("http");
+const socket_1 = require("./socket");
 dotenv.config();
 // --- CONSTANTS ---
 const COMMON_STYLE = `
@@ -108,7 +110,48 @@ const PRIVACY_POLICY = `
         <p>If you have any questions about this Privacy Policy, please contact us at:</p>
         <p><strong>Email:</strong> <a href="mailto:support@spotch.app" style="color:#00C2FF">support@spotch.app</a></p>
 
-        <a href="/" class="back-link">← Back to Home</a>
+        <hr style="margin: 60px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+        <div lang="ja">
+            <h1>プライバシーポリシー</h1>
+            <span class="date">最終更新日: 2026年1月25日</span>
+
+            <p>本プライバシーポリシーは、Spotchチームが運営するモバイルアプリケーション「Spotch」（以下「本サービス」）に適用されます。</p>
+
+            <h2>1. 収集する情報</h2>
+            <p>本サービスを提供・改善するために、以下の情報を収集します：</p>
+            <ul>
+                <li><strong>位置情報:</strong> ゲームプレイの中核機能である「チェックイン」を有効にするため、アプリ使用中のみ正確な位置情報（GPS）を収集します。アプリが閉じている間にバックグラウンドで位置情報を追跡することはありません。</li>
+                <li><strong>ユーザー提供情報:</strong> アカウント確認のためにメールアドレスを使用し、選択されたニックネームとアバター画像を保存します。</li>
+                <li><strong>ゲームプレイデータ:</strong> グローバルランキングを維持するため、チェックイン履歴、ポイント、領土所有状況を保存します。</li>
+            </ul>
+
+            <h2>2. 情報の利用目的</h2>
+            <p>収集した情報は以下の目的で利用します：</p>
+            <ul>
+                <li>本サービスの提供およびゲーム状態の維持。</li>
+                <li>公開ランキングへの表示。</li>
+                <li>不正行為（GPS偽装など）の検知および防止。</li>
+            </ul>
+
+            <h2>3. 情報の共有と開示</h2>
+            <p>私たちは、お客様の個人を特定できる情報を外部の第三者に販売、取引、または譲渡することはありません。ただし、本サービスの運営を支援する信頼できる第三者（クラウドホスティングプロバイダーなど）が、情報の機密性を保持することに同意している場合はこの限りではありません。</p>
+
+            <h2>4. データの保持と削除</h2>
+            <p>アカウントが有効である限り、データを保持します。アカウントおよび関連データの削除を希望される場合は、support@spotch.app までご連絡ください。リクエストを受領後、30日以内にサーバーからすべてのデータを完全に削除します。</p>
+
+            <h2>5. セキュリティ</h2>
+            <p>個人情報の安全性を維持するために、様々なセキュリティ対策を講じています。すべての機密データはSSL（Secure Socket Layer）技術を介して送信されます。</p>
+
+            <h2>6. 子供のプライバシー</h2>
+            <p>私たちは、13歳未満の子供から意図的に個人情報を収集することはありません。親権者または保護者の方で、お子様が私たちに個人データを提供したことに気づいた場合は、ご連絡ください。</p>
+
+            <h2>7. お問い合わせ</h2>
+            <p>本プライバシーポリシーに関するご質問は、以下までお問い合わせください：</p>
+            <p><strong>Email:</strong> <a href="mailto:support@spotch.app" style="color:#00C2FF">support@spotch.app</a></p>
+        </div>
+
+        <a href="/" class="back-link">← Back to Home / ホームに戻る</a>
     </div>
 </body>
 </html>
@@ -147,7 +190,34 @@ const TERMS_OF_SERVICE = `
         <h2>4. Disclaimer</h2>
         <p>The Service is provided "as is". We make no warranties, expressed or implied, regarding the reliability or availability of the Service.</p>
 
-        <a href="/" class="back-link">← Back to Home</a>
+        <hr style="margin: 60px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+        <div lang="ja">
+            <h1>利用規約</h1>
+            <span class="date">最終更新日: 2026年1月25日</span>
+
+            <p>Spotchを利用することにより、本規約に同意したものとみなされます。よくお読みください。</p>
+
+            <h2>1. 規約への同意</h2>
+            <p>Spotchモバイルアプリケーションにアクセスまたは使用することにより、利用者は本利用規約および適用されるすべての法律・規制に拘束されることに同意するものとします。</p>
+
+            <h2>2. ユーザーの行動規範</h2>
+            <p>本サービスを不正に利用しないことに同意するものとします。禁止事項には以下が含まれます：</p>
+            <ul>
+                <li>GPS偽装または位置情報の改ざん。</li>
+                <li>他のプレイヤーへの嫌がらせ、いじめ、または威嚇。</li>
+                <li>不快または違法なコンテンツの投稿。</li>
+                <li>アプリケーションのリバースエンジニアリングの試み。</li>
+            </ul>
+
+            <h2>3. アカウントの停止</h2>
+            <p>私たちは、本規約に違反している、または他のユーザーに害を及ぼすと判断した場合、独自の裁量により、予告なくアカウントを停止または削除する権利を留保します。</p>
+
+            <h2>4. 免責事項</h2>
+            <p>本サービスは「現状有姿」で提供されます。私たちは、本サービスの信頼性や可用性に関して、明示または黙示を問わず、いかなる保証も行いません。</p>
+        </div>
+
+        <a href="/" class="back-link">← Back to Home / ホームに戻る</a>
     </div>
 </body>
 </html>
@@ -173,7 +243,21 @@ const SUPPORT_PAGE = `
         <h2>FAQ</h2>
         <p>Check out our <a href="/#faq" style="color: #00C2FF;">Frequently Asked Questions</a> on the home page.</p>
 
-        <a href="/" class="back-link">← Back to Home</a>
+        <hr style="margin: 60px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+        <div lang="ja">
+            <h1>サポート</h1>
+            <p>お困りですか？私たちがお手伝いします。</p>
+            
+            <h2>お問い合わせ</h2>
+            <p>不具合の報告、アカウントに関するお問い合わせは、以下のメールアドレスまで直接ご連絡ください：</p>
+            <p><a href="mailto:support@spotch.app" style="font-size: 1.2rem; color: #00C2FF; font-weight: bold;">support@spotch.app</a></p>
+            
+            <h2>よくある質問 (FAQ)</h2>
+            <p>トップページの <a href="/#faq" style="color: #00C2FF;">よくある質問</a> も併せてご確認ください。</p>
+        </div>
+
+        <a href="/" class="back-link">← Back to Home / ホームに戻る</a>
     </div>
 </body>
 </html>
@@ -200,11 +284,12 @@ app.use((req, res, next) => {
 // Robust Static Path Resolution
 const fs_1 = __importDefault(require("fs"));
 const searchPaths = [
-    path_1.default.join(__dirname, '../public'),
-    path_1.default.join(__dirname, 'public'),
-    path_1.default.join(process.cwd(), 'public'),
-    path_1.default.join(process.cwd(), 'backend/public'),
+    path_1.default.join(__dirname, 'public'), // dist/public (Prioritize built artifact)
+    path_1.default.join(__dirname, '../public'), // ../public relative to dist/server.js -> backend/public
+    path_1.default.join(process.cwd(), 'public'), // backend/public
+    path_1.default.join(process.cwd(), 'backend/public'), // fallback
 ];
+console.log('DEBUG: defined searchPaths:', searchPaths);
 let PUBLIC_PATH = path_1.default.join(__dirname, '../public'); // Default
 for (const p of searchPaths) {
     if (fs_1.default.existsSync(p)) {
@@ -231,6 +316,11 @@ app.get('/', (req, res) => {
     }
 });
 app.get('/health', (req, res) => res.send('OK'));
+app.get('/health-check', (req, res) => res.json({
+    status: 'OK',
+    time: new Date().toISOString(),
+    version: process.version
+}));
 app.get('/privacy-policy', (req, res) => res.send(PRIVACY_POLICY));
 app.get('/privacy', (req, res) => res.send(PRIVACY_POLICY)); // Alias for convenience
 app.get('/terms', (req, res) => res.send(TERMS_OF_SERVICE));
@@ -264,28 +354,63 @@ app.get('/debug-fs', (req, res) => {
         res.json({ error: String(e) });
     }
 });
+app.get('/debug-index', (req, res) => {
+    const indexPath = path_1.default.join(PUBLIC_PATH, 'index.html');
+    if (fs_1.default.existsSync(indexPath)) {
+        res.send(fs_1.default.readFileSync(indexPath, 'utf-8'));
+    }
+    else {
+        res.status(404).send('Not found at ' + indexPath);
+    }
+});
+app.get('/debug-read', (req, res) => {
+    try {
+        const rootPublic = path_1.default.join(process.cwd(), 'public');
+        const indexPath = path_1.default.join(rootPublic, 'index.html');
+        const info = {
+            cwd: process.cwd(),
+            rootPublic,
+            indexPath,
+            exists: fs_1.default.existsSync(indexPath),
+            stat: fs_1.default.existsSync(indexPath) ? fs_1.default.statSync(indexPath) : 'N/A',
+            readdir: fs_1.default.existsSync(rootPublic) ? fs_1.default.readdirSync(rootPublic) : 'N/A',
+            contentSnippet: '',
+            error: null
+        };
+        if (info.exists) {
+            info.contentSnippet = fs_1.default.readFileSync(indexPath, 'utf-8').slice(0, 100);
+        }
+        res.json(info);
+    }
+    catch (e) {
+        res.json({ error: String(e), stack: e.stack });
+    }
+});
 // Catch-all for debugging (MUST BE LAST)
 app.use('*', (req, res) => {
     console.log(`Fallback hit for: ${req.url} - Current Public Path: ${PUBLIC_PATH} `);
     res.status(200).send(`
-    < html >
-    <body style="font-family:sans-serif; text-align:center; padding:50px;" >
-        <h1>Spotch is Alive </h1>
-            < p > You requested: ${req.url} </p>
-                < p > But we couldn't find the specific resource.</p>
-                    < p > Landing page path: ${PUBLIC_PATH} </p>
-                        < hr />
-                        <a href="/images/screenshot_05_fixed.png" > Check Image </a>
-                            </body>
-                            </html>
-                                `);
+    <!DOCTYPE html>
+    <html>
+        <body style="font-family:sans-serif; text-align:center; padding:50px;">
+            <h1>Spotch is Alive</h1>
+            <p>You requested: ${req.url}</p>
+            <p>But we couldn't find the specific resource.</p>
+            <p>Landing page path: ${PUBLIC_PATH}</p>
+            <hr/>
+            <a href="/images/screenshot_05_fixed.png">Check Image</a>
+        </body>
+    </html>
+    `);
 });
 // Bind to default host and start
 const start = async () => {
     try {
         console.log("🚀 Starting Spotch Backend...");
         await (0, db_1.initDB)();
-        app.listen(Number(PORT), '0.0.0.0', () => {
+        const httpServer = (0, http_1.createServer)(app);
+        (0, socket_1.initSocket)(httpServer);
+        httpServer.listen(Number(PORT), '0.0.0.0', () => {
             console.log(`✅ Server is running on port ${PORT} `);
         });
     }
@@ -296,6 +421,13 @@ const start = async () => {
 };
 // --- Cron Scheduler ---
 const cron_1 = require("./utils/cron");
+// Keep-alive Ping to prevent Render sleep (every 14 mins)
+setInterval(() => {
+    const url = process.env.RENDER_EXTERNAL_URL || 'https://spotch-backend.onrender.com/health';
+    fetch(url)
+        .then(res => console.log(`🔄 Keep-alive ping sent to ${url}: ${res.status}`))
+        .catch(e => console.error(`⚠️ Keep-alive ping failed:`, e));
+}, 14 * 60 * 1000);
 // Run every 10 minutes
 setInterval(() => {
     (0, cron_1.processWeeklyTurfWars)().catch(e => console.error('Cron Error:', e));

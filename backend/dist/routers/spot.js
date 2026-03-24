@@ -49,6 +49,10 @@ exports.spotRouter = (0, trpc_1.router)({
         totalPoints: zod_1.z.number().min(100),
         ratePerMinute: zod_1.z.number().min(1),
         category: zod_1.z.string().optional(),
+        targetGender: zod_1.z.string().optional(),
+        targetAge: zod_1.z.string().optional(),
+        targetAudience: zod_1.z.string().optional(),
+        color: zod_1.z.string().optional(),
     }))
         .mutation(async ({ ctx, input }) => {
         return await db_1.db.transaction(async (tx) => {
@@ -79,6 +83,10 @@ exports.spotRouter = (0, trpc_1.router)({
                 remainingPoints: input.totalPoints,
                 ratePerMinute: input.ratePerMinute,
                 category: input.category || 'General',
+                targetGender: input.targetGender || 'all',
+                targetAge: input.targetAge || 'all',
+                targetAudience: input.targetAudience || 'all',
+                color: input.color || '#00C2FF', // Default to Spotch Blue
                 active: true,
             }).returning();
             // 3. Gamification (Inside transaction ensures all or nothing)

@@ -53,7 +53,7 @@ export default function CreateSpotSheet({ visible, coordinate, onClose, onSubmit
 
     const panResponder = useRef(
         PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
+            onStartShouldSetPanResponder: () => false,
             onMoveShouldSetPanResponder: (_, gestureState) => {
                 // Only enable swipe if moving down significantly
                 return gestureState.dy > 5;

@@ -44,6 +44,9 @@ exports.spots = (0, pg_core_1.pgTable)('spots', {
     lastOwnerChangeAt: (0, pg_core_1.timestamp)('last_owner_change_at'),
     shieldExpiresAt: (0, pg_core_1.timestamp)('shield_expires_at'),
     taxBoostExpiresAt: (0, pg_core_1.timestamp)('tax_boost_expires_at'),
+    targetGender: (0, pg_core_1.varchar)('target_gender', { length: 20 }).default('all'), // all, male, female, couple
+    targetAge: (0, pg_core_1.varchar)('target_age', { length: 20 }).default('all'), // all, teen, 20s, 30s, 40s, 50s, 60+
+    targetAudience: (0, pg_core_1.varchar)('target_audience', { length: 20 }).default('all'), // all, local, tourist, business, student, family
     createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow(),
 });
 exports.weeklySpotPoints = (0, pg_core_1.pgTable)('weekly_spot_points', {

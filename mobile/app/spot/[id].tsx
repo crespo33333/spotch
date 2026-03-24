@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { trpc, getStoredUserId } from '../../utils/api';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { Avatar } from '../../components/Avatar';
@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function SpotDetailScreen() {
     const { t } = useTranslation();
+    const insets = useSafeAreaInsets();
     const { id } = useLocalSearchParams();
     const spotId = parseInt(id as string);
     const router = useRouter();
@@ -269,7 +270,7 @@ export default function SpotDetailScreen() {
     if (!spot) return <View className="flex-1 items-center justify-center"><Text className="text-gray-400 font-bold">Spot not found</Text></View>;
 
     return (
-        <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
+        <View className="flex-1 bg-white" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
             <ImageBackground
                 source={{ uri: 'https://images.unsplash.com/photo-1518640027989-a30d5d7e498e?w=800&q=80' }}
                 className="w-full h-64 absolute top-0 opacity-10"
@@ -555,6 +556,6 @@ export default function SpotDetailScreen() {
                     </View>
                 )}
             </View>
-        </SafeAreaView>
+        </View>
     );
 }

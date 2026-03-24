@@ -45,6 +45,19 @@ const getCategoryColor = (category: string) => {
     }
 };
 
+const getCategoryEmojiSeed = (category: string, id: string) => {
+    const options: Record<string, string[]> = {
+        'Food': ['emoji:🍽️', 'emoji:🍔', 'emoji:🍜', 'emoji:🍣', 'emoji:🍕'],
+        'Chill': ['emoji:☕', 'emoji:🍵', 'emoji:🛋️', 'emoji:♨️'],
+        'Adventure': ['emoji:🧗', 'emoji:⛺', 'emoji:🚵', 'emoji:🏂'],
+        'Study': ['emoji:📚', 'emoji:💻', 'emoji:📖', 'emoji:🎓'],
+        'Art': ['emoji:🎨', 'emoji:🎭', 'emoji:🖼️', 'emoji:🎸'],
+        'Nature': ['emoji:🌳', 'emoji:🍁', 'emoji:🏔️', 'emoji:🌊', 'emoji:🌸']
+    };
+    const cats = options[category] || ['emoji:📍'];
+    const numId = parseInt(id) || 0;
+    return cats[numId % cats.length];
+};
 
 const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, pulseAnim: any }) => {
     const scale = useSharedValue(0);
@@ -92,7 +105,7 @@ const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, 
 
                     {(() => {
                         const owner = spot.owner;
-                        const seed = owner?.avatarUrl || spot.spotter?.avatarUrl || `spot_${spot.id}`;
+                        const seed = owner ? (owner.avatarUrl || `spot_${spot.id}`) : getCategoryEmojiSeed(spot.category, spot.id);
                         const avatarSource = getCreatureAvatar(seed);
                         const isShielded = spot.shieldExpiresAt && new Date(spot.shieldExpiresAt) > new Date();
                         const isBoosted = spot.taxBoostExpiresAt && new Date(spot.taxBoostExpiresAt) > new Date();
@@ -175,7 +188,7 @@ const AnimatedMarker = ({ spot, router, pulseAnim }: { spot: Spot, router: any, 
                     <View className="p-3 w-48 items-center bg-white rounded-xl">
                         <View className="flex-row items-center mb-3 bg-gray-50 p-1.5 rounded-full pr-3 border border-gray-100 w-full justify-center">
                             {(() => {
-                                const seed = spot.spotter?.avatarUrl || `spot_${spot.id}`;
+                                const seed = spot.owner ? (spot.owner.avatarUrl || `spot_${spot.id}`) : getCategoryEmojiSeed(spot.category, spot.id);
                                 const avatarSource = getCreatureAvatar(seed);
 
                                 if (avatarSource.startsWith('emoji:')) {
