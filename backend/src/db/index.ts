@@ -5,9 +5,11 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
+const isExternalRender = process.env.DATABASE_URL?.includes('render.com');
+
 const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }, // Render PostgreSQL requires SSL even for local dev
+    ssl: isExternalRender ? { rejectUnauthorized: false } : undefined,
     connectionTimeoutMillis: 10000, // 10s timeout
 });
 
